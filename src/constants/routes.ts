@@ -4,6 +4,7 @@ export const Routes = {
     login: '/(auth)/login',
     register: '/(auth)/register',
     forgotPassword: '/(auth)/forgot-password',
+    callback: '/auth/callback',
   },
   onboarding: {
     setup: '/(onboarding)/setup',

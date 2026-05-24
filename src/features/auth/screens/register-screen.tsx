@@ -10,12 +10,19 @@ import { Spacer } from '@/components/ui/spacer';
 import { Routes } from '@/constants/routes';
 import { AuthFooterLink } from '@/features/auth/components/auth-footer-link';
 import { AuthMessage } from '@/features/auth/components/auth-message';
+import { SocialAuthButtons } from '@/features/auth/components/social-auth-buttons';
+import { useOAuthLogin } from '@/features/auth/hooks/use-oauth-login';
 import { useRegister } from '@/features/auth/hooks/use-register';
 import { registerSchema, type RegisterFormData } from '@/features/auth/schemas/register.schema';
+import type { OAuthProviderId } from '@/features/auth/types/auth.types';
 import { mapAuthError } from '@/features/auth/utils/map-auth-error';
 
 export function RegisterScreen() {
   const register = useRegister();
+  const oauthLogin = useOAuthLogin();
+
+  const isAuthPending = register.isPending || oauthLogin.isPending;
+  const authError = register.error ?? oauthLogin.error;
 
   const {
     control,
@@ -33,7 +40,14 @@ export function RegisterScreen() {
 
   const onSubmit = (data: RegisterFormData) => {
     register.reset();
+    oauthLogin.reset();
     register.mutate(data);
+  };
+
+  const handleOAuthPress = (provider: OAuthProviderId) => {
+    register.reset();
+    oauthLogin.reset();
+    oauthLogin.mutate(provider);
   };
 
   const showEmailConfirmationSuccess =
@@ -69,8 +83,8 @@ export function RegisterScreen() {
       <AuthLayout
         title="Únete a Ranco"
         subtitle="Publica servicios o encuentra profesionales cerca">
-        {register.error ? (
-          <AuthMessage message={mapAuthError(register.error)} variant="error" />
+        {authError ? (
+          <AuthMessage message={mapAuthError(authError)} variant="error" />
         ) : null}
 
         <Controller
@@ -79,7 +93,7 @@ export function RegisterScreen() {
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
               autoComplete="name"
-              editable={!register.isPending}
+              editable={!isAuthPending}
               error={errors.fullName?.message}
               label="Nombre completo"
               onBlur={onBlur}
@@ -97,7 +111,7 @@ export function RegisterScreen() {
             <Input
               autoCapitalize="none"
               autoComplete="email"
-              editable={!register.isPending}
+              editable={!isAuthPending}
               error={errors.email?.message}
               keyboardType="email-address"
               label="Correo electrónico"
@@ -116,7 +130,7 @@ export function RegisterScreen() {
             <Input
               autoCapitalize="none"
               autoComplete="new-password"
-              editable={!register.isPending}
+              editable={!isAuthPending}
               error={errors.password?.message}
               label="Contraseña"
               onBlur={onBlur}
@@ -135,7 +149,7 @@ export function RegisterScreen() {
             <Input
               autoCapitalize="none"
               autoComplete="new-password"
-              editable={!register.isPending}
+              editable={!isAuthPending}
               error={errors.confirmPassword?.message}
               label="Confirmar contraseña"
               onBlur={onBlur}
@@ -150,10 +164,20 @@ export function RegisterScreen() {
         <Spacer size="md" />
 
         <Button
-          disabled={register.isPending}
+          disabled={isAuthPending}
           label={register.isPending ? 'Creando cuenta...' : 'Registrarse'}
           onPress={handleSubmit(onSubmit)}
         />
+
+        <Spacer size="md" />
+
+        <SocialAuthButtons
+          disabled={isAuthPending}
+          pendingProvider={oauthLogin.isPending ? oauthLogin.variables : null}
+          onProviderPress={handleOAuthPress}
+        />
+
+        <Spacer size="md" />
 
         <AuthFooterLink
           href={Routes.auth.login}

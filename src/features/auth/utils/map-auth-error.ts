@@ -19,6 +19,11 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   validation_failed: 'Revisa los datos ingresados e inténtalo de nuevo.',
   user_not_found: 'No encontramos una cuenta con ese correo.',
   same_password: 'La nueva contraseña debe ser diferente a la anterior.',
+  oauth_cancelled: 'Inicio de sesión cancelado.',
+  oauth_timeout: 'El inicio de sesión tardó demasiado. Inténtalo de nuevo.',
+  oauth_failed: 'No se pudo completar el inicio de sesión.',
+  oauth_url_missing: 'No se pudo iniciar el flujo de autenticación.',
+  oauth_session_missing: 'No se pudo completar el inicio de sesión.',
 };
 
 export function mapAuthError(error: unknown): string {
