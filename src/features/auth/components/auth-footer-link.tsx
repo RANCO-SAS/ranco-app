@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, type Href } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
@@ -7,7 +7,7 @@ import { Spacing } from '@/constants/theme';
 type AuthFooterLinkProps = {
   prompt: string;
   linkLabel: string;
-  href: string;
+  href: Href;
 };
 
 export function AuthFooterLink({ prompt, linkLabel, href }: AuthFooterLinkProps) {
