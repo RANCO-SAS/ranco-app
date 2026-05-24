@@ -12,6 +12,8 @@ import { useAuth } from '@/features/auth/hooks/use-auth';
 import { useLogout } from '@/features/auth/hooks/use-logout';
 import { mapAuthError } from '@/features/auth/utils/map-auth-error';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
+import { ModeSwitcher } from '@/features/profile/components/mode-switcher';
+import { useAppStore } from '@/stores/app-store';
 
 function formatRoles(isClient: boolean, isProfessional: boolean): string {
   if (isClient && isProfessional) {
@@ -30,6 +32,10 @@ export function ProfileScreen() {
   const { session } = useAuth();
   const { profile } = useCurrentProfile();
   const logout = useLogout();
+  const activeMode = useAppStore((state) => state.activeMode);
+  const setActiveMode = useAppStore((state) => state.setActiveMode);
+
+  const isHybridUser = Boolean(profile?.isClient && profile?.isProfessional);
 
   return (
     <ScreenLayout scrollable>
@@ -69,6 +75,13 @@ export function ProfileScreen() {
         ) : null}
 
         <Spacer size="lg" />
+
+        {isHybridUser ? (
+          <>
+            <ModeSwitcher activeMode={activeMode} onChange={setActiveMode} />
+            <Spacer size="lg" />
+          </>
+        ) : null}
 
         <Button
           label="Editar perfil"

@@ -1,3 +1,4 @@
+export { ModeSwitcher } from '@/features/profile/components/mode-switcher';
 export { RoleSelector } from '@/features/profile/components/role-selector';
 export * from '@/features/profile/hooks';
 export { EditProfileScreen } from '@/features/profile/screens/edit-profile-screen';
