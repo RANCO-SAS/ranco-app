@@ -11,9 +11,9 @@ import { AuthMessage } from '@/features/auth/components/auth-message';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { useLogout } from '@/features/auth/hooks/use-logout';
 import { mapAuthError } from '@/features/auth/utils/map-auth-error';
+import { ProfileModeSection } from '@/features/profile/components/profile-mode-section';
+import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
-import { ModeSwitcher } from '@/features/profile/components/mode-switcher';
-import { useAppStore } from '@/stores/app-store';
 
 function formatRoles(isClient: boolean, isProfessional: boolean): string {
   if (isClient && isProfessional) {
@@ -32,29 +32,28 @@ export function ProfileScreen() {
   const { session } = useAuth();
   const { profile } = useCurrentProfile();
   const logout = useLogout();
-  const activeMode = useAppStore((state) => state.activeMode);
-  const setActiveMode = useAppStore((state) => state.setActiveMode);
+  const { activeMode } = useActiveMode();
 
-  const isHybridUser = Boolean(profile?.isClient && profile?.isProfessional);
+  const activeModeLabel = activeMode === 'client' ? 'Cliente' : 'Profesional';
 
   return (
     <ScreenLayout scrollable>
       <Section
         title="Perfil"
-        description="Tu información, reputación y preferencias de cuenta.">
+        description="Tu cuenta, modo de uso y preferencias.">
         {profile ? (
           <Card>
             <AppText variant="subtitle">{profile.fullName || 'Usuario'}</AppText>
             <Spacer size="sm" />
             {session?.email ? (
-              <AppText variant="body" color="textSecondary">
+              <AppText color="textSecondary" variant="body">
                 {session.email}
               </AppText>
             ) : null}
             {profile.phone ? (
               <>
                 <Spacer size="sm" />
-                <AppText variant="body" color="textSecondary">
+                <AppText color="textSecondary" variant="body">
                   {profile.phone}
                 </AppText>
               </>
@@ -62,26 +61,26 @@ export function ProfileScreen() {
             {profile.locationLabel ? (
               <>
                 <Spacer size="sm" />
-                <AppText variant="body" color="textSecondary">
+                <AppText color="textSecondary" variant="body">
                   {profile.locationLabel}
                 </AppText>
               </>
             ) : null}
             <Spacer size="sm" />
-            <AppText variant="caption" color="textMuted">
-              {formatRoles(profile.isClient, profile.isProfessional)}
+            <AppText color="textMuted" variant="caption">
+              Roles: {formatRoles(profile.isClient, profile.isProfessional)}
+            </AppText>
+            <AppText color="primary" variant="caption">
+              Usando ahora: {activeModeLabel}
             </AppText>
           </Card>
         ) : null}
 
         <Spacer size="lg" />
 
-        {isHybridUser ? (
-          <>
-            <ModeSwitcher activeMode={activeMode} onChange={setActiveMode} />
-            <Spacer size="lg" />
-          </>
-        ) : null}
+        <ProfileModeSection />
+
+        <Spacer size="lg" />
 
         <Button
           label="Editar perfil"

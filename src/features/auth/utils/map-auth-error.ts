@@ -24,10 +24,19 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   oauth_failed: 'No se pudo completar el inicio de sesión.',
   oauth_url_missing: 'No se pudo iniciar el flujo de autenticación.',
   oauth_session_missing: 'No se pudo completar el inicio de sesión.',
+  bad_oauth_state:
+    'La sesión de login expiró o se procesó dos veces. Cierra la app, ábrela de nuevo e inténtalo otra vez.',
+  invalid_request: 'Solicitud de autenticación inválida. Inténtalo de nuevo.',
 };
 
 export function mapAuthError(error: unknown): string {
   if (error instanceof AuthError) {
+    const mappedMessage = error.code ? AUTH_ERROR_MESSAGES[error.code] : undefined;
+
+    if (mappedMessage) {
+      return mappedMessage;
+    }
+
     return error.message;
   }
 

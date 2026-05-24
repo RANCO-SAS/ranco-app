@@ -8,11 +8,17 @@ import { getSupabaseClient } from '@/services/supabase/client';
 
 const SERVICE_REQUESTS_TABLE = 'service_requests';
 
+const SERVICE_REQUEST_SELECT = `
+  *,
+  category:service_categories ( id, name, slug ),
+  subcategory:service_subcategories ( id, name, slug )
+`;
+
 async function getClientRequests(clientId: string): Promise<ServiceRequest[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from(SERVICE_REQUESTS_TABLE)
-    .select('*')
+    .select(SERVICE_REQUEST_SELECT)
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
 
@@ -27,7 +33,7 @@ async function getPublishedRequests(): Promise<ServiceRequest[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from(SERVICE_REQUESTS_TABLE)
-    .select('*')
+    .select(SERVICE_REQUEST_SELECT)
     .eq('status', 'published')
     .order('created_at', { ascending: false });
 
@@ -38,6 +44,25 @@ async function getPublishedRequests(): Promise<ServiceRequest[]> {
   return (data as ServiceRequestRow[]).map(mapServiceRequestRow);
 }
 
+async function getServiceRequestById(requestId: string): Promise<ServiceRequest | null> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from(SERVICE_REQUESTS_TABLE)
+    .select(SERVICE_REQUEST_SELECT)
+    .eq('id', requestId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapServiceRequestRow(data as ServiceRequestRow);
+}
+
 async function createServiceRequest(input: CreateServiceRequestInput): Promise<ServiceRequest> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
@@ -46,12 +71,13 @@ async function createServiceRequest(input: CreateServiceRequestInput): Promise<S
       client_id: input.clientId,
       title: input.title.trim(),
       description: input.description.trim(),
-      category: input.category.trim(),
+      category_id: input.categoryId,
+      subcategory_id: input.subcategoryId,
       urgency: input.urgency ?? 'normal',
       location_label: input.locationLabel?.trim() || null,
       status: 'published',
     })
-    .select('*')
+    .select(SERVICE_REQUEST_SELECT)
     .single();
 
   if (error) {
@@ -64,5 +90,6 @@ async function createServiceRequest(input: CreateServiceRequestInput): Promise<S
 export const serviceRequestService = {
   getClientRequests,
   getPublishedRequests,
+  getServiceRequestById,
   createServiceRequest,
 };

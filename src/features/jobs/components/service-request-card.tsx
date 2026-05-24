@@ -1,4 +1,5 @@
-import { StyleSheet, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
@@ -7,6 +8,8 @@ import type { ServiceRequest } from '@/features/jobs/types/service-request.types
 
 type ServiceRequestCardProps = {
   request: ServiceRequest;
+  onPress?: () => void;
+  footer?: ReactNode;
 };
 
 const URGENCY_LABELS: Record<ServiceRequest['urgency'], string> = {
@@ -16,21 +19,30 @@ const URGENCY_LABELS: Record<ServiceRequest['urgency'], string> = {
   urgent: 'Urgente',
 };
 
-export function ServiceRequestCard({ request }: ServiceRequestCardProps) {
-  return (
-    <Card>
+const STATUS_LABELS: Record<ServiceRequest['status'], string> = {
+  published: 'Publicada',
+  in_negotiation: 'En negociación',
+  accepted: 'Aceptada',
+  in_progress: 'En progreso',
+  completed: 'Completada',
+  cancelled: 'Cancelada',
+};
+
+export function ServiceRequestCard({ request, onPress, footer }: ServiceRequestCardProps) {
+  const content = (
+    <>
       <View style={styles.header}>
         <AppText variant="subtitle">{request.title}</AppText>
         <AppText variant="caption" color="primary">
-          {request.category}
+          {request.categoryName} · {request.subcategoryName}
         </AppText>
       </View>
-      <AppText variant="body" color="textSecondary" style={styles.description}>
+      <AppText variant="body" color="textSecondary" style={styles.description} numberOfLines={3}>
         {request.description}
       </AppText>
       <View style={styles.meta}>
         <AppText variant="small" color="textMuted">
-          Urgencia: {URGENCY_LABELS[request.urgency]}
+          {STATUS_LABELS[request.status]} · Urgencia {URGENCY_LABELS[request.urgency]}
         </AppText>
         {request.locationLabel ? (
           <AppText variant="small" color="textMuted">
@@ -38,7 +50,18 @@ export function ServiceRequestCard({ request }: ServiceRequestCardProps) {
           </AppText>
         ) : null}
       </View>
-    </Card>
+      {footer ? <View style={styles.footer}>{footer}</View> : null}
+    </>
+  );
+
+  if (!onPress) {
+    return <Card>{content}</Card>;
+  }
+
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress}>
+      <Card>{content}</Card>
+    </Pressable>
   );
 }
 
@@ -52,5 +75,8 @@ const styles = StyleSheet.create({
   },
   meta: {
     gap: Spacing.xs,
+  },
+  footer: {
+    marginTop: Spacing.md,
   },
 });

@@ -9,16 +9,20 @@ import { Spacer } from '@/components/ui/spacer';
 import { AuthMessage } from '@/features/auth/components/auth-message';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { RoleSelector } from '@/features/profile/components/role-selector';
+import { ProfessionalAreasPicker } from '@/features/profile/components/professional-areas-picker';
 import { useCompleteOnboarding } from '@/features/profile/hooks/use-complete-onboarding';
+import { useServiceCategories } from '@/features/jobs/hooks/use-service-categories';
 import {
   onboardingSchema,
   type OnboardingFormData,
 } from '@/features/profile/schemas/onboarding.schema';
 import { mapProfileError } from '@/features/profile/utils/map-profile-error';
+import { PROFESSIONAL_SERVICE_SELECTION } from '@/constants/profile';
 
 export function OnboardingScreen() {
   const { session } = useAuth();
   const completeOnboarding = useCompleteOnboarding();
+  const categoriesQuery = useServiceCategories();
 
   const {
     control,
@@ -35,6 +39,7 @@ export function OnboardingScreen() {
       avatarUrl: '',
       isClient: true,
       isProfessional: false,
+      professionalSubcategoryIds: [],
     },
   });
 
@@ -135,11 +140,46 @@ export function OnboardingScreen() {
           error={errors.isClient?.message}
           isClient={isClient}
           isProfessional={isProfessional}
-          onToggleClient={() => setValue('isClient', !isClient, { shouldValidate: true })}
-          onToggleProfessional={() =>
-            setValue('isProfessional', !isProfessional, { shouldValidate: true })
-          }
+          onToggleClient={() => {
+            if (isClient && !isProfessional) {
+              return;
+            }
+
+            setValue('isClient', !isClient, { shouldValidate: true });
+          }}
+          onToggleProfessional={() => {
+            if (isProfessional && !isClient) {
+              return;
+            }
+
+            const nextValue = !isProfessional;
+            setValue('isProfessional', nextValue, { shouldValidate: true });
+
+            if (!nextValue) {
+              setValue('professionalSubcategoryIds', [], { shouldValidate: true });
+            }
+          }}
         />
+
+        {isProfessional ? (
+          <>
+            <Spacer size="md" />
+            <Controller
+              control={control}
+              name="professionalSubcategoryIds"
+              render={({ field: { value, onChange } }) => (
+                <ProfessionalAreasPicker
+                  categories={categoriesQuery.data ?? []}
+                  disabled={completeOnboarding.isPending || categoriesQuery.isLoading}
+                  error={errors.professionalSubcategoryIds?.message}
+                  maxSelections={PROFESSIONAL_SERVICE_SELECTION.max}
+                  onChange={onChange}
+                  value={value}
+                />
+              )}
+            />
+          </>
+        ) : null}
 
         <Spacer size="md" />
 

@@ -3,7 +3,8 @@ export type ServiceRequestRow = {
   client_id: string;
   title: string;
   description: string;
-  category: string;
+  category_id: string;
+  subcategory_id: string;
   urgency: string;
   status: string;
   location_label: string | null;
@@ -11,4 +12,6 @@ export type ServiceRequestRow = {
   location_lng: number | null;
   created_at: string;
   updated_at: string;
+  category: { id: string; name: string; slug: string } | null;
+  subcategory: { id: string; name: string; slug: string } | null;
 };

@@ -80,6 +80,13 @@ export async function openOAuthSession(authUrl: string, redirectTo: string): Pro
         return;
       }
 
+      if (event.url.includes('error=')) {
+        if (__DEV__) {
+          console.info('[oauth] deep link con error ignorado; se usa el resultado del navegador');
+        }
+        return;
+      }
+
       finish(() => {
         cleanup(subscription);
         void WebBrowser.dismissBrowser();
@@ -108,6 +115,19 @@ export async function openOAuthSession(authUrl: string, redirectTo: string): Pro
         }
 
         if (result.type === 'success') {
+          if (!result.url || result.url.includes('error=')) {
+            finish(() => {
+              cleanup(subscription);
+              reject(
+                new AuthError(
+                  'No se pudo completar el inicio de sesión. Inténtalo de nuevo.',
+                  'oauth_failed',
+                ),
+              );
+            });
+            return;
+          }
+
           finish(() => {
             cleanup(subscription);
             resolve(result.url);

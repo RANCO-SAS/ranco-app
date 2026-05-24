@@ -11,7 +11,9 @@ export function useProfileSync() {
   const setProfile = useProfileStore((state) => state.setProfile);
   const setHydrated = useProfileStore((state) => state.setHydrated);
   const reset = useProfileStore((state) => state.reset);
-  const setActiveMode = useAppStore((state) => state.setActiveMode);
+  const syncActiveModeWithProfile = useAppStore((state) => state.syncActiveModeWithProfile);
+  const syncModeSelectionPrompt = useAppStore((state) => state.syncModeSelectionPrompt);
+  const hasAppStoreHydrated = useAppStore((state) => state.hasHydrated);
 
   const userId = session?.userId;
   const profileQuery = useProfile(isAuthHydrated && isAuthenticated ? userId : undefined);
@@ -50,10 +52,9 @@ export function useProfileSync() {
 
         setProfile(profile);
 
-        if (profile.isClient) {
-          setActiveMode('client');
-        } else if (profile.isProfessional) {
-          setActiveMode('professional');
+        if (hasAppStoreHydrated) {
+          syncActiveModeWithProfile(profile);
+          syncModeSelectionPrompt(profile);
         }
       } catch {
         setProfile(null);
@@ -64,6 +65,7 @@ export function useProfileSync() {
 
     void syncProfile();
   }, [
+    hasAppStoreHydrated,
     isAuthHydrated,
     isAuthenticated,
     userId,
@@ -72,8 +74,21 @@ export function useProfileSync() {
     reset,
     session?.fullName,
     session?.avatarUrl,
-    setActiveMode,
     setHydrated,
     setProfile,
+    syncActiveModeWithProfile,
+    syncModeSelectionPrompt,
   ]);
+
+  useEffect(() => {
+    if (!hasAppStoreHydrated || !isAuthenticated) {
+      return;
+    }
+
+    const profile = useProfileStore.getState().profile;
+
+    if (profile) {
+      syncActiveModeWithProfile(profile);
+    }
+  }, [hasAppStoreHydrated, isAuthenticated, syncActiveModeWithProfile]);
 }

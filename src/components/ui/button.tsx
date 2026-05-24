@@ -4,7 +4,7 @@ import { AppText } from '@/components/ui/text';
 import { Layout, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'dark';
 type ButtonSize = 'md' | 'lg';
 
 type ButtonProps = Omit<PressableProps, 'children'> & {
@@ -53,7 +53,7 @@ function getVariantStyles(
   variant: ButtonVariant,
 ): {
   container: ViewStyle;
-  textColor: 'primaryForeground' | 'text' | 'primary' | 'destructive';
+  textColor: 'primaryForeground' | 'text' | 'primary' | 'destructive' | 'background';
   fullWidth: ViewStyle;
 } {
   const base: ViewStyle = {
@@ -86,6 +86,12 @@ function getVariantStyles(
       return {
         container: { ...base, backgroundColor: theme.destructive },
         textColor: 'primaryForeground',
+        fullWidth: { alignSelf: 'stretch' },
+      };
+    case 'dark':
+      return {
+        container: { ...base, backgroundColor: theme.text },
+        textColor: 'background',
         fullWidth: { alignSelf: 'stretch' },
       };
     default:

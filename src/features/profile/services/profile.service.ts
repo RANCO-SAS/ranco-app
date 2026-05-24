@@ -6,6 +6,7 @@ import type {
   UserProfile,
 } from '@/features/profile/types/profile.types';
 import { mapUserProfileRow } from '@/features/profile/services/profile.mapper';
+import { professionalAreasService } from '@/features/profile/services/professional-areas.service';
 import { getSupabaseClient } from '@/services/supabase/client';
 
 const PROFILE_TABLE = 'user_profiles';
@@ -26,7 +27,10 @@ async function getProfileByUserId(userId: string): Promise<UserProfile | null> {
     return null;
   }
 
-  return mapUserProfileRow(data as UserProfileRow);
+  const professionalSubcategoryIds =
+    await professionalAreasService.getProfessionalSubcategoryIds(userId);
+
+  return mapUserProfileRow(data as UserProfileRow, professionalSubcategoryIds);
 }
 
 async function initializeProfile(input: InitializeProfileInput): Promise<UserProfile> {
@@ -51,7 +55,7 @@ async function initializeProfile(input: InitializeProfileInput): Promise<UserPro
     throw error;
   }
 
-  return mapUserProfileRow(data as UserProfileRow);
+  return mapUserProfileRow(data as UserProfileRow, []);
 }
 
 async function completeOnboarding(input: CompleteOnboardingInput): Promise<UserProfile> {
@@ -78,7 +82,14 @@ async function completeOnboarding(input: CompleteOnboardingInput): Promise<UserP
     throw error;
   }
 
-  return mapUserProfileRow(data as UserProfileRow);
+  const professionalSubcategoryIds = input.isProfessional
+    ? await professionalAreasService.replaceProfessionalSubcategories(
+        input.userId,
+        input.professionalSubcategoryIds ?? [],
+      )
+    : await professionalAreasService.replaceProfessionalSubcategories(input.userId, []);
+
+  return mapUserProfileRow(data as UserProfileRow, professionalSubcategoryIds);
 }
 
 async function updateProfile(userId: string, input: UpdateProfileInput): Promise<UserProfile> {
@@ -120,7 +131,22 @@ async function updateProfile(userId: string, input: UpdateProfileInput): Promise
     throw error;
   }
 
-  return mapUserProfileRow(data as UserProfileRow);
+  let professionalSubcategoryIds =
+    await professionalAreasService.getProfessionalSubcategoryIds(userId);
+
+  if (input.professionalSubcategoryIds !== undefined) {
+    professionalSubcategoryIds = await professionalAreasService.replaceProfessionalSubcategories(
+      userId,
+      input.isProfessional === false ? [] : input.professionalSubcategoryIds,
+    );
+  } else if (input.isProfessional === false) {
+    professionalSubcategoryIds = await professionalAreasService.replaceProfessionalSubcategories(
+      userId,
+      [],
+    );
+  }
+
+  return mapUserProfileRow(data as UserProfileRow, professionalSubcategoryIds);
 }
 
 export const profileService = {

@@ -6,8 +6,11 @@ import { Loader } from '@/components/ui/loader';
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { Routes } from '@/constants/routes';
 import { AuthMessage } from '@/features/auth/components/auth-message';
-import { createSessionFromUrl } from '@/features/auth/utils/create-session-from-url';
-import { mapAuthError } from '@/features/auth/utils/map-auth-error';
+import {
+  createSessionFromUrl,
+  waitForAuthSession,
+} from '@/features/auth/utils/create-session-from-url';
+import { AuthError, mapAuthError } from '@/features/auth/utils/map-auth-error';
 import { isSupabaseConfigured } from '@/lib/env';
 import { authService } from '@/features/auth/services/auth.service';
 
@@ -17,7 +20,7 @@ export default function AuthCallbackScreen() {
   const url = Linking.useLinkingURL();
 
   useEffect(() => {
-    async function handleCallback(callbackUrl: string) {
+    async function handleCallback(callbackUrl: string | null) {
       if (!isSupabaseConfigured()) {
         router.replace(Routes.auth.login);
         return;
@@ -30,16 +33,35 @@ export default function AuthCallbackScreen() {
         return;
       }
 
+      const sessionFromActiveFlow = await waitForAuthSession();
+
+      if (sessionFromActiveFlow) {
+        router.replace(Routes.root);
+        return;
+      }
+
+      if (!callbackUrl || !callbackUrl.includes('code=')) {
+        setErrorMessage(
+          mapAuthError(
+            new AuthError('No se pudo completar el inicio de sesión.', 'oauth_failed'),
+          ),
+        );
+        return;
+      }
+
       try {
         await createSessionFromUrl(callbackUrl);
         router.replace(Routes.root);
       } catch (error) {
+        const sessionAfterError = await authService.getSession();
+
+        if (sessionAfterError) {
+          router.replace(Routes.root);
+          return;
+        }
+
         setErrorMessage(mapAuthError(error));
       }
-    }
-
-    if (!url) {
-      return;
     }
 
     void handleCallback(url);
@@ -55,7 +77,7 @@ export default function AuthCallbackScreen() {
 
   return (
     <ScreenLayout centered>
-      <Loader />
+      <Loader message="Completando inicio de sesión..." />
     </ScreenLayout>
   );
 }

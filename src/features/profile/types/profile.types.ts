@@ -8,6 +8,7 @@ export type UserProfile = {
   locationLng: number | null;
   isClient: boolean;
   isProfessional: boolean;
+  professionalSubcategoryIds: string[];
   onboardingCompletedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -27,6 +28,7 @@ export type CompleteOnboardingInput = {
   avatarUrl?: string;
   isClient: boolean;
   isProfessional: boolean;
+  professionalSubcategoryIds?: string[];
 };
 
 export type UpdateProfileInput = {
@@ -36,4 +38,5 @@ export type UpdateProfileInput = {
   avatarUrl?: string | null;
   isClient?: boolean;
   isProfessional?: boolean;
+  professionalSubcategoryIds?: string[];
 };

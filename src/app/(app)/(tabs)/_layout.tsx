@@ -1,22 +1,26 @@
 import { Platform, Text, type ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 
+import { AppTabBar } from '@/components/navigation/app-tab-bar';
 import { Colors, Spacing } from '@/constants/theme';
+import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { showDiscoverTab, showJobsTab } = useActiveMode();
 
   return (
     <Tabs
+      tabBar={(props) => <AppTabBar {...props} />}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: theme.textMuted,
         tabBarStyle: {
           backgroundColor: theme.background,
-          borderTopColor: theme.border,
+          borderTopWidth: 0,
           paddingTop: Spacing.xs,
           height: Platform.select({ ios: 88, default: 64 }),
         },
@@ -35,14 +39,16 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="discover"
         options={{
-          title: 'Explorar',
+          title: 'Oportunidades',
+          href: showDiscoverTab ? undefined : null,
           tabBarIcon: ({ color }) => <TabIcon color={color} label="◎" />,
         }}
       />
       <Tabs.Screen
         name="jobs"
         options={{
-          title: 'Trabajos',
+          title: 'Solicitudes',
+          href: showJobsTab ? undefined : null,
           tabBarIcon: ({ color }) => <TabIcon color={color} label="▤" />,
         }}
       />

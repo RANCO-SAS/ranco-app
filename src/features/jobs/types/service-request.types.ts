@@ -13,7 +13,10 @@ export type ServiceRequest = {
   clientId: string;
   title: string;
   description: string;
-  category: string;
+  categoryId: string;
+  subcategoryId: string;
+  categoryName: string;
+  subcategoryName: string;
   urgency: ServiceRequestUrgency;
   status: ServiceRequestStatus;
   locationLabel: string | null;
@@ -27,7 +30,8 @@ export type CreateServiceRequestInput = {
   clientId: string;
   title: string;
   description: string;
-  category: string;
+  categoryId: string;
+  subcategoryId: string;
   urgency?: ServiceRequestUrgency;
   locationLabel?: string;
 };

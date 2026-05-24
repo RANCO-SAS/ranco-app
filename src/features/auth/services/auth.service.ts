@@ -23,13 +23,23 @@ async function signOut(): Promise<void> {
   }
 }
 
-function onAuthStateChange(callback: (session: AuthSession | null) => void): () => void {
+type AuthStateChangeEvent =
+  | 'INITIAL_SESSION'
+  | 'SIGNED_IN'
+  | 'SIGNED_OUT'
+  | 'TOKEN_REFRESHED'
+  | 'USER_UPDATED'
+  | 'PASSWORD_RECOVERY';
+
+function onAuthStateChange(
+  callback: (event: AuthStateChangeEvent, session: AuthSession | null) => void,
+): () => void {
   const supabase = getSupabaseClient();
 
   const {
     data: { subscription },
-  } = supabase.auth.onAuthStateChange((_event, session) => {
-    callback(mapSupabaseSession(session));
+  } = supabase.auth.onAuthStateChange((event, session) => {
+    callback(event as AuthStateChangeEvent, mapSupabaseSession(session));
   });
 
   return () => {

@@ -18,3 +18,11 @@ export function usePublishedServiceRequests(enabled: boolean) {
     enabled,
   });
 }
+
+export function useServiceRequest(requestId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.jobs.detail(requestId ?? 'unknown'),
+    queryFn: () => serviceRequestService.getServiceRequestById(requestId!),
+    enabled: Boolean(requestId),
+  });
+}

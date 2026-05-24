@@ -5,6 +5,7 @@ import type { OnboardingFormData } from '@/features/profile/schemas/onboarding.s
 import { profileService } from '@/features/profile/services/profile.service';
 import { Routes } from '@/constants/routes';
 import { queryKeys } from '@/lib/query-keys';
+import { isHybridUser } from '@/features/profile/utils/user-mode';
 import { useAppStore } from '@/stores/app-store';
 import { useProfileStore } from '@/stores/profile-store';
 
@@ -16,7 +17,9 @@ export function useCompleteOnboarding() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const setProfile = useProfileStore((state) => state.setProfile);
-  const setActiveMode = useAppStore((state) => state.setActiveMode);
+  const syncActiveModeWithProfile = useAppStore((state) => state.syncActiveModeWithProfile);
+  const setPendingModeSelection = useAppStore((state) => state.setPendingModeSelection);
+  const setPromptModeOnLogin = useAppStore((state) => state.setPromptModeOnLogin);
 
   return useMutation({
     mutationFn: ({ userId, ...data }: CompleteOnboardingVariables) =>
@@ -28,15 +31,16 @@ export function useCompleteOnboarding() {
         avatarUrl: data.avatarUrl || undefined,
         isClient: data.isClient,
         isProfessional: data.isProfessional,
+        professionalSubcategoryIds: data.professionalSubcategoryIds,
       }),
     onSuccess: (profile) => {
       setProfile(profile);
       queryClient.setQueryData(queryKeys.profile.detail(profile.id), profile);
+      syncActiveModeWithProfile(profile);
 
-      if (profile.isClient) {
-        setActiveMode('client');
-      } else if (profile.isProfessional) {
-        setActiveMode('professional');
+      if (isHybridUser(profile)) {
+        setPendingModeSelection(true);
+        setPromptModeOnLogin(true);
       }
 
       router.replace(Routes.app.home);
