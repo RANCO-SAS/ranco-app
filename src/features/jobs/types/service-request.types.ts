@@ -1,0 +1,33 @@
+export type ServiceRequestStatus =
+  | 'published'
+  | 'in_negotiation'
+  | 'accepted'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled';
+
+export type ServiceRequestUrgency = 'low' | 'normal' | 'high' | 'urgent';
+
+export type ServiceRequest = {
+  id: string;
+  clientId: string;
+  title: string;
+  description: string;
+  category: string;
+  urgency: ServiceRequestUrgency;
+  status: ServiceRequestStatus;
+  locationLabel: string | null;
+  locationLat: number | null;
+  locationLng: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateServiceRequestInput = {
+  clientId: string;
+  title: string;
+  description: string;
+  category: string;
+  urgency?: ServiceRequestUrgency;
+  locationLabel?: string;
+};

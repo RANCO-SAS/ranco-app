@@ -6,6 +6,8 @@ export const queryKeys = {
   jobs: {
     all: ['jobs'] as const,
     detail: (jobId: string) => ['jobs', jobId] as const,
+    client: (clientId: string) => ['jobs', 'client', clientId] as const,
+    published: ['jobs', 'published'] as const,
   },
   messages: {
     all: ['messages'] as const,

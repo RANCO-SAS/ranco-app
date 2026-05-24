@@ -1,0 +1,14 @@
+export type ServiceRequestRow = {
+  id: string;
+  client_id: string;
+  title: string;
+  description: string;
+  category: string;
+  urgency: string;
+  status: string;
+  location_label: string | null;
+  location_lat: number | null;
+  location_lng: number | null;
+  created_at: string;
+  updated_at: string;
+};
