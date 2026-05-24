@@ -1,0 +1,243 @@
+---
+description: React Native component architecture and UI standards
+globs: ["**/*.tsx"]
+---
+
+# Component Philosophy
+
+Components must be:
+- Reusable
+- Predictable
+- Focused
+- Maintainable
+- Mobile-first
+
+The codebase prioritizes:
+- Simplicity
+- Readability
+- Composition
+- UX quality
+
+Avoid:
+- Giant components
+- Mixed responsibilities
+- Excessive prop drilling
+- Unnecessary abstractions
+
+# Component Rules
+
+- Use functional components only
+- One responsibility per component
+- Prefer composition over inheritance
+- Keep components focused and cohesive
+- Extract reusable UI primitives
+- Avoid deeply nested JSX
+
+# Component Structure
+
+Preferred order:
+
+1. imports
+2. types
+3. constants
+4. component
+5. hooks/helpers
+
+Good:
+
+import ...
+
+type Props = {}
+
+const ITEM_HEIGHT = 72
+
+export function UserCard() {}
+
+# Component Size Rules
+
+- Components larger than ~200 lines should be split
+- Screens should remain orchestration layers
+- Complex UI sections should become separate components
+- Business logic belongs in hooks/services
+
+# UI Philosophy
+
+The app should feel:
+- Modern
+- Minimalistic
+- Smooth
+- Mobile-native
+- Clean
+
+Prioritize:
+- readability
+- spacing
+- visual hierarchy
+- touch ergonomics
+
+# Mobile UX Rules
+
+- Use large touch targets
+- Avoid cramped layouts
+- Prioritize accessibility
+- Keep important actions reachable
+- Prefer simple interactions
+- Optimize for one-handed use
+
+# Layout Standards
+
+Prefer:
+- generous spacing
+- clean hierarchy
+- consistent paddings
+- reusable layout primitives
+
+Avoid:
+- visual clutter
+- inconsistent spacing
+- overloaded screens
+
+# Reusability Rules
+
+Extract reusable primitives when repetition exists.
+
+Examples:
+- Button
+- Input
+- Card
+- Avatar
+- Loader
+- Badge
+- BottomSheet
+
+Avoid premature abstractions.
+
+# Conditional Rendering
+
+Prefer early returns.
+
+Good:
+
+if (isLoading) {
+  return <Loader />
+}
+
+if (error) {
+  return <ErrorState />
+}
+
+Avoid deeply nested conditions.
+
+# Props Rules
+
+- Keep props minimal
+- Avoid massive prop objects
+- Prefer explicit props
+- Avoid boolean explosion
+
+Bad:
+
+<Component
+  isLoading
+  isSelected
+  isCompact
+  isRounded
+  isSmall
+/>
+
+# State Rules
+
+Use local component state only for:
+- UI interactions
+- temporary visual state
+- input handling
+
+Avoid:
+- storing server data locally
+- duplicating global state
+
+# Lists
+
+For lists:
+- Use FlatList by default
+- Use FlashList for large datasets
+- Always provide stable keys
+- Avoid inline renderItem functions when reusable
+
+# Loading UX
+
+Prefer:
+- skeleton loaders
+- optimistic UI
+- smooth transitions
+
+Avoid:
+- blank screens
+- blocking spinners everywhere
+
+# Empty States
+
+Every important screen should handle:
+- loading states
+- empty states
+- error states
+
+Empty states should:
+- guide the user
+- provide context
+- suggest next actions
+
+# Error UX
+
+- Use user-friendly messages
+- Avoid raw backend errors
+- Provide actionable feedback
+
+# Accessibility Rules
+
+- Use accessible touch targets
+- Provide accessibility labels when necessary
+- Maintain readable contrast
+- Avoid tiny text
+
+# Performance Rules
+
+- Avoid unnecessary re-renders
+- Memoize only when necessary
+- Avoid premature optimization
+- Keep render trees manageable
+
+# Animation Standards
+
+Animations should be:
+- subtle
+- smooth
+- responsive
+
+Avoid:
+- excessive motion
+- distracting transitions
+- slow interactions
+
+# Styling Philosophy
+
+The UI should prioritize:
+- clarity
+- consistency
+- perceived performance
+- native feel
+
+Over:
+- excessive decoration
+- overly complex visuals
+- flashy interactions
+
+# Cursor AI Expectations
+
+When generating components:
+- Prefer clean and modern mobile UI
+- Respect existing architecture
+- Keep components small and reusable
+- Avoid unnecessary complexity
+- Generate production-quality React Native code
+- Follow mobile-first UX principles

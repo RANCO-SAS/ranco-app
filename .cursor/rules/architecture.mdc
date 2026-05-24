@@ -1,0 +1,220 @@
+---
+description: Global architecture and project structure standards
+alwaysApply: true
+---
+
+# Project Philosophy
+
+This project is an MVP-first mobile application built with Expo, React Native, TypeScript, and Supabase.
+
+The primary goal is:
+- Ship features quickly
+- Maintain clean architecture
+- Prioritize user experience
+- Avoid unnecessary complexity
+- Optimize for iteration speed
+
+Avoid:
+- Premature microservices
+- Enterprise overengineering
+- CQRS
+- Complex DDD abstractions
+- Unnecessary backend infrastructure
+
+# Architecture Principles
+
+- Use feature-first architecture
+- Keep modules isolated and cohesive
+- Prefer simplicity over abstraction
+- Optimize for maintainability
+- Prioritize readability over cleverness
+- Avoid deep folder nesting
+- Prefer composition over inheritance
+- Keep files focused and cohesive
+- Avoid unnecessary indirection
+- Build scalable structures without premature complexity
+
+# Core Project Structure
+
+Preferred structure:
+
+app/
+components/
+features/
+shared/
+services/
+stores/
+lib/
+constants/
+hooks/
+types/
+
+# Layer Responsibilities
+
+## app/
+
+Contains Expo Router routes and screen entry points.
+
+Rules:
+- Keep screens thin
+- Avoid business logic inside routes
+- Screens should orchestrate UI and hooks only
+- Extract reusable logic into hooks/services
+
+## components/
+
+Contains reusable shared UI components.
+
+Examples:
+- Button
+- Input
+- Modal
+- Avatar
+- Card
+- Loader
+
+Rules:
+- Components must be generic and reusable
+- Avoid feature-specific business logic
+- Prefer composability
+- Keep APIs simple and predictable
+
+## features/
+
+Contains isolated feature modules.
+
+Each feature owns:
+- UI
+- business logic
+- hooks
+- services
+- schemas
+- types
+- local state
+
+Preferred structure:
+
+features/
+  jobs/
+    components/
+    screens/
+    hooks/
+    services/
+    stores/
+    schemas/
+    types/
+    utils/
+
+Rules:
+- Features must remain cohesive
+- Avoid leaking internal feature logic
+- Avoid cross-feature imports when possible
+- Shared code belongs in shared/ or components/
+
+## shared/
+
+Contains truly shared business utilities and reusable logic.
+
+Examples:
+- formatters
+- shared validators
+- reusable domain helpers
+
+Avoid:
+- dumping unrelated utilities
+- feature-specific logic
+
+## services/
+
+Contains global infrastructure services.
+
+Examples:
+- supabase client
+- storage adapters
+- notification services
+- analytics services
+
+Rules:
+- Infrastructure concerns only
+- No UI logic
+- No screen-specific behavior
+
+## stores/
+
+Contains global Zustand stores.
+
+Rules:
+- Only global app state belongs here
+- Keep stores small and domain-focused
+- Avoid giant monolithic stores
+
+## hooks/
+
+Contains reusable cross-feature hooks.
+
+Examples:
+- useDebounce
+- usePermissions
+- useOnlineStatus
+
+Rules:
+- Avoid feature-specific hooks here
+- Shared reusable behavior only
+
+# Module Isolation Rules
+
+- Features should communicate through services/hooks, not direct internals
+- Avoid circular dependencies
+- Prefer explicit imports
+- Keep dependency direction predictable
+- Avoid tight coupling between modules
+
+# Simplicity Standards
+
+Always prefer:
+- Simpler architecture
+- Fewer abstractions
+- Readable code
+- Explicit behavior
+- Predictable structures
+
+Avoid:
+- Overly generic systems
+- Premature scalability patterns
+- Enterprise ceremony
+- Abstraction for its own sake
+
+# Reusability Philosophy
+
+Before extracting abstractions:
+- Confirm repetition actually exists
+- Prefer duplication over bad abstraction
+- Extract only stable patterns
+- Keep abstractions simple
+
+# MVP Engineering Rules
+
+This project prioritizes:
+- Product validation
+- Fast iteration
+- UX quality
+- Maintainability
+- Developer productivity
+
+Over:
+- Enterprise architecture
+- Hyper scalability
+- Perfect abstraction
+- Premature optimization
+
+# Cursor AI Expectations
+
+When generating code:
+- Respect the existing architecture
+- Keep patterns consistent
+- Avoid introducing unnecessary libraries
+- Prefer maintainable solutions
+- Generate production-quality TypeScript
+- Avoid placeholder implementations unless requested
+- Follow feature-first architecture consistently
+- Prefer mobile-first UX decisions

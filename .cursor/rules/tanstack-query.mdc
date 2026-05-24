@@ -1,0 +1,256 @@
+---
+description: TanStack Query server state and async data management standards
+alwaysApply: true
+---
+
+# Server State Philosophy
+
+TanStack Query is the single source of truth for server state.
+
+The project prioritizes:
+- predictable async flows
+- cache consistency
+- maintainable fetching logic
+- smooth UX
+- minimal boilerplate
+
+Avoid:
+- manual cache synchronization
+- duplicated server state
+- unnecessary custom fetch systems
+- storing server data in Zustand
+
+# TanStack Query Responsibilities
+
+Use TanStack Query for:
+- API fetching
+- Supabase queries
+- async synchronization
+- mutations
+- cache management
+- background refetching
+- optimistic updates
+
+# Do NOT Use TanStack Query For
+
+Avoid using TanStack Query for:
+- local UI state
+- modal visibility
+- temporary interaction state
+- form input state
+
+Those belong to local state or Zustand.
+
+# Query Organization
+
+Prefer feature-based query organization.
+
+Good:
+
+features/
+  jobs/
+    hooks/
+      use-jobs.ts
+      use-job.ts
+      use-create-job.ts
+
+Avoid:
+- giant centralized query folders
+- unrelated queries mixed together
+
+# Query Key Standards
+
+Always use consistent query keys.
+
+Good:
+
+['jobs']
+['jobs', jobId]
+['applications', userId]
+['profile', profileId]
+
+Rules:
+- keep keys predictable
+- use stable identifiers
+- avoid random dynamic structures
+
+# Fetching Rules
+
+Never fetch directly inside components when reusable.
+
+Avoid:
+
+useEffect(() => {
+  fetch(...)
+}, [])
+
+Prefer:
+- reusable hooks
+- query hooks
+- feature services
+
+# Query Hook Structure
+
+Preferred pattern:
+
+export function useJobs() {
+  return useQuery({
+    queryKey: ['jobs'],
+    queryFn: fetchJobs,
+  })
+}
+
+# Mutation Rules
+
+Use mutations for:
+- creates
+- updates
+- deletes
+- side-effect operations
+
+Keep mutations:
+- isolated
+- explicit
+- predictable
+
+# Optimistic Updates
+
+Use optimistic updates when UX benefits clearly.
+
+Examples:
+- chat messages
+- realtime interactions
+- like/favorite actions
+- ride/job acceptance flows
+
+Avoid:
+- overly complex optimistic systems
+- risky destructive optimistic flows
+
+# Cache Rules
+
+Prefer:
+- query invalidation
+- refetching
+- normalized predictable updates
+
+Avoid:
+- manual cache hacks
+- excessive direct cache mutations
+- fragile synchronization logic
+
+# Loading UX
+
+Always handle:
+- loading states
+- empty states
+- error states
+
+Prefer:
+- skeleton loaders
+- optimistic interactions
+- smooth transitions
+
+Avoid:
+- blank screens
+- blocking spinners everywhere
+
+# Error Handling
+
+- Always handle async errors
+- Use user-friendly messages
+- Avoid exposing raw backend errors
+- Prefer centralized reusable error handling
+
+# Pagination Rules
+
+For large datasets:
+- use pagination
+- use infinite queries when appropriate
+- avoid loading huge lists at once
+
+# Realtime Integration
+
+Use Supabase Realtime together with TanStack Query carefully.
+
+Preferred patterns:
+- invalidate queries after realtime updates
+- merge lightweight realtime updates
+- keep synchronization predictable
+
+Avoid:
+- excessive manual reconciliation logic
+- overly complex cache merging systems
+
+# Query Separation
+
+Separate:
+- fetching hooks
+- mutation hooks
+- services
+- transformations
+
+Avoid giant all-in-one hooks.
+
+# Service Layer Rules
+
+Query hooks should use services.
+
+Good:
+
+useJobs()
+  -> jobs.service.ts
+  -> Supabase
+
+Avoid:
+- direct Supabase logic everywhere
+- duplicated queries across components
+
+# Retry Rules
+
+Retries should:
+- improve UX
+- avoid excessive backend spam
+- remain predictable
+
+Avoid aggressive retry loops.
+
+# Performance Rules
+
+- Avoid unnecessary refetching
+- Use staleTime appropriately
+- Keep queries scoped properly
+- Avoid giant reactive chains
+
+# Maintainability Standards
+
+Always prioritize:
+- predictable async flows
+- readable hooks
+- isolated responsibilities
+- reusable fetching patterns
+
+Avoid:
+- hidden side effects
+- giant async abstractions
+- complex synchronization systems
+
+# MVP Philosophy
+
+The async architecture should remain:
+- simple
+- reliable
+- easy to iterate
+- easy to debug
+
+Avoid premature complexity.
+
+# Cursor AI Expectations
+
+When generating TanStack Query logic:
+- Use reusable query hooks
+- Keep async flows predictable
+- Avoid duplicating server state
+- Use proper query keys
+- Respect feature boundaries
+- Prefer maintainable fetching patterns

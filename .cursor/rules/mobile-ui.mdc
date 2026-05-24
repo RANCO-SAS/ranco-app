@@ -1,0 +1,319 @@
+---
+description: Mobile UI, UX, and design system standards for React Native
+globs: ["**/*.tsx"]
+---
+
+# UI Philosophy
+
+The application must feel:
+- modern
+- premium
+- clean
+- mobile-native
+- smooth
+- visually balanced
+
+The UI should prioritize:
+- clarity
+- spacing
+- hierarchy
+- usability
+- perceived performance
+
+Avoid:
+- cluttered interfaces
+- outdated UI patterns
+- inconsistent spacing
+- overly complex layouts
+- excessive visual noise
+
+# Mobile-First Philosophy
+
+This is a mobile-first application.
+
+Every screen must:
+- feel touch-friendly
+- optimize thumb ergonomics
+- minimize cognitive load
+- prioritize readability
+- remain responsive on smaller devices
+
+# Design Principles
+
+Always prioritize:
+- simplicity
+- consistency
+- whitespace
+- visual hierarchy
+- intuitive interactions
+
+Over:
+- decoration
+- complexity
+- flashy visuals
+- unnecessary animations
+
+# Layout Standards
+
+Prefer:
+- clean layouts
+- generous spacing
+- predictable alignment
+- clear content separation
+
+Avoid:
+- overcrowded screens
+- deeply nested layouts
+- excessive containers
+- cramped sections
+
+# Spacing System
+
+Use consistent spacing.
+
+Prefer:
+- 4
+- 8
+- 12
+- 16
+- 20
+- 24
+- 32
+
+Avoid random spacing values.
+
+# Visual Hierarchy
+
+The UI must clearly communicate:
+- primary actions
+- secondary actions
+- important content
+- navigation flow
+
+Use:
+- spacing
+- typography
+- sizing
+- contrast
+
+Instead of excessive decoration.
+
+# Typography Standards
+
+Typography should feel:
+- modern
+- readable
+- clean
+- balanced
+
+Prefer:
+- clear font hierarchy
+- larger headings
+- readable body text
+- medium font weights
+
+Avoid:
+- tiny text
+- excessive font sizes
+- inconsistent typography scales
+
+# Card Design
+
+Cards should:
+- feel lightweight
+- have subtle separation
+- maintain clean spacing
+- use soft rounded corners
+
+Prefer:
+- subtle borders
+- lightweight shadows
+- smooth corners
+- balanced padding
+
+Avoid:
+- heavy elevation
+- aggressive borders
+- noisy containers
+
+# Button Standards
+
+Buttons must:
+- feel touch-friendly
+- have strong hierarchy
+- remain visually consistent
+- communicate importance clearly
+
+Primary actions should stand out immediately.
+
+# Input Standards
+
+Inputs should:
+- feel modern
+- remain lightweight
+- use adequate spacing
+- provide clear feedback
+
+Avoid:
+- dense form layouts
+- tiny touch targets
+- noisy validation states
+
+# Color Philosophy
+
+Prefer:
+- neutral palettes
+- accessible contrast
+- limited accent colors
+- semantic coloring
+
+Avoid:
+- oversaturated interfaces
+- rainbow UIs
+- inconsistent colors
+
+# Dark Mode Standards
+
+The app should support dark mode naturally.
+
+Rules:
+- maintain readability
+- avoid pure black when unnecessary
+- preserve hierarchy in dark mode
+- use semantic colors consistently
+
+# Styling Standards
+
+Use the project's existing styling approach consistently.
+
+Rules:
+- keep styles readable
+- prioritize reusable style patterns
+- maintain visual consistency
+- avoid duplicated styling logic
+- prefer scalable and maintainable styling structures
+
+Prefer:
+- reusable layout primitives
+- centralized spacing systems
+- shared design tokens
+- predictable styling conventions
+
+Avoid:
+- inconsistent inline styles
+- duplicated style values
+- giant style objects
+- visual inconsistency across screens
+
+# Reusable UI Components
+
+Extract reusable primitives when repetition exists.
+
+Examples:
+- Button
+- Input
+- Card
+- Avatar
+- Badge
+- EmptyState
+- Loader
+- BottomSheet
+- Section
+
+Avoid premature abstractions.
+
+# Loading UX
+
+Loading states should feel polished.
+
+Prefer:
+- skeleton loaders
+- progressive rendering
+- optimistic interactions
+
+Avoid:
+- blocking spinners everywhere
+- blank loading screens
+
+# Empty States
+
+Empty states should:
+- guide the user
+- explain context
+- suggest next actions
+- remain visually clean
+
+# Animation Standards
+
+Animations should:
+- feel subtle
+- improve responsiveness
+- enhance perceived performance
+
+Avoid:
+- excessive motion
+- distracting transitions
+- slow animations
+
+# Navigation UX
+
+Navigation should feel:
+- intuitive
+- lightweight
+- predictable
+- mobile-native
+
+Avoid:
+- confusing flows
+- excessive nesting
+- overloaded headers
+
+# Lists and Feeds
+
+Lists should:
+- remain scannable
+- have clear separation
+- prioritize readability
+- avoid visual overload
+
+# Accessibility Standards
+
+Always consider:
+- readable contrast
+- touch target sizes
+- text readability
+- accessible interactions
+
+# Performance Philosophy
+
+UI performance should prioritize:
+- smooth scrolling
+- fast interactions
+- perceived responsiveness
+- lightweight rendering
+
+Avoid:
+- unnecessary rerenders
+- visually heavy layouts
+- oversized assets
+
+# MVP Philosophy
+
+The UI should feel:
+- polished
+- modern
+- reliable
+- easy to use
+
+Without introducing unnecessary complexity.
+
+# Cursor AI Expectations
+
+When generating UI:
+- Create modern premium mobile interfaces
+- Use clean spacing and hierarchy
+- Prefer minimalistic layouts
+- Respect mobile-first UX principles
+- Generate reusable UI patterns
+- Keep styling consistent
+- Optimize for readability and usability

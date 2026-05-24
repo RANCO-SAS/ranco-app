@@ -1,0 +1,233 @@
+---
+description: Autonomous professional semantic commit workflow
+alwaysApply: false
+---
+
+# Commit Philosophy
+
+Commits must reflect:
+- logical development progression
+- clean engineering practices
+- maintainable project history
+- professional team standards
+
+The AI must behave like an experienced engineer maintaining a clean repository history.
+
+# Autonomous Commit Behavior
+
+When working on tasks, features, refactors, fixes, or infrastructure:
+
+- Automatically create commits during progress
+- Do NOT wait for explicit commit requests
+- Do NOT ask for confirmation after every change
+- Commit continuously as logical milestones are completed
+
+The AI should think in:
+- incremental development steps
+- isolated responsibilities
+- clean git history
+
+# Commit Grouping Rules
+
+Group commits by:
+- feature
+- bugfix
+- refactor
+- infrastructure
+- styling
+- architecture
+- documentation
+
+Avoid:
+- giant mixed commits
+- unrelated changes together
+- monolithic repository history
+
+# Commit Analysis Rules
+
+Before creating commits analyze:
+- changed files
+- feature boundaries
+- architectural impact
+- dependency relationships
+- logical implementation order
+
+# Conventional Commit Format
+
+Always use:
+
+<type>(<scope>): <summary>
+
+Examples:
+
+feat(auth): add session persistence
+fix(chat): prevent duplicated realtime messages
+refactor(ui): simplify card layout structure
+
+# Commit Types
+
+Use appropriate commit types:
+- feat
+- fix
+- refactor
+- chore
+- docs
+- style
+- perf
+- build
+- ci
+
+# Summary Rules
+
+Summaries must be:
+- concise
+- professional
+- lowercase
+- descriptive
+
+Avoid:
+- vague summaries
+- generic wording
+- unnecessary verbosity
+
+Bad:
+
+update stuff
+fix bugs
+changes
+
+Good:
+
+feat(profile): add avatar upload support
+refactor(home): simplify feed loading flow
+
+# Commit Body Format
+
+Commit bodies must follow:
+
+What:
+- concrete technical change
+- concrete technical change
+
+Why:
+- business motivation
+- technical consistency reason
+- maintainability improvement
+
+# Commit Frequency
+
+Create commits:
+- after meaningful progress
+- after stable implementations
+- after isolated refactors
+- after completing logical milestones
+
+Avoid:
+- committing every tiny edit
+- extremely large delayed commits
+- messy WIP history
+
+# Chronological Consistency
+
+Commits must follow realistic development order.
+
+Rules:
+- foundational changes first
+- dependent features later
+- infrastructure before usage
+- refactors before consumers
+- UI integration after logic completion
+
+# Timestamp Rules
+
+When generating commit timestamps:
+- maintain realistic chronology
+- ensure every commit is later than the previous
+- use believable development spacing
+
+Preferred spacing:
+- 5 to 45 minutes between commits
+
+Preferred ranges:
+- 10:00 AM - 12:00 PM
+- 1:00 PM - 5:00 PM
+
+Avoid:
+- unnatural timestamp jumps
+- multiple commits in the same minute
+- unrealistic commit bursts
+
+# Git Command Rules
+
+Use actual git commands.
+
+Use:
+- git add
+- git commit
+- git status
+- git diff
+
+Never:
+- force push automatically
+- rewrite history automatically
+- squash commits automatically unless requested
+
+# Repository Hygiene
+
+Maintain:
+- isolated commits
+- readable history
+- professional chronology
+- predictable progression
+
+The repository history should look like:
+- a real senior engineer workflow
+- intentional iterative development
+- production-quality engineering practices
+
+# Refactor Rules
+
+Refactors should:
+- remain isolated when possible
+- avoid mixing with features unnecessarily
+- preserve clean history boundaries
+
+# Feature Development Rules
+
+Large features should be split into:
+- infrastructure
+- domain logic
+- UI integration
+- polishing
+- fixes
+
+Instead of one giant commit.
+
+# AI Workflow Expectations
+
+While working:
+- think incrementally
+- commit incrementally
+- preserve history quality
+- maintain logical progression
+
+The AI must proactively manage git history professionally.
+
+# Maintainability Standards
+
+A clean git history is part of maintainable software engineering.
+
+Commits should:
+- explain project evolution
+- simplify debugging
+- simplify code review
+- improve long-term maintainability
+
+# Final Principle
+
+The repository history should feel:
+- intentional
+- realistic
+- professional
+- maintainable
+- production-grade

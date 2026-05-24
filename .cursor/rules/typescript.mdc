@@ -1,0 +1,256 @@
+---
+description: TypeScript standards and conventions
+alwaysApply: true
+---
+
+# TypeScript Philosophy
+
+TypeScript is mandatory across the entire codebase.
+
+The project values:
+- Strong typing
+- Predictable APIs
+- Readability
+- Maintainability
+- Developer experience
+
+Avoid:
+- Weak typing
+- Unsafe patterns
+- Overly complex generic abstractions
+- Excessive type indirection
+
+# Strict Typing Rules
+
+- Always use TypeScript strict mode
+- Never use any
+- Avoid unknown unless necessary
+- Avoid unsafe type assertions
+- Explicitly type component props
+- Explicitly type non-trivial function returns
+- Prefer inferred types when obvious
+
+Bad:
+
+const data: any = response
+
+Good:
+
+const data: User = response
+
+# type vs interface
+
+Prefer type by default.
+
+Use interface only when:
+- Extending object contracts
+- Public extensible APIs require merging behavior
+
+Good:
+
+type User = {
+  id: string
+  name: string
+}
+
+Avoid unnecessary interfaces.
+
+# Naming Conventions
+
+## Components
+
+Use PascalCase.
+
+Good:
+
+UserCard
+JobDetailsScreen
+
+## Variables and Functions
+
+Use camelCase.
+
+Good:
+
+fetchUserProfile
+isLoading
+
+## Constants
+
+Use UPPER_SNAKE_CASE.
+
+Good:
+
+MAX_RETRY_COUNT
+DEFAULT_RADIUS_KM
+
+# File Naming
+
+Use kebab-case for files.
+
+Good:
+
+user-card.tsx
+create-job.schema.ts
+use-auth-session.ts
+
+Avoid:
+
+UserCard.tsx
+CreateJobSchema.ts
+
+# Component Props
+
+Always explicitly type props.
+
+Good:
+
+type Props = {
+  title: string
+  onPress: () => void
+}
+
+export function Button(props: Props) {}
+
+Avoid implicit props.
+
+# Function Rules
+
+- Keep functions small
+- Prefer pure functions
+- Avoid hidden side effects
+- Prefer early returns
+- Prefer explicit behavior
+- Avoid deeply nested conditions
+
+Bad:
+
+if (user) {
+  if (user.profile) {
+    if (user.profile.avatar) {
+    }
+  }
+}
+
+Better:
+
+if (!user?.profile?.avatar) {
+  return
+}
+
+# Optional Values
+
+Use optional chaining and nullish coalescing when appropriate.
+
+Good:
+
+const avatar = user?.avatarUrl ?? defaultAvatar
+
+# Enums
+
+Prefer union types over enums when possible.
+
+Good:
+
+type JobStatus =
+  | 'pending'
+  | 'accepted'
+  | 'completed'
+
+Avoid unnecessary enums.
+
+# Reusable Types
+
+Shared reusable types belong in:
+
+types/
+
+Feature-specific types belong inside feature modules.
+
+Good:
+
+features/jobs/types/job.ts
+
+# API Types
+
+Always type:
+- API responses
+- mutations
+- Supabase queries
+- hook returns
+- form schemas
+
+Avoid untyped backend communication.
+
+# Zod Integration
+
+Prefer deriving types from Zod schemas.
+
+Good:
+
+const schema = z.object({
+  title: z.string(),
+})
+
+type FormData = z.infer<typeof schema>
+
+# Generic Rules
+
+Avoid overly abstract generic systems.
+
+Prefer:
+- readability
+- explicitness
+- maintainability
+
+Over:
+- advanced type wizardry
+- unnecessary abstractions
+
+# Async Rules
+
+- Always handle async errors
+- Never ignore rejected promises
+- Prefer async/await over chained promises
+
+Good:
+
+try {
+  await createJob()
+} catch (error) {
+  handleError(error)
+}
+
+# Imports
+
+Prefer absolute imports when configured.
+
+Keep imports organized:
+1. external libraries
+2. shared modules
+3. feature modules
+4. relative imports
+
+# Maintainability Standards
+
+Always prioritize:
+- readable code
+- explicit intent
+- predictable behavior
+- simple APIs
+
+Avoid:
+- magic behavior
+- hidden mutations
+- clever abstractions
+- excessive indirection
+
+# Cursor AI Expectations
+
+When generating TypeScript:
+- Generate strict-safe code
+- Avoid any
+- Prefer readable types
+- Respect existing naming conventions
+- Prefer maintainable solutions
+- Keep APIs simple and explicit

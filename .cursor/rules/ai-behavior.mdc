@@ -1,0 +1,192 @@
+---
+description: Cursor AI generation behavior and project consistency standards
+alwaysApply: true
+---
+
+# AI Assistant Philosophy
+
+The AI assistant must generate code that prioritizes:
+- maintainability
+- simplicity
+- consistency
+- readability
+- product velocity
+
+The project values practical engineering over theoretical perfection.
+
+# Core Expectations
+
+When generating code:
+- Respect the existing architecture
+- Follow established project patterns
+- Keep implementations simple
+- Prioritize maintainable solutions
+- Generate production-quality code
+- Avoid placeholder implementations unless requested
+
+# Architecture Consistency
+
+The AI must:
+- follow feature-first architecture
+- respect module boundaries
+- avoid introducing unnecessary layers
+- avoid architectural drift
+- maintain predictable structures
+
+Avoid:
+- random folder structures
+- inconsistent patterns
+- enterprise overengineering
+- unnecessary abstractions
+
+# Code Generation Rules
+
+Generated code should:
+- be explicit
+- remain readable
+- avoid magic behavior
+- avoid hidden side effects
+- prioritize clarity
+
+Avoid:
+- clever implementations
+- excessive generic abstractions
+- unnecessary indirection
+- overengineered solutions
+
+# TypeScript Expectations
+
+- Always generate strict-safe TypeScript
+- Never use any
+- Prefer explicit typing
+- Respect project naming conventions
+- Generate maintainable APIs
+
+# React Native Expectations
+
+Generated UI should:
+- feel mobile-native
+- remain clean and modern
+- prioritize UX clarity
+- optimize touch ergonomics
+- avoid cluttered layouts
+
+# UI Standards
+
+Prefer:
+- minimalistic interfaces
+- reusable components
+- consistent spacing
+- clean typography
+- smooth interactions
+
+Avoid:
+- noisy layouts
+- inconsistent visual systems
+- overly complex UI patterns
+
+
+# Zustand Expectations
+
+- Keep stores small
+- Avoid duplicating server state
+- Use explicit actions
+- Respect domain boundaries
+
+# TanStack Query Expectations
+
+- Use reusable query hooks
+- Keep async flows predictable
+- Use proper query keys
+- Avoid manual cache hacks
+
+# Supabase Expectations
+
+- Use relational modeling
+- Respect Row Level Security
+- Keep schemas simple
+- Avoid backend overengineering
+- Use realtime only when valuable
+
+# Form Expectations
+
+- Use React Hook Form
+- Use Zod validation
+- Generate mobile-friendly forms
+- Handle loading and errors properly
+
+# Reusability Philosophy
+
+Extract abstractions only when:
+- repetition clearly exists
+- patterns stabilize
+- reuse becomes meaningful
+
+Prefer duplication over bad abstraction.
+
+# Performance Philosophy
+
+Optimize for:
+- smooth UX
+- maintainable rendering
+- perceived performance
+
+Avoid:
+- premature optimization
+- unnecessary memoization
+- performance hacks
+
+# MVP Philosophy
+
+This project is an MVP-first application.
+
+Always prioritize:
+- shipping features
+- validating product ideas
+- development speed
+- maintainability
+- UX quality
+
+Over:
+- enterprise scalability
+- hyper-abstract architectures
+- premature optimization
+- unnecessary infrastructure
+
+# Dependency Rules
+
+Before introducing a new dependency:
+- confirm real value exists
+- avoid duplicate ecosystem tools
+- prefer lightweight solutions
+- respect existing stack choices
+
+# Maintainability Standards
+
+Generated code should:
+- remain easy to debug
+- remain easy to extend
+- remain easy to onboard
+- stay consistent with the codebase
+
+# Documentation and Comments
+
+- Avoid unnecessary comments
+- Prefer self-documenting code
+- Write comments only when valuable
+- All comments must be written in English
+
+# Final Principle
+
+This codebase values:
+- simplicity
+- clean UX
+- maintainability
+- product velocity
+- practical engineering
+
+Over:
+- overengineering
+- excessive abstraction
+- enterprise ceremony
+- premature scalability

@@ -1,0 +1,427 @@
+---
+description: Ranco business and product requirements
+alwaysApply: true
+---
+
+# RANCO — FUNCTIONAL & NON-FUNCTIONAL REQUIREMENTS
+
+Ranco is a real-time marketplace platform that connects people who need services with independent workers and professionals nearby.
+
+The application must support both clients and professionals within the same account.
+
+---
+
+# CORE BUSINESS IDEA
+
+Users can publish service requests such as:
+
+- Plumbing
+- Painting
+- Cleaning
+- Electrical repairs
+- Babysitting
+- Cooking
+- Delivery
+- Mechanical assistance
+- Home repairs
+- Pet care
+- Tutoring
+- Any informal or local service
+
+Professionals can discover nearby opportunities and send offers to clients.
+
+The platform must focus on:
+
+- Trust
+- Reputation
+- Real-time interaction
+- Fast hiring
+- Local proximity
+- Service reliability
+
+---
+
+# USER TYPES
+
+The system must support:
+
+## Client
+A user who requests services.
+
+## Professional
+A user who offers services.
+
+## Hybrid User
+A user who can act as both client and professional.
+
+Users must be able to switch modes dynamically inside the app.
+
+---
+
+# FUNCTIONAL REQUIREMENTS
+
+## Authentication
+
+The app must allow users to:
+
+- Register accounts
+- Log in
+- Recover passwords
+- Maintain active sessions
+- Log out securely
+
+---
+
+# Onboarding
+
+After registration, users must be able to:
+
+- Complete profile information
+- Upload profile photo
+- Choose whether they want to:
+  - Request services
+  - Offer services
+  - Both
+
+---
+
+# User Profile
+
+Users must be able to:
+
+- Edit personal information
+- Upload profile pictures
+- Change contact information
+- Configure notification preferences
+- View ratings and reviews
+- View service history
+
+---
+
+# Professional Profiles
+
+Professionals must be able to:
+
+- Add skills
+- Select service categories
+- Define service radius
+- Configure availability
+- Upload portfolio images
+- Add work experience
+- Set pricing references
+- Enable or disable availability status
+
+---
+
+# Service Requests
+
+Clients must be able to:
+
+- Create service requests
+- Add descriptions
+- Add photos
+- Select service categories
+- Set urgency levels
+- Choose location
+- Publish requests
+- Cancel requests
+- View request status
+
+---
+
+# Discovery System
+
+Professionals must be able to:
+
+- Discover nearby requests
+- Filter opportunities
+- Search by category
+- Search by distance
+- Search by urgency
+
+---
+
+# Offer System
+
+Professionals must be able to:
+
+- Send offers to service requests
+- Add messages to offers
+- Suggest prices
+- Withdraw offers
+
+Clients must be able to:
+
+- Receive offers
+- Accept offers
+- Reject offers
+- Compare professionals
+
+---
+
+# Real-Time Chat
+
+The app must support:
+
+- Real-time messaging
+- Message delivery states
+- Read receipts
+- Typing indicators
+- Media sharing
+- Chat history
+
+---
+
+# Notifications
+
+Users must receive notifications for:
+
+- New offers
+- Accepted offers
+- New messages
+- Job status updates
+- Ratings and reviews
+- Nearby opportunities
+
+---
+
+# Job Lifecycle
+
+The system must support service lifecycle states such as:
+
+- Published
+- In negotiation
+- Accepted
+- In progress
+- Completed
+- Cancelled
+
+---
+
+# Ratings & Reputation
+
+Clients and professionals must be able to:
+
+- Rate each other
+- Leave reviews
+- Build reputation scores
+- View public ratings
+
+The system should prioritize trust and reliability.
+
+---
+
+# Geolocation Features
+
+The app must support:
+
+- User location detection
+- Nearby professionals
+- Nearby service requests
+- Distance-based discovery
+- Location selection on map
+
+---
+
+# Presence System
+
+The system must support:
+
+- Online/offline status
+- Availability indicators
+- Active professionals nearby
+
+---
+
+# Media Features
+
+Users must be able to:
+
+- Upload profile photos
+- Upload job images
+- Upload portfolio media
+- Share images in chat
+
+---
+
+# Search & Filtering
+
+Users must be able to filter by:
+
+- Category
+- Distance
+- Rating
+- Availability
+- Price range
+- Urgency
+
+---
+
+# History
+
+Users must be able to:
+
+- View completed jobs
+- View cancelled jobs
+- View previous chats
+- View transaction history
+- View reviews history
+
+---
+
+# Future-Ready Features
+
+The system structure must allow future implementation of:
+
+- Payments
+- Wallets
+- Identity verification
+- Background checks
+- Escrow systems
+- Subscription plans
+- AI recommendations
+- Dynamic pricing
+- Multi-language support
+- Multi-country support
+
+---
+
+# NON-FUNCTIONAL REQUIREMENTS
+
+## Scalability
+
+The application must support future growth in:
+
+- Users
+- Messages
+- Service requests
+- Real-time events
+- Media uploads
+
+---
+
+# Performance
+
+The app must feel:
+
+- Fast
+- Responsive
+- Smooth
+- Real-time
+
+Navigation and interactions should minimize delays.
+
+---
+
+# Reliability
+
+The system must handle:
+
+- Intermittent internet connections
+- Real-time reconnections
+- Failed uploads
+- Notification retries
+
+---
+
+# Security
+
+The system must protect:
+
+- User data
+- Chats
+- Media
+- Account access
+- Personal information
+
+Users should only access authorized data.
+
+---
+
+# Maintainability
+
+The codebase must be:
+
+- Modular
+- Organized
+- Extensible
+- Easy to maintain
+- Easy to scale
+
+---
+
+# Reusability
+
+The application must maximize reuse of:
+
+- Components
+- Logic
+- Validation
+- Business rules
+
+---
+
+# Accessibility
+
+The app should support:
+
+- Readable interfaces
+- Proper touch targets
+- Accessible navigation
+- Clear visual hierarchy
+
+---
+
+# Offline Tolerance
+
+The app should gracefully handle:
+
+- Slow internet
+- Temporary disconnections
+- Reconnection flows
+
+---
+
+# Real-Time Responsiveness
+
+Real-time events should update the UI immediately for:
+
+- Messages
+- Offers
+- Status changes
+- Presence updates
+- Notifications
+
+---
+
+# UX EXPECTATIONS
+
+The experience should feel:
+
+- Modern
+- Minimal
+- Trustworthy
+- Fast
+- Fluid
+- Human
+- Local-first
+- Community-driven
+
+The app should prioritize simplicity and reduce friction between clients and professionals.
+
+---
+
+# MVP PRIORITIES
+
+Prioritize implementation of:
+
+1. Authentication
+2. Profiles
+3. Service requests
+4. Offers
+5. Real-time chat
+6. Notifications
+7. Geolocation
+8. Reputation system
+
+All other features can remain extensible for future versions.

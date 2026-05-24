@@ -1,0 +1,256 @@
+---
+description: Supabase backend architecture and realtime standards
+alwaysApply: true
+---
+
+# Backend Philosophy
+
+Supabase is the primary backend platform for the MVP.
+
+The backend architecture must prioritize:
+- fast iteration
+- simplicity
+- realtime capabilities
+- maintainability
+- predictable data flows
+
+Avoid:
+- unnecessary backend infrastructure
+- premature microservices
+- complex event-driven systems
+- excessive backend abstractions
+
+# Supabase Responsibilities
+
+Supabase handles:
+- authentication
+- database
+- realtime
+- storage
+- authorization
+- lightweight backend logic
+
+Avoid introducing custom backend services unless absolutely necessary.
+
+# Database Philosophy
+
+Use PostgreSQL relational modeling.
+
+Prioritize:
+- simplicity
+- consistency
+- maintainability
+- predictable schemas
+
+Avoid:
+- overengineered database designs
+- unnecessary normalization complexity
+- premature scalability patterns
+
+# Table Design Rules
+
+- Use UUID primary keys
+- Always include timestamps
+- Use foreign keys correctly
+- Keep naming consistent
+- Prefer explicit relations
+
+Preferred columns:
+
+id uuid primary key
+created_at timestamptz
+updated_at timestamptz
+
+# Naming Conventions
+
+Use snake_case for:
+- tables
+- columns
+- foreign keys
+
+Good:
+- user_profiles
+- created_at
+- job_applications
+
+Avoid:
+- camelCase columns
+- inconsistent naming
+- abbreviations
+
+# Relationship Rules
+
+Prefer relational modeling.
+
+Good:
+- foreign keys
+- normalized relationships
+- explicit ownership
+
+Avoid:
+- duplicated relational data
+- denormalized hacks without justification
+
+# Realtime Philosophy
+
+Use Supabase Realtime only where valuable.
+
+Good realtime use cases:
+- chat
+- live availability
+- ride/job updates
+- presence systems
+- realtime statuses
+
+Avoid:
+- realtime for everything
+- unnecessary subscriptions
+- excessive client synchronization
+
+# Realtime Rules
+
+- Keep subscriptions scoped
+- Clean up subscriptions properly
+- Avoid duplicate subscriptions
+- Keep realtime flows predictable
+
+Prefer:
+- lightweight event handling
+- query invalidation
+- simple synchronization logic
+
+# Authentication Rules
+
+Use Supabase Auth exclusively.
+
+Rules:
+- persist sessions securely
+- centralize auth logic
+- protect authenticated routes
+- avoid duplicated auth state
+
+# Authorization Rules
+
+Always use Row Level Security.
+
+Rules:
+- every table must define policies
+- never trust client-side validation alone
+- keep policies explicit and predictable
+
+Avoid:
+- public unrestricted tables
+- overly permissive policies
+- hidden authorization logic
+
+# Security Standards
+
+- Never expose service role keys
+- Use environment variables correctly
+- Validate user ownership properly
+- Protect sensitive operations
+
+# Environment Variables
+
+Use:
+
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
+
+Never hardcode credentials.
+
+# Query Rules
+
+- Keep queries simple
+- Prefer reusable services
+- Avoid duplicated query logic
+- Select only required fields
+
+Avoid:
+- massive nested queries
+- overfetching
+- duplicated transformations
+
+# Service Layer Rules
+
+All Supabase communication belongs inside services.
+
+Good:
+
+features/jobs/services/jobs.service.ts
+
+Avoid:
+- direct Supabase logic everywhere
+- duplicated queries across components
+
+# Storage Rules
+
+Use Supabase Storage for:
+- profile images
+- uploaded documents
+- lightweight media
+
+Rules:
+- validate uploads
+- keep bucket structure organized
+- avoid oversized uploads unnecessarily
+
+# Edge Functions
+
+Use Edge Functions only when necessary.
+
+Good use cases:
+- secure server-side logic
+- third-party integrations
+- protected workflows
+
+Avoid:
+- moving all logic to edge functions
+- unnecessary backend complexity
+
+# Error Handling
+
+- Always handle backend errors
+- Use user-friendly messages
+- Avoid exposing raw database errors
+- Keep async flows predictable
+
+# Realtime + TanStack Query
+
+Preferred integration:
+- lightweight realtime events
+- query invalidation
+- predictable cache updates
+
+Avoid:
+- excessive manual reconciliation
+- giant realtime state systems
+
+# MVP Philosophy
+
+The backend should remain:
+- simple
+- reliable
+- fast to iterate
+- easy to debug
+
+Prioritize:
+- shipping product
+- validating ideas
+- maintaining velocity
+
+Over:
+- enterprise backend complexity
+- premature scalability
+- unnecessary infrastructure
+
+# Cursor AI Expectations
+
+When generating Supabase logic:
+- Use relational modeling
+- Respect RLS policies
+- Keep schemas maintainable
+- Generate reusable services
+- Avoid backend overengineering
+- Prefer simple predictable queries
+- Use realtime only when valuable

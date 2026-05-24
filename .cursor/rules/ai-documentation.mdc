@@ -1,0 +1,226 @@
+---
+description: Module-level AGENTS.md documentation and AI context maintenance
+globs: "features/**/AGENTS.md,features/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Module AI Documentation
+
+Each feature module must maintain an `AGENTS.md` file at the module root.
+
+Purpose:
+- machine-oriented context
+- architectural continuity
+- implementation reference for AI agents
+- fast onboarding for future development
+
+This file is NOT user documentation.
+
+Avoid:
+- marketing language
+- tutorials
+- excessive prose
+- redundant explanations
+
+# AGENTS.md Location
+
+Each feature must contain:
+
+features/<feature>/AGENTS.md
+
+Examples:
+
+features/auth/AGENTS.md
+features/jobs/AGENTS.md
+features/chat/AGENTS.md
+
+# Update Rules
+
+`AGENTS.md` must be updated whenever the module changes.
+
+This includes:
+- new screens
+- new hooks
+- new services
+- schema changes
+- realtime flows
+- Supabase integration
+- architectural refactors
+- navigation changes
+- state changes
+- new dependencies
+
+Stale AGENTS documentation is considered a defect.
+
+# Documentation Philosophy
+
+AGENTS.md exists for:
+- AI context preservation
+- architectural continuity
+- predictable module understanding
+- future maintainability
+
+Keep sections:
+- concise
+- structured
+- grep-friendly
+- implementation-oriented
+
+# Preferred Structure
+
+Use this structure:
+
+# <feature-name>
+
+## Purpose
+Short explanation of module responsibilities.
+
+## Architecture
+
+- components/ — reusable feature UI
+- screens/ — route-level screens
+- hooks/ — feature hooks
+- services/ — Supabase and async logic
+- stores/ — Zustand state
+- schemas/ — Zod schemas
+- types/ — feature types
+- utils/ — isolated helpers
+
+## Features
+
+### <feature>
+
+- Role:
+- Screens:
+- Hooks:
+- Services:
+- Realtime:
+- State:
+- Dependencies:
+- Notes:
+
+## Data Flow
+
+Describe:
+- query flow
+- mutation flow
+- realtime synchronization
+- Supabase integration
+
+## Navigation
+
+List:
+- routes
+- modal flows
+- protected screens
+
+## Realtime
+
+Document:
+- subscriptions
+- presence systems
+- invalidation strategy
+- synchronization behavior
+
+## State Management
+
+Document:
+- Zustand usage
+- TanStack Query usage
+- local component state responsibilities
+
+## Forms
+
+List:
+- schemas
+- form flows
+- validation behavior
+
+## Dependencies
+
+Important module dependencies only.
+
+## Technical Notes
+
+Important implementation constraints.
+
+## Changelog
+
+- YYYY-MM-DD: added realtime job synchronization
+- YYYY-MM-DD: refactored profile query structure
+
+# Agent Obligations
+
+When modifying a feature module:
+
+1. Update AGENTS.md in the same change set
+2. Refresh feature descriptions
+3. Update architectural sections
+4. Document new flows or dependencies
+5. Append changelog entries
+6. Keep documentation aligned with implementation
+
+# Documentation Rules
+
+Prefer:
+- short sections
+- lists
+- stable identifiers
+- implementation-focused language
+
+Avoid:
+- giant explanations
+- duplicated code
+- tutorial content
+- outdated architecture descriptions
+
+# Realtime Documentation
+
+Realtime modules must document:
+- active subscriptions
+- event flow
+- invalidation strategy
+- synchronization rules
+
+# Service Documentation
+
+Document:
+- important Supabase queries
+- external integrations
+- mutation responsibilities
+- async orchestration
+
+# State Documentation
+
+Clarify:
+- what belongs in Zustand
+- what belongs in TanStack Query
+- what remains local UI state
+
+# Architecture Consistency
+
+AGENTS.md should reflect:
+- actual implementation
+- current architecture
+- active module boundaries
+
+Never leave stale architecture documentation.
+
+# MVP Philosophy
+
+Documentation should remain:
+- lightweight
+- useful
+- maintainable
+- implementation-focused
+
+Avoid enterprise documentation overhead.
+
+# Cursor AI Expectations
+
+When generating or modifying features:
+- update AGENTS.md automatically
+- preserve architecture consistency
+- document important flows
+- maintain concise structured context
+- keep documentation implementation-oriented
