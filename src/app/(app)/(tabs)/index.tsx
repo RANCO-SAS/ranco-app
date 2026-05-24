@@ -31,7 +31,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <ScreenLayout scrollable>
+    <ScreenLayout safeArea="tab" scrollable>
       <View style={styles.header}>
         <AppText variant="title">{firstName ? `Hola, ${firstName}` : 'Hola'}</AppText>
         <AppText color="textSecondary" variant="body">

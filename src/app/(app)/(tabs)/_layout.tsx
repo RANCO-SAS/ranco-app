@@ -22,7 +22,7 @@ export default function TabsLayout() {
           backgroundColor: theme.background,
           borderTopWidth: 0,
           paddingTop: Spacing.xs,
-          height: Platform.select({ ios: 88, default: 64 }),
+          height: Platform.select({ ios: 56, default: 52 }),
         },
         tabBarLabelStyle: {
           fontSize: 12,

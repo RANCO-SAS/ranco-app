@@ -28,13 +28,13 @@ export function JobsScreen() {
 
   if (clientRequests.isLoading) {
     return (
-      <ScreenLayout loading loadingMessage="Cargando solicitudes..." />
+      <ScreenLayout loading loadingMessage="Cargando solicitudes..." safeArea="tab" />
     );
   }
 
   if (clientRequests.error) {
     return (
-      <ScreenLayout>
+      <ScreenLayout safeArea="tab">
         <Section title="Mis solicitudes" description="Gestiona lo que has publicado como cliente.">
           <Card>
             <AppText variant="body" color="destructive">
@@ -49,7 +49,7 @@ export function JobsScreen() {
   const requests = clientRequests.data ?? [];
 
   return (
-    <ScreenLayout scrollable>
+    <ScreenLayout safeArea="tab" scrollable>
       <Section
         title="Mis solicitudes"
         description="Publica y da seguimiento a tus trabajos como cliente.">

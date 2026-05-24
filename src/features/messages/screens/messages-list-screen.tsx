@@ -46,12 +46,12 @@ export function MessagesListScreen() {
   const conversationsQuery = useConversations(profile?.id);
 
   if (conversationsQuery.isLoading) {
-    return <ScreenLayout loading loadingMessage="Cargando mensajes..." />;
+    return <ScreenLayout loading loadingMessage="Cargando mensajes..." safeArea="tab" />;
   }
 
   if (conversationsQuery.error) {
     return (
-      <ScreenLayout>
+      <ScreenLayout safeArea="tab">
         <Section title="Mensajes" description="Conversaciones con clientes y profesionales.">
           <Card>
             <AppText variant="body" color="destructive">
@@ -66,7 +66,7 @@ export function MessagesListScreen() {
   const conversations = conversationsQuery.data ?? [];
 
   return (
-    <ScreenLayout scrollable>
+    <ScreenLayout safeArea="tab" scrollable>
       <Section
         title="Mensajes"
         description="Conversaciones con clientes y profesionales.">

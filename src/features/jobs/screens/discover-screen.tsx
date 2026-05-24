@@ -75,13 +75,13 @@ export function DiscoverScreen() {
 
   if (publishedRequests.isLoading) {
     return (
-      <ScreenLayout loading loadingMessage="Buscando oportunidades..." />
+      <ScreenLayout loading loadingMessage="Buscando oportunidades..." safeArea="tab" />
     );
   }
 
   if (publishedRequests.error) {
     return (
-      <ScreenLayout>
+      <ScreenLayout safeArea="tab">
         <View style={styles.header}>
           <AppText variant="title">Oportunidades</AppText>
         </View>
@@ -95,7 +95,7 @@ export function DiscoverScreen() {
   }
 
   return (
-    <ScreenLayout scrollable>
+    <ScreenLayout safeArea="tab" scrollable>
       <View style={styles.header}>
         <AppText variant="title">Oportunidades</AppText>
         <AppText color="textSecondary" variant="body">

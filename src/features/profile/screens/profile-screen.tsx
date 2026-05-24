@@ -37,7 +37,7 @@ export function ProfileScreen() {
   const activeModeLabel = activeMode === 'client' ? 'Cliente' : 'Profesional';
 
   return (
-    <ScreenLayout scrollable>
+    <ScreenLayout safeArea="tab" scrollable>
       <Section
         title="Perfil"
         description="Tu cuenta, modo de uso y preferencias.">

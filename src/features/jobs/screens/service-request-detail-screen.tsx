@@ -81,7 +81,7 @@ export function ServiceRequestDetailScreen() {
   };
 
   return (
-    <ScreenLayout scrollable edges={['bottom']}>
+    <ScreenLayout scrollable>
       <StackHeader title="Detalle" />
 
       <Spacer size="md" />

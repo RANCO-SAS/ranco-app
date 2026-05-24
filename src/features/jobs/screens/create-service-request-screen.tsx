@@ -24,6 +24,7 @@ import type { ServiceRequestUrgency } from '@/features/jobs/types/service-reques
 import { getSubcategoryTitleHint } from '@/features/jobs/utils/category-icons';
 import { Layout, Spacing } from '@/constants/theme';
 import { Loader } from '@/components/ui/loader';
+import { useKeyboardLayout } from '@/hooks/use-keyboard-layout';
 import { useTheme } from '@/hooks/use-theme';
 import { ModeGateEmptyState } from '@/features/profile/components/mode-gate-empty-state';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
@@ -56,6 +57,7 @@ export function CreateServiceRequestScreen() {
   const categoriesQuery = useServiceCategories();
   const createRequest = useCreateServiceRequest();
   const [currentStep, setCurrentStep] = useState(0);
+  const { keyboardBehavior, keyboardVerticalOffset } = useKeyboardLayout();
 
   const {
     control,
@@ -180,11 +182,13 @@ export function CreateServiceRequestScreen() {
       <StackHeader title={STEP_TITLES[currentStep]} />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+        behavior={keyboardBehavior}
+        keyboardVerticalOffset={keyboardVerticalOffset}
         style={styles.flex}>
         <ScrollView
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={styles.scrollContent}
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           {currentStep > 0 ? (

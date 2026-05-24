@@ -17,6 +17,7 @@ import {
   useSendMessage,
 } from '@/features/messages/hooks/use-conversations';
 import type { Message } from '@/features/messages/types/message.types';
+import { useKeyboardLayout } from '@/hooks/use-keyboard-layout';
 import { useTheme } from '@/hooks/use-theme';
 
 type MessageBubbleProps = {
@@ -52,6 +53,7 @@ export function ConversationScreen() {
   const conversationQuery = useConversation(conversationId);
   const messagesQuery = useMessages(conversationId);
   const sendMessage = useSendMessage();
+  const { insets, keyboardBehavior, keyboardVerticalOffset } = useKeyboardLayout();
 
   const messages = messagesQuery.data ?? [];
   const title = conversationQuery.data?.serviceRequestTitle ?? 'Conversación';
@@ -100,11 +102,11 @@ export function ConversationScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={[styles.safeArea, { backgroundColor: theme.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <StackHeader title={title} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+        behavior={keyboardBehavior}
+        keyboardVerticalOffset={keyboardVerticalOffset}
         style={styles.flex}>
         {messages.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -115,8 +117,11 @@ export function ConversationScreen() {
           </View>
         ) : (
           <FlatList
+            automaticallyAdjustKeyboardInsets
             contentContainerStyle={styles.messagesList}
             data={messages}
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+            keyboardShouldPersistTaps="handled"
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <MessageBubble isOwn={item.senderId === session?.userId} message={item} />
@@ -124,7 +129,15 @@ export function ConversationScreen() {
           />
         )}
 
-        <View style={[styles.composer, { borderTopColor: theme.border, backgroundColor: theme.background }]}>
+        <View
+          style={[
+            styles.composer,
+            {
+              borderTopColor: theme.border,
+              backgroundColor: theme.background,
+              paddingBottom: Math.max(insets.bottom, Spacing.md),
+            },
+          ]}>
           <Input
             editable={!sendMessage.isPending}
             onChangeText={setDraft}
@@ -158,6 +171,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.screenPaddingHorizontal,
     paddingVertical: Spacing.md,
     gap: Spacing.sm,
+    flexGrow: 1,
   },
   bubbleRow: {
     flexDirection: 'row',
@@ -178,6 +192,6 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Layout.screenPaddingHorizontal,
-    paddingVertical: Spacing.md,
+    paddingTop: Spacing.md,
   },
 });
