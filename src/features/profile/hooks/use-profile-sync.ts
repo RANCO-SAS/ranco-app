@@ -44,6 +44,7 @@ export function useProfileSync() {
           profile = await profileService.initializeProfile({
             userId,
             fullName: session?.fullName,
+            avatarUrl: session?.avatarUrl,
           });
         }
 
@@ -70,6 +71,7 @@ export function useProfileSync() {
     profileQuery.data,
     reset,
     session?.fullName,
+    session?.avatarUrl,
     setActiveMode,
     setHydrated,
     setProfile,

@@ -42,6 +42,7 @@ async function initializeProfile(input: InitializeProfileInput): Promise<UserPro
     .insert({
       id: input.userId,
       full_name: input.fullName?.trim() ?? '',
+      avatar_url: input.avatarUrl?.trim() || null,
     })
     .select('*')
     .single();

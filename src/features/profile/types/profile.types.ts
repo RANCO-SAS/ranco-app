@@ -16,6 +16,7 @@ export type UserProfile = {
 export type InitializeProfileInput = {
   userId: string;
   fullName?: string | null;
+  avatarUrl?: string | null;
 };
 
 export type CompleteOnboardingInput = {

@@ -9,6 +9,7 @@ import { AuthMessage } from '@/features/auth/components/auth-message';
 import { createSessionFromUrl } from '@/features/auth/utils/create-session-from-url';
 import { mapAuthError } from '@/features/auth/utils/map-auth-error';
 import { isSupabaseConfigured } from '@/lib/env';
+import { authService } from '@/features/auth/services/auth.service';
 
 export default function AuthCallbackScreen() {
   const router = useRouter();
@@ -19,6 +20,13 @@ export default function AuthCallbackScreen() {
     async function handleCallback(callbackUrl: string) {
       if (!isSupabaseConfigured()) {
         router.replace(Routes.auth.login);
+        return;
+      }
+
+      const existingSession = await authService.getSession();
+
+      if (existingSession) {
+        router.replace(Routes.root);
         return;
       }
 

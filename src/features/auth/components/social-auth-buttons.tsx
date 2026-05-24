@@ -1,11 +1,8 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { AppText } from '@/components/ui/text';
 import { Spacer } from '@/components/ui/spacer';
-import { Spacing } from '@/constants/theme';
 import type { OAuthProviderId } from '@/features/auth/types/auth.types';
-import { useTheme } from '@/hooks/use-theme';
 
 type SocialAuthButtonsProps = {
   disabled?: boolean;
@@ -23,27 +20,14 @@ export function SocialAuthButtons({
   pendingProvider = null,
   onProviderPress,
 }: SocialAuthButtonsProps) {
-  const theme = useTheme();
-
   return (
     <View>
-      <View style={styles.dividerRow}>
-        <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
-        <AppText color="textMuted" variant="caption">
-          o continúa con
-        </AppText>
-        <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
-      </View>
-
-      <Spacer size="md" />
-
       <Button
         disabled={disabled}
         label={
           pendingProvider === 'google' ? 'Conectando con Google...' : PROVIDER_LABELS.google
         }
         onPress={() => onProviderPress('google')}
-        variant="secondary"
       />
 
       <Spacer size="sm" />
@@ -57,15 +41,3 @@ export function SocialAuthButtons({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  dividerRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: Spacing.md,
-  },
-  dividerLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-  },
-});
