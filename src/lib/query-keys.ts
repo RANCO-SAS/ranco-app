@@ -15,4 +15,10 @@ export const queryKeys = {
     conversations: (userId: string) => ['messages', 'conversations', userId] as const,
     thread: (conversationId: string) => ['messages', conversationId] as const,
   },
+  reviews: {
+    all: ['reviews'] as const,
+    profile: (userId: string) => ['reviews', 'profile', userId] as const,
+    job: (serviceRequestId: string, reviewerId: string) =>
+      ['reviews', 'job', serviceRequestId, reviewerId] as const,
+  },
 } as const;

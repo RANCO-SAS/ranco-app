@@ -2,8 +2,13 @@ import type { ServiceRequestRow } from '@/features/jobs/types/service-request-db
 import type {
   CreateServiceRequestInput,
   ServiceRequest,
+  UpdateServiceRequestStatusInput,
 } from '@/features/jobs/types/service-request.types';
 import { mapServiceRequestRow } from '@/features/jobs/services/service-request.mapper';
+import {
+  canUserUpdateStatus,
+  requiresAssignedProfessional,
+} from '@/features/jobs/utils/job-status-transitions';
 import { getSupabaseClient } from '@/services/supabase/client';
 
 const SERVICE_REQUESTS_TABLE = 'service_requests';
@@ -87,9 +92,56 @@ async function createServiceRequest(input: CreateServiceRequestInput): Promise<S
   return mapServiceRequestRow(data as ServiceRequestRow);
 }
 
+async function updateServiceRequestStatus(
+  input: UpdateServiceRequestStatusInput,
+): Promise<ServiceRequest> {
+  const current = await getServiceRequestById(input.requestId);
+
+  if (!current) {
+    throw new Error('Solicitud no encontrada.');
+  }
+
+  const assignedProfessionalId =
+    input.assignedProfessionalId ?? current.assignedProfessionalId ?? null;
+
+  if (
+    !canUserUpdateStatus({
+      currentStatus: current.status,
+      nextStatus: input.status,
+      userId: input.userId,
+      clientId: current.clientId,
+      assignedProfessionalId,
+    })
+  ) {
+    throw new Error('No puedes cambiar el estado de esta solicitud.');
+  }
+
+  if (requiresAssignedProfessional(input.status) && !assignedProfessionalId) {
+    throw new Error('Debes asignar un profesional antes de aceptar la solicitud.');
+  }
+
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from(SERVICE_REQUESTS_TABLE)
+    .update({
+      status: input.status,
+      assigned_professional_id: assignedProfessionalId,
+    })
+    .eq('id', input.requestId)
+    .select(SERVICE_REQUEST_SELECT)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapServiceRequestRow(data as ServiceRequestRow);
+}
+
 export const serviceRequestService = {
   getClientRequests,
   getPublishedRequests,
   getServiceRequestById,
   createServiceRequest,
+  updateServiceRequestStatus,
 };

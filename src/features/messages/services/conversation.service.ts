@@ -1,8 +1,9 @@
-import type { ConversationRow, MessageRow } from '@/features/messages/types/message-db.types';
+import type { ConversationRow, MessageRow, ProfileSummaryRow } from '@/features/messages/types/message-db.types';
 import type {
   Conversation,
   Message,
-  SendMessageInput,
+  SendImageMessageInput,
+  SendTextMessageInput,
   StartConversationInput,
 } from '@/features/messages/types/message.types';
 import {
@@ -10,14 +11,49 @@ import {
   mapMessageRow,
 } from '@/features/messages/services/message.mapper';
 import { getSupabaseClient } from '@/services/supabase/client';
+import { storageService } from '@/services/storage/storage.service';
 
 const CONVERSATIONS_TABLE = 'conversations';
 const MESSAGES_TABLE = 'messages';
+const PROFILES_TABLE = 'user_profiles';
 
 const CONVERSATION_SELECT = `
   *,
-  service_request:service_requests ( title, category_id, subcategory_id )
+  service_request:service_requests (
+    title,
+    status,
+    category_id,
+    subcategory_id,
+    assigned_professional_id
+  )
 `;
+
+async function getParticipantProfiles(
+  clientId: string,
+  professionalId: string,
+): Promise<{ client?: ProfileSummaryRow; professional?: ProfileSummaryRow }> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from(PROFILES_TABLE)
+    .select('id, full_name, avatar_url')
+    .in('id', [clientId, professionalId]);
+
+  if (error) {
+    throw error;
+  }
+
+  const profiles = (data ?? []) as ProfileSummaryRow[];
+
+  return {
+    client: profiles.find((profile) => profile.id === clientId),
+    professional: profiles.find((profile) => profile.id === professionalId),
+  };
+}
+
+async function mapConversation(data: ConversationRow): Promise<Conversation> {
+  const participants = await getParticipantProfiles(data.client_id, data.professional_id);
+  return mapConversationRow(data, participants);
+}
 
 async function getConversations(userId: string): Promise<Conversation[]> {
   const supabase = getSupabaseClient();
@@ -31,7 +67,8 @@ async function getConversations(userId: string): Promise<Conversation[]> {
     throw error;
   }
 
-  return (data as ConversationRow[]).map(mapConversationRow);
+  const rows = (data ?? []) as ConversationRow[];
+  return Promise.all(rows.map((row) => mapConversation(row)));
 }
 
 async function getConversationById(conversationId: string): Promise<Conversation | null> {
@@ -50,7 +87,7 @@ async function getConversationById(conversationId: string): Promise<Conversation
     return null;
   }
 
-  return mapConversationRow(data as ConversationRow);
+  return mapConversation(data as ConversationRow);
 }
 
 async function getMessages(conversationId: string): Promise<Message[]> {
@@ -83,7 +120,7 @@ async function startConversation(input: StartConversationInput): Promise<Convers
   }
 
   if (existing.data) {
-    return mapConversationRow(existing.data as ConversationRow);
+    return mapConversation(existing.data as ConversationRow);
   }
 
   const { data, error } = await supabase
@@ -100,17 +137,40 @@ async function startConversation(input: StartConversationInput): Promise<Convers
     throw error;
   }
 
-  return mapConversationRow(data as ConversationRow);
+  return mapConversation(data as ConversationRow);
 }
 
-async function sendMessage(input: SendMessageInput): Promise<Message> {
+async function sendTextMessage(input: SendTextMessageInput): Promise<Message> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from(MESSAGES_TABLE)
     .insert({
       conversation_id: input.conversationId,
       sender_id: input.senderId,
+      message_type: 'text',
       content: input.content.trim(),
+    })
+    .select('*')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapMessageRow(data as MessageRow);
+}
+
+async function sendImageMessage(input: SendImageMessageInput): Promise<Message> {
+  const mediaUrl = await storageService.uploadChatImage(input.conversationId, input.mediaUri);
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from(MESSAGES_TABLE)
+    .insert({
+      conversation_id: input.conversationId,
+      sender_id: input.senderId,
+      message_type: 'image',
+      content: 'Imagen',
+      media_url: mediaUrl,
     })
     .select('*')
     .single();
@@ -127,5 +187,6 @@ export const conversationService = {
   getConversationById,
   getMessages,
   startConversation,
-  sendMessage,
+  sendTextMessage,
+  sendImageMessage,
 };

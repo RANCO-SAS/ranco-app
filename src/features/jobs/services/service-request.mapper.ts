@@ -17,6 +17,7 @@ export function mapServiceRequestRow(row: ServiceRequestRow): ServiceRequest {
     subcategoryName: row.subcategory?.name ?? 'General',
     urgency: row.urgency as ServiceRequestUrgency,
     status: row.status as ServiceRequestStatus,
+    assignedProfessionalId: row.assigned_professional_id,
     locationLabel: row.location_label,
     locationLat: row.location_lat,
     locationLng: row.location_lng,

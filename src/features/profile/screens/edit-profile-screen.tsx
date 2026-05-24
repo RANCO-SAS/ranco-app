@@ -12,6 +12,7 @@ import { AppText } from '@/components/ui/text';
 import { AuthMessage } from '@/features/auth/components/auth-message';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { ProfileRolesSection } from '@/features/profile/components/profile-roles-section';
+import { ProfileAvatarPicker } from '@/features/profile/components/profile-avatar-picker';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
 import { useUpdateProfile } from '@/features/profile/hooks/use-update-profile';
 import {
@@ -19,19 +20,24 @@ import {
   type UpdateProfileFormData,
 } from '@/features/profile/schemas/update-profile.schema';
 import { mapProfileError } from '@/features/profile/utils/map-profile-error';
+import { storageService } from '@/services/storage/storage.service';
 import { Spacing } from '@/constants/theme';
 import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
 
 export function EditProfileScreen() {
   const router = useRouter();
   const { session } = useAuth();
   const { profile } = useCurrentProfile();
   const updateProfile = useUpdateProfile();
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   const {
     control,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<UpdateProfileFormData>({
     resolver: zodResolver(updateProfileSchema),
@@ -55,6 +61,9 @@ export function EditProfileScreen() {
       avatarUrl: profile.avatarUrl ?? '',
     });
   }, [profile?.id, profile?.fullName, profile?.phone, profile?.locationLabel, profile?.avatarUrl, reset]);
+
+  const fullName = watch('fullName');
+  const avatarUrl = watch('avatarUrl');
 
   const onSubmit = (data: UpdateProfileFormData) => {
     if (!session?.userId) {
@@ -102,6 +111,33 @@ export function EditProfileScreen() {
       <View style={styles.section}>
         <AppText variant="subtitle">Datos personales</AppText>
         <Spacer size="md" />
+
+        <ProfileAvatarPicker
+          disabled={updateProfile.isPending}
+          name={fullName || profile?.fullName || 'Usuario'}
+          onChange={(url) => {
+            setAvatarError(null);
+            setValue('avatarUrl', url, { shouldDirty: true });
+          }}
+          onError={setAvatarError}
+          onUpload={async (uri) => {
+            if (!session?.userId) {
+              throw new Error('Sesión no disponible.');
+            }
+
+            return storageService.uploadAvatar(session.userId, uri);
+          }}
+          value={avatarUrl}
+        />
+
+        {avatarError ? (
+          <>
+            <Spacer size="sm" />
+            <AuthMessage message={avatarError} variant="error" />
+          </>
+        ) : null}
+
+        <Spacer size="lg" />
 
         <Controller
           control={control}
@@ -158,24 +194,6 @@ export function EditProfileScreen() {
           )}
         />
 
-        <Spacer size="md" />
-
-        <Controller
-          control={control}
-          name="avatarUrl"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              autoCapitalize="none"
-              editable={!updateProfile.isPending}
-              error={errors.avatarUrl?.message}
-              label="Avatar (URL)"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              placeholder="https://..."
-              value={value}
-            />
-          )}
-        />
       </View>
 
       <Spacer size="xl" />

@@ -8,26 +8,17 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
+import {
+  SERVICE_REQUEST_STATUS_LABELS,
+  SERVICE_REQUEST_URGENCY_LABELS,
+} from '@/features/jobs/constants/service-request-labels';
+import { JobEngagementPanel } from '@/features/jobs/components/job-engagement-panel';
 import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
 import { useStartConversation } from '@/features/messages/hooks/use-conversations';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
-
-const STATUS_LABELS = {
-  published: 'Publicada',
-  in_negotiation: 'En negociación',
-  accepted: 'Aceptada',
-  in_progress: 'En progreso',
-  completed: 'Completada',
-  cancelled: 'Cancelada',
-} as const;
-
-const URGENCY_LABELS = {
-  low: 'Baja',
-  normal: 'Normal',
-  high: 'Alta',
-  urgent: 'Urgente',
-} as const;
+import { ReviewForm } from '@/features/reviews/components/review-form';
+import { useJobReview } from '@/features/reviews/hooks/use-reviews';
 
 export function ServiceRequestDetailScreen() {
   const router = useRouter();
@@ -55,11 +46,18 @@ export function ServiceRequestDetailScreen() {
 
   const request = requestQuery.data;
   const isOwner = profile?.id === request.clientId;
+  const isAssignedProfessional = profile?.id === request.assignedProfessionalId;
   const canContact =
     !isOwner &&
     activeMode === 'professional' &&
     profile?.isProfessional &&
-    request.status === 'published';
+    (request.status === 'published' || request.status === 'in_negotiation');
+
+  const revieweeId = isOwner ? request.assignedProfessionalId : request.clientId;
+  const jobReviewQuery = useJobReview(
+    request.id,
+    request.status === 'completed' ? profile?.id : undefined,
+  );
 
   const handleContact = () => {
     if (!profile) {
@@ -98,10 +96,10 @@ export function ServiceRequestDetailScreen() {
         </AppText>
         <Spacer size="md" />
         <AppText variant="small" color="textMuted">
-          Estado: {STATUS_LABELS[request.status]}
+          Estado: {SERVICE_REQUEST_STATUS_LABELS[request.status]}
         </AppText>
         <AppText variant="small" color="textMuted">
-          Urgencia: {URGENCY_LABELS[request.urgency]}
+          Urgencia: {SERVICE_REQUEST_URGENCY_LABELS[request.urgency]}
         </AppText>
         {request.locationLabel ? (
           <AppText variant="small" color="textMuted">
@@ -112,12 +110,44 @@ export function ServiceRequestDetailScreen() {
 
       <Spacer size="md" />
 
+      {profile?.id &&
+      (isAssignedProfessional ||
+        (isOwner &&
+          request.status !== 'published' &&
+          request.status !== 'in_negotiation')) ? (
+        <>
+          <JobEngagementPanel
+            assignedProfessionalId={request.assignedProfessionalId}
+            clientId={request.clientId}
+            isClient={isOwner}
+            professionalId={request.assignedProfessionalId ?? profile.id}
+            requestId={request.id}
+            status={request.status}
+            userId={profile.id}
+          />
+          <Spacer size="md" />
+        </>
+      ) : null}
+
+      {request.status === 'completed' && revieweeId && profile?.id ? (
+        <>
+          <ReviewForm
+            existingRating={jobReviewQuery.data?.rating}
+            revieweeId={revieweeId}
+            revieweeName={isOwner ? 'el profesional' : 'el cliente'}
+            reviewerId={profile.id}
+            serviceRequestId={request.id}
+          />
+          <Spacer size="md" />
+        </>
+      ) : null}
+
       {isOwner && activeMode === 'client' ? (
         <Card>
-          <AppText variant="bodyMedium">Tu solicitud está publicada</AppText>
+          <AppText variant="bodyMedium">Tu solicitud</AppText>
           <Spacer size="xs" />
           <AppText variant="caption" color="textSecondary">
-            Los profesionales pueden verla en Explorar y contactarte por mensajes.
+            Gestiona el estado del trabajo y revisa los mensajes con profesionales interesados.
           </AppText>
         </Card>
       ) : null}
@@ -135,7 +165,7 @@ export function ServiceRequestDetailScreen() {
               <AppText variant="bodyMedium">Solicitud no disponible</AppText>
               <Spacer size="xs" />
               <AppText variant="caption" color="textSecondary">
-                Esta solicitud ya no está publicada o no puedes contactar al cliente.
+                Esta solicitud ya no acepta nuevos contactos o ya avanzó de estado.
               </AppText>
             </Card>
           )}

@@ -19,11 +19,19 @@ export type ServiceRequest = {
   subcategoryName: string;
   urgency: ServiceRequestUrgency;
   status: ServiceRequestStatus;
+  assignedProfessionalId: string | null;
   locationLabel: string | null;
   locationLat: number | null;
   locationLng: number | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type UpdateServiceRequestStatusInput = {
+  requestId: string;
+  userId: string;
+  status: ServiceRequestStatus;
+  assignedProfessionalId?: string;
 };
 
 export type CreateServiceRequestInput = {

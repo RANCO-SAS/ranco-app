@@ -10,6 +10,7 @@ export type ServiceRequestRow = {
   location_label: string | null;
   location_lat: number | null;
   location_lng: number | null;
+  assigned_professional_id: string | null;
   created_at: string;
   updated_at: string;
   category: { id: string; name: string; slug: string } | null;

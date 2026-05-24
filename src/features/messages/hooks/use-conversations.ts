@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { conversationService } from '@/features/messages/services/conversation.service';
+import type {
+  SendImageMessageInput,
+  SendTextMessageInput,
+} from '@/features/messages/types/message.types';
 import { queryKeys } from '@/lib/query-keys';
 
 export function useConversations(userId: string | undefined) {
@@ -41,15 +45,30 @@ export function useStartConversation() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.messages.conversations(conversation.professionalId),
       });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
     },
   });
 }
 
-export function useSendMessage() {
+export function useSendTextMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: conversationService.sendMessage,
+    mutationFn: (input: SendTextMessageInput) => conversationService.sendTextMessage(input),
+    onSuccess: (message) => {
+      void queryClient.invalidateQueries({
+        queryKey: [...queryKeys.messages.thread(message.conversationId), 'messages'],
+      });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.messages.all });
+    },
+  });
+}
+
+export function useSendImageMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: SendImageMessageInput) => conversationService.sendImageMessage(input),
     onSuccess: (message) => {
       void queryClient.invalidateQueries({
         queryKey: [...queryKeys.messages.thread(message.conversationId), 'messages'],
