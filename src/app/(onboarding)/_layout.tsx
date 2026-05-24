@@ -1,16 +1,19 @@
-import { Redirect } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 
 import { Loader } from '@/components/ui/loader';
 import { Routes } from '@/constants/routes';
-import { resolveAuthenticatedRoute } from '@/features/profile/utils/resolve-app-route';
 import { selectIsAuthenticated, selectIsHydrated, useAuthStore } from '@/stores/auth-store';
-import { selectIsProfileHydrated, selectProfile, useProfileStore } from '@/stores/profile-store';
+import {
+  selectIsOnboardingComplete,
+  selectIsProfileHydrated,
+  useProfileStore,
+} from '@/stores/profile-store';
 
-export default function Index() {
+export default function OnboardingLayout() {
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const isAuthHydrated = useAuthStore(selectIsHydrated);
   const isProfileHydrated = useProfileStore(selectIsProfileHydrated);
-  const profile = useProfileStore(selectProfile);
+  const isOnboardingComplete = useProfileStore(selectIsOnboardingComplete);
 
   if (!isAuthHydrated || (isAuthenticated && !isProfileHydrated)) {
     return <Loader message="Cargando..." />;
@@ -20,5 +23,13 @@ export default function Index() {
     return <Redirect href={Routes.auth.login} />;
   }
 
-  return <Redirect href={resolveAuthenticatedRoute(profile)} />;
+  if (isOnboardingComplete) {
+    return <Redirect href={Routes.app.home} />;
+  }
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="setup" />
+    </Stack>
+  );
 }
