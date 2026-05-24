@@ -8,7 +8,10 @@
     "scheme": "ranco",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Ranco usa tu ubicación para mostrar oportunidades cercanas y marcar dónde se realizará el trabajo."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,6 +20,10 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "resize"
     },
@@ -31,6 +38,12 @@
         {
           "photosPermission": "Permite seleccionar fotos para tu perfil y chats.",
           "cameraPermission": "Permite tomar fotos para tu perfil y chats."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Ranco usa tu ubicación para mostrar oportunidades cercanas y marcar dónde se realizará el trabajo."
         }
       ],
       [

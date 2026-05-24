@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
+import { StaticLocationMap } from '@/components/map/static-location-map';
 import { StackHeader } from '@/components/layout/stack-header';
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { Button } from '@/components/ui/button';
@@ -107,6 +108,17 @@ export function ServiceRequestDetailScreen() {
           </AppText>
         ) : null}
       </Card>
+
+      {request.locationLat !== null && request.locationLng !== null ? (
+        <>
+          <Spacer size="md" />
+          <StaticLocationMap
+            latitude={request.locationLat}
+            longitude={request.locationLng}
+            title={request.locationLabel ?? request.title}
+          />
+        </>
+      ) : null}
 
       <Spacer size="md" />
 

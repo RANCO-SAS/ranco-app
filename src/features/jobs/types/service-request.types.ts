@@ -42,4 +42,6 @@ export type CreateServiceRequestInput = {
   subcategoryId: string;
   urgency?: ServiceRequestUrgency;
   locationLabel?: string;
+  locationLat: number;
+  locationLng: number;
 };

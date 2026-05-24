@@ -24,6 +24,8 @@ export function useCreateServiceRequest() {
         subcategoryId: data.subcategoryId,
         urgency: data.urgency,
         locationLabel: data.locationLabel || undefined,
+        locationLat: data.locationLat,
+        locationLng: data.locationLng,
       }),
     onSuccess: (request) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.client(request.clientId) });

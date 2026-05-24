@@ -46,13 +46,12 @@ export function RequestSummaryCard({ values, categories }: RequestSummaryCardPro
         </AppText>
         {values.locationLabel ? (
           <AppText color="textMuted" variant="small">
-            Ubicación: {values.locationLabel}
+            Referencia: {values.locationLabel}
           </AppText>
-        ) : (
-          <AppText color="textMuted" variant="small">
-            Ubicación: no especificada
-          </AppText>
-        )}
+        ) : null}
+        <AppText color="textMuted" variant="small">
+          Punto en mapa: {values.locationLat.toFixed(4)}, {values.locationLng.toFixed(4)}
+        </AppText>
       </View>
     </Card>
   );

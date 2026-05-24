@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { StackHeader } from '@/components/layout/stack-header';
+import { LocationPickerMap } from '@/components/map/location-picker-map';
 import { UberPlanTimeline } from '@/components/ui/uber-plan-timeline';
 import { AppText } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
@@ -32,7 +33,7 @@ import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile'
 
 const STEP_FIELDS: Array<Array<keyof CreateServiceRequestFormData>> = [
   ['categoryId', 'subcategoryId'],
-  ['title', 'description'],
+  ['title', 'description', 'locationLat', 'locationLng'],
   ['urgency'],
 ];
 
@@ -75,6 +76,8 @@ export function CreateServiceRequestScreen() {
       subcategoryId: '',
       urgency: 'normal',
       locationLabel: '',
+      locationLat: 40.4168,
+      locationLng: -3.7038,
     },
     mode: 'onChange',
   });
@@ -301,18 +304,50 @@ export function CreateServiceRequestScreen() {
 
               <Controller
                 control={control}
+                name="locationLat"
+                render={({ field: latField }) => (
+                  <Controller
+                    control={control}
+                    name="locationLng"
+                    render={({ field: lngField }) => (
+                      <View style={styles.fieldGroup}>
+                        <AppText color="textMuted" variant="small">
+                          UBICACIÓN DEL TRABAJO
+                        </AppText>
+                        <LocationPickerMap
+                          disabled={createRequest.isPending}
+                          latitude={latField.value}
+                          longitude={lngField.value}
+                          onCoordinateChange={(coordinate) => {
+                            latField.onChange(coordinate.latitude);
+                            lngField.onChange(coordinate.longitude);
+                          }}
+                        />
+                        {errors.locationLat?.message || errors.locationLng?.message ? (
+                          <AppText color="destructive" variant="small">
+                            {errors.locationLat?.message ?? errors.locationLng?.message}
+                          </AppText>
+                        ) : null}
+                      </View>
+                    )}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
                 name="locationLabel"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <View style={styles.fieldGroup}>
                     <AppText color="textMuted" variant="small">
-                      UBICACIÓN (OPCIONAL)
+                      REFERENCIA (OPCIONAL)
                     </AppText>
                     <Input
                       editable={!createRequest.isPending}
                       error={errors.locationLabel?.message}
                       onBlur={onBlur}
                       onChangeText={onChange}
-                      placeholder="Barrio, calle o referencia"
+                      placeholder="Barrio, calle, portal o piso"
                       value={value}
                     />
                   </View>
