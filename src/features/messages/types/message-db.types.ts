@@ -23,6 +23,8 @@ export type MessageRow = {
   content: string;
   message_type: 'text' | 'image';
   media_url: string | null;
+  delivered_at: string | null;
+  read_at: string | null;
   created_at: string;
 };
 

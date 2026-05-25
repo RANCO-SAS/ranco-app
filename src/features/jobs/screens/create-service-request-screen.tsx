@@ -58,6 +58,7 @@ export function CreateServiceRequestScreen() {
   const categoriesQuery = useServiceCategories();
   const createRequest = useCreateServiceRequest();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isFormScrollEnabled, setIsFormScrollEnabled] = useState(true);
   const { keyboardBehavior, keyboardVerticalOffset } = useKeyboardLayout();
 
   const {
@@ -193,6 +194,8 @@ export function CreateServiceRequestScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={Platform.OS === 'android'}
+          scrollEnabled={isFormScrollEnabled}
           showsVerticalScrollIndicator={false}>
           {currentStep > 0 ? (
             <UberPlanTimeline
@@ -322,6 +325,8 @@ export function CreateServiceRequestScreen() {
                             latField.onChange(coordinate.latitude);
                             lngField.onChange(coordinate.longitude);
                           }}
+                          onInteractionEnd={() => setIsFormScrollEnabled(true)}
+                          onInteractionStart={() => setIsFormScrollEnabled(false)}
                         />
                         {errors.locationLat?.message || errors.locationLng?.message ? (
                           <AppText color="destructive" variant="small">

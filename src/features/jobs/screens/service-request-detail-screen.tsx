@@ -102,23 +102,19 @@ export function ServiceRequestDetailScreen() {
         <AppText variant="small" color="textMuted">
           Urgencia: {SERVICE_REQUEST_URGENCY_LABELS[request.urgency]}
         </AppText>
-        {request.locationLabel ? (
+      {request.locationLabel ? (
           <AppText variant="small" color="textMuted">
             Ubicación: {request.locationLabel}
           </AppText>
         ) : null}
       </Card>
 
-      {request.locationLat !== null && request.locationLng !== null ? (
-        <>
-          <Spacer size="md" />
-          <StaticLocationMap
-            latitude={request.locationLat}
-            longitude={request.locationLng}
-            title={request.locationLabel ?? request.title}
-          />
-        </>
-      ) : null}
+      <Spacer size="md" />
+      <StaticLocationMap
+        latitude={request.locationLat}
+        longitude={request.locationLng}
+        title={request.locationLabel ?? request.title}
+      />
 
       <Spacer size="md" />
 

@@ -1,8 +1,10 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 
+import { baseMapProps, mapLayoutStyles } from '@/components/map/map-config';
 import { getMapRegion, getRegionForCoordinates, type MapCoordinate } from '@/shared/utils/geo';
+import { devLog } from '@/lib/dev-logger';
 
 export type JobMapMarker = {
   id: string;
@@ -20,12 +22,20 @@ type JobMapViewProps = {
   markers: JobMapMarker[];
   selectedId?: string | null;
   userLocation?: MapCoordinate | null;
+  showUserLocation?: boolean;
   onMarkerPress?: (id: string) => void;
   onRegionChange?: (region: Region) => void;
 };
 
 export const JobMapView = forwardRef<JobMapViewHandle, JobMapViewProps>(function JobMapView(
-  { markers, selectedId, userLocation, onMarkerPress, onRegionChange },
+  {
+    markers,
+    selectedId,
+    userLocation,
+    showUserLocation = false,
+    onMarkerPress,
+    onRegionChange,
+  },
   ref,
 ) {
   const mapRef = useRef<MapView>(null);
@@ -77,31 +87,55 @@ export const JobMapView = forwardRef<JobMapViewHandle, JobMapViewProps>(function
     ) ?? getMapRegion(userLocation ?? markers[0]?.coordinate ?? { latitude: 40.4168, longitude: -3.7038 });
 
   return (
-    <MapView
-      ref={mapRef}
-      initialRegion={initialRegion}
-      onRegionChangeComplete={onRegionChange}
-      pitchEnabled={false}
-      rotateEnabled={false}
-      showsCompass={false}
-      showsMyLocationButton={false}
-      showsUserLocation={Boolean(userLocation)}
-      style={styles.map}
-      userInterfaceStyle="light">
-      {markers.map((marker) => (
-        <Marker
-          key={marker.id}
-          coordinate={marker.coordinate}
-          identifier={marker.id}
-          onPress={() => onMarkerPress?.(marker.id)}
-          pinColor={marker.selected || marker.id === selectedId ? '#11181C' : '#2563EB'}
-          title={marker.title}
-        />
-      ))}
-    </MapView>
+    <View
+      style={styles.container}
+      onLayout={(event) => {
+        devLog('map', 'discover:container-layout', {
+          width: event.nativeEvent.layout.width,
+          height: event.nativeEvent.layout.height,
+          x: event.nativeEvent.layout.x,
+          y: event.nativeEvent.layout.y,
+        });
+      }}>
+      <MapView
+        ref={mapRef}
+        {...baseMapProps}
+        initialRegion={initialRegion}
+        onMapReady={() => {
+          devLog('map', 'discover:onMapReady', {
+            markerCount: markers.length,
+            hasUserLocation: Boolean(userLocation),
+            initialRegion,
+          });
+        }}
+        onRegionChangeComplete={onRegionChange}
+        scrollEnabled
+        showsUserLocation={showUserLocation && Boolean(userLocation)}
+        style={styles.map}
+        userInterfaceStyle="light"
+        zoomEnabled>
+        {markers.map((marker) => (
+          <Marker
+            key={marker.id}
+            coordinate={marker.coordinate}
+            identifier={marker.id}
+            onPress={() => onMarkerPress?.(marker.id)}
+            pinColor={marker.selected || marker.id === selectedId ? '#11181C' : '#2563EB'}
+            title={marker.title}
+          />
+        ))}
+      </MapView>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
-  map: StyleSheet.absoluteFill,
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
 });

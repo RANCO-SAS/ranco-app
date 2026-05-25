@@ -21,8 +21,8 @@ export type ServiceRequest = {
   status: ServiceRequestStatus;
   assignedProfessionalId: string | null;
   locationLabel: string | null;
-  locationLat: number | null;
-  locationLng: number | null;
+  locationLat: number;
+  locationLng: number;
   createdAt: string;
   updatedAt: string;
 };

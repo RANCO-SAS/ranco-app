@@ -1,59 +1,74 @@
-import * as Location from 'expo-location';
 import { useCallback, useEffect, useState } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 
+import { locationService } from '@/services/location/location.service';
+import type { LocationAccessState } from '@/services/location/location.types';
 import type { MapCoordinate } from '@/shared/utils/geo';
+import { devLog } from '@/lib/dev-logger';
 
 type UseUserLocationOptions = {
   enabled?: boolean;
+  requestPermissionOnMount?: boolean;
+};
+
+type RefreshLocationOptions = {
+  requestPermission?: boolean;
 };
 
 type UseUserLocationResult = {
   location: MapCoordinate | null;
-  error: string | null;
+  access: LocationAccessState;
   isLoading: boolean;
-  permissionDenied: boolean;
-  refresh: () => Promise<MapCoordinate | null>;
+  refresh: (options?: RefreshLocationOptions) => Promise<MapCoordinate | null>;
+  openSettings: () => Promise<void>;
+};
+
+const INITIAL_ACCESS: LocationAccessState = {
+  issue: 'none',
+  message: null,
+  permissionStatus: 'undetermined' as LocationAccessState['permissionStatus'],
+  servicesEnabled: true,
+  canRequestPermission: true,
+  canOpenSettings: false,
+  isReady: false,
 };
 
 export function useUserLocation(options: UseUserLocationOptions = {}): UseUserLocationResult {
   const enabled = options.enabled ?? true;
+  const requestPermissionOnMount = options.requestPermissionOnMount ?? true;
   const [location, setLocation] = useState<MapCoordinate | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [access, setAccess] = useState<LocationAccessState>(INITIAL_ACCESS);
   const [isLoading, setIsLoading] = useState(enabled);
-  const [permissionDenied, setPermissionDenied] = useState(false);
 
-  const refresh = useCallback(async (): Promise<MapCoordinate | null> => {
-    setIsLoading(true);
-    setError(null);
+  const refresh = useCallback(
+    async (refreshOptions: RefreshLocationOptions = {}): Promise<MapCoordinate | null> => {
+      setIsLoading(true);
 
-    try {
-      const permission = await Location.requestForegroundPermissionsAsync();
+      try {
+        const result = await locationService.resolveUserLocation({
+          requestPermission: refreshOptions.requestPermission ?? false,
+        });
 
-      if (permission.status !== Location.PermissionStatus.GRANTED) {
-        setPermissionDenied(true);
-        setError('Activa la ubicación para ver oportunidades cercanas.');
-        return null;
+        setAccess(result.access);
+        setLocation(result.location);
+
+        devLog('location', 'useUserLocation:refresh', {
+          hasLocation: Boolean(result.location),
+          issue: result.access.issue,
+          servicesEnabled: result.access.servicesEnabled,
+          permissionStatus: result.access.permissionStatus,
+        });
+
+        return result.location;
+      } finally {
+        setIsLoading(false);
       }
+    },
+    [],
+  );
 
-      setPermissionDenied(false);
-
-      const currentPosition = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const nextLocation: MapCoordinate = {
-        latitude: currentPosition.coords.latitude,
-        longitude: currentPosition.coords.longitude,
-      };
-
-      setLocation(nextLocation);
-      return nextLocation;
-    } catch {
-      setError('No pudimos obtener tu ubicación.');
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
+  const openSettings = useCallback(async () => {
+    await locationService.openLocationSettings();
   }, []);
 
   useEffect(() => {
@@ -62,14 +77,32 @@ export function useUserLocation(options: UseUserLocationOptions = {}): UseUserLo
       return;
     }
 
-    void refresh();
+    void refresh({ requestPermission: requestPermissionOnMount });
+  }, [enabled, refresh, requestPermissionOnMount]);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (nextState === 'active') {
+        void refresh({ requestPermission: false });
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription.remove();
+    };
   }, [enabled, refresh]);
 
   return {
     location,
-    error,
+    access,
     isLoading,
-    permissionDenied,
     refresh,
+    openSettings,
   };
 }

@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/avatar';
 import { AppText } from '@/components/ui/text';
+import { devError, devLog } from '@/lib/dev-logger';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -33,6 +34,11 @@ export function ProfileAvatarPicker({
     }
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    devLog('storage', 'avatar-picker:permission', {
+      granted: permission.granted,
+      status: permission.status,
+      canAskAgain: permission.canAskAgain,
+    });
 
     if (!permission.granted) {
       onError?.('Necesitamos acceso a tu galería para cambiar la foto de perfil.');
@@ -47,14 +53,28 @@ export function ProfileAvatarPicker({
     });
 
     if (result.canceled || !result.assets[0]) {
+      devLog('storage', 'avatar-picker:cancelled');
       return;
     }
 
+    const asset = result.assets[0];
+    devLog('storage', 'avatar-picker:selected', {
+      uriScheme: asset.uri.split(':')[0],
+      width: asset.width,
+      height: asset.height,
+      mimeType: asset.mimeType ?? null,
+      fileSize: asset.fileSize ?? null,
+    });
+
     try {
       setIsUploading(true);
-      const avatarUrl = await onUpload(result.assets[0].uri);
+      const avatarUrl = await onUpload(asset.uri);
+      devLog('storage', 'avatar-picker:upload-success', {
+        urlPreview: avatarUrl.slice(0, 120),
+      });
       onChange(avatarUrl);
-    } catch {
+    } catch (error) {
+      devError('storage', 'avatar-picker:upload-failed', error);
       onError?.('No pudimos subir tu foto. Inténtalo de nuevo.');
     } finally {
       setIsUploading(false);

@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { conversationService } from '@/features/messages/services/conversation.service';
 import type {
+  Message,
   SendImageMessageInput,
   SendTextMessageInput,
 } from '@/features/messages/types/message.types';
+import { devError, devLog } from '@/lib/dev-logger';
 import { queryKeys } from '@/lib/query-keys';
 
 export function useConversations(userId: string | undefined) {
@@ -12,7 +14,7 @@ export function useConversations(userId: string | undefined) {
     queryKey: queryKeys.messages.conversations(userId ?? 'unknown'),
     queryFn: () => conversationService.getConversations(userId!),
     enabled: Boolean(userId),
-    refetchInterval: 10_000,
+    staleTime: 30_000,
   });
 }
 
@@ -29,7 +31,7 @@ export function useMessages(conversationId: string | undefined) {
     queryKey: [...queryKeys.messages.thread(conversationId ?? 'unknown'), 'messages'],
     queryFn: () => conversationService.getMessages(conversationId!),
     enabled: Boolean(conversationId),
-    refetchInterval: 3_000,
+    staleTime: 30_000,
   });
 }
 
@@ -56,9 +58,20 @@ export function useSendTextMessage() {
   return useMutation({
     mutationFn: (input: SendTextMessageInput) => conversationService.sendTextMessage(input),
     onSuccess: (message) => {
-      void queryClient.invalidateQueries({
-        queryKey: [...queryKeys.messages.thread(message.conversationId), 'messages'],
-      });
+      queryClient.setQueryData<Message[]>(
+        [...queryKeys.messages.thread(message.conversationId), 'messages'],
+        (current) => {
+          if (!current) {
+            return [message];
+          }
+
+          if (current.some((item) => item.id === message.id)) {
+            return current;
+          }
+
+          return [...current, message];
+        },
+      );
       void queryClient.invalidateQueries({ queryKey: queryKeys.messages.all });
     },
   });
@@ -69,10 +82,27 @@ export function useSendImageMessage() {
 
   return useMutation({
     mutationFn: (input: SendImageMessageInput) => conversationService.sendImageMessage(input),
-    onSuccess: (message) => {
-      void queryClient.invalidateQueries({
-        queryKey: [...queryKeys.messages.thread(message.conversationId), 'messages'],
+    onError: (error, input) => {
+      devError('storage', 'chat-image:mutation-failed', error, {
+        conversationId: input.conversationId,
+        uriScheme: input.mediaUri.split(':')[0],
       });
+    },
+    onSuccess: (message) => {
+      queryClient.setQueryData<Message[]>(
+        [...queryKeys.messages.thread(message.conversationId), 'messages'],
+        (current) => {
+          if (!current) {
+            return [message];
+          }
+
+          if (current.some((item) => item.id === message.id)) {
+            return current;
+          }
+
+          return [...current, message];
+        },
+      );
       void queryClient.invalidateQueries({ queryKey: queryKeys.messages.all });
     },
   });

@@ -11,6 +11,7 @@ import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
 import { SERVICE_REQUEST_STATUS_LABELS } from '@/features/jobs/constants/service-request-labels';
 import { useConversations } from '@/features/messages/hooks/use-conversations';
+import { useConversationsRealtime } from '@/features/messages/hooks/use-messages-realtime';
 import type { Conversation } from '@/features/messages/types/message.types';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
 
@@ -65,6 +66,11 @@ export function MessagesListScreen() {
   const router = useRouter();
   const { profile } = useCurrentProfile();
   const conversationsQuery = useConversations(profile?.id);
+
+  useConversationsRealtime({
+    enabled: Boolean(profile?.id),
+    userId: profile?.id,
+  });
 
   if (conversationsQuery.isLoading) {
     return <ScreenLayout loading loadingMessage="Cargando mensajes..." safeArea="tab" />;

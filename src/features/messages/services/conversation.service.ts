@@ -12,6 +12,7 @@ import {
 } from '@/features/messages/services/message.mapper';
 import { getSupabaseClient } from '@/services/supabase/client';
 import { storageService } from '@/services/storage/storage.service';
+import { devError, devLog } from '@/lib/dev-logger';
 
 const CONVERSATIONS_TABLE = 'conversations';
 const MESSAGES_TABLE = 'messages';
@@ -161,7 +162,23 @@ async function sendTextMessage(input: SendTextMessageInput): Promise<Message> {
 }
 
 async function sendImageMessage(input: SendImageMessageInput): Promise<Message> {
-  const mediaUrl = await storageService.uploadChatImage(input.conversationId, input.mediaUri);
+  devLog('storage', 'sendImageMessage:start', {
+    conversationId: input.conversationId,
+    senderId: input.senderId,
+    uriScheme: input.mediaUri.split(':')[0],
+  });
+
+  let mediaUrl: string;
+
+  try {
+    mediaUrl = await storageService.uploadChatImage(input.conversationId, input.mediaUri);
+  } catch (error) {
+    devError('storage', 'sendImageMessage:upload-failed', error, {
+      conversationId: input.conversationId,
+    });
+    throw error;
+  }
+
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from(MESSAGES_TABLE)
@@ -176,10 +193,44 @@ async function sendImageMessage(input: SendImageMessageInput): Promise<Message> 
     .single();
 
   if (error) {
+    devError('storage', 'sendImageMessage:insert-failed', error, {
+      conversationId: input.conversationId,
+    });
     throw error;
   }
 
+  devLog('storage', 'sendImageMessage:success', { messageId: data.id });
   return mapMessageRow(data as MessageRow);
+}
+
+async function markMessagesDelivered(messageIds: string[]): Promise<void> {
+  if (messageIds.length === 0) {
+    return;
+  }
+
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.rpc('mark_messages_delivered', {
+    p_message_ids: messageIds,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function markMessagesRead(messageIds: string[]): Promise<void> {
+  if (messageIds.length === 0) {
+    return;
+  }
+
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.rpc('mark_messages_read', {
+    p_message_ids: messageIds,
+  });
+
+  if (error) {
+    throw error;
+  }
 }
 
 export const conversationService = {
@@ -189,4 +240,6 @@ export const conversationService = {
   startConversation,
   sendTextMessage,
   sendImageMessage,
+  markMessagesDelivered,
+  markMessagesRead,
 };

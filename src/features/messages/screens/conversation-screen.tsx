@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChatHeader } from '@/components/layout/chat-header';
+import { MessageStatusIndicator } from '@/features/messages/components/message-status-indicator';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -23,11 +24,20 @@ import {
   useSendImageMessage,
   useSendTextMessage,
 } from '@/features/messages/hooks/use-conversations';
+import {
+  useMessageReceipts,
+  useMessagesRealtime,
+} from '@/features/messages/hooks/use-messages-realtime';
 import type { Conversation, Message } from '@/features/messages/types/message.types';
+import {
+  formatMessageTime,
+  getMessageDeliveryStatus,
+} from '@/features/messages/utils/message-status';
 import { ReviewForm } from '@/features/reviews/components/review-form';
 import { useJobReview } from '@/features/reviews/hooks/use-reviews';
 import { useKeyboardLayout } from '@/hooks/use-keyboard-layout';
 import { useTheme } from '@/hooks/use-theme';
+import { devError, devLog } from '@/lib/dev-logger';
 
 type MessageBubbleProps = {
   message: Message;
@@ -36,15 +46,25 @@ type MessageBubbleProps = {
 
 function MessageBubble({ message, isOwn }: MessageBubbleProps) {
   const theme = useTheme();
+  const deliveryStatus = getMessageDeliveryStatus(message);
+  const timeLabel = formatMessageTime(message.createdAt);
 
   if (message.type === 'image' && message.mediaUrl) {
     return (
       <View style={[styles.bubbleRow, isOwn ? styles.bubbleRowOwn : styles.bubbleRowOther]}>
-        <Image
-          contentFit="cover"
-          source={{ uri: message.mediaUrl }}
-          style={[styles.imageBubble, { backgroundColor: theme.backgroundElement }]}
-        />
+        <View style={styles.imageBubbleWrapper}>
+          <Image
+            contentFit="cover"
+            source={{ uri: message.mediaUrl }}
+            style={[styles.imageBubble, { backgroundColor: theme.backgroundElement }]}
+          />
+          <View style={[styles.metaRow, styles.imageMetaRow]}>
+            <AppText color="textMuted" variant="small">
+              {timeLabel}
+            </AppText>
+            <MessageStatusIndicator isOwn={isOwn} status={deliveryStatus} />
+          </View>
+        </View>
       </View>
     );
   }
@@ -61,6 +81,15 @@ function MessageBubble({ message, isOwn }: MessageBubbleProps) {
         <AppText color={isOwn ? 'primaryForeground' : 'text'} variant="body">
           {message.content}
         </AppText>
+        <View style={styles.metaRow}>
+          <AppText
+            color={isOwn ? 'primaryForeground' : 'textMuted'}
+            style={isOwn ? styles.metaOnPrimary : undefined}
+            variant="small">
+            {timeLabel}
+          </AppText>
+          <MessageStatusIndicator isOwn={isOwn} status={deliveryStatus} />
+        </View>
       </View>
     </View>
   );
@@ -103,6 +132,19 @@ export function ConversationScreen() {
   const canSend = useMemo(() => draft.trim().length > 0, [draft]);
   const isPending = sendTextMessage.isPending || sendImageMessage.isPending;
 
+  useMessagesRealtime({
+    conversationId,
+    enabled: Boolean(conversation),
+    userId: session?.userId,
+  });
+
+  useMessageReceipts({
+    conversationId,
+    enabled: Boolean(conversation),
+    messages,
+    userId: session?.userId,
+  });
+
   const handleSend = () => {
     if (!session?.userId || !conversationId || !canSend) {
       return;
@@ -128,8 +170,14 @@ export function ConversationScreen() {
     }
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    devLog('storage', 'chat-image:permission', {
+      granted: permission.granted,
+      status: permission.status,
+      canAskAgain: permission.canAskAgain,
+    });
 
     if (!permission.granted) {
+      devLog('storage', 'chat-image:permission-denied');
       return;
     }
 
@@ -139,14 +187,31 @@ export function ConversationScreen() {
     });
 
     if (result.canceled || !result.assets[0]) {
+      devLog('storage', 'chat-image:cancelled');
       return;
     }
 
-    sendImageMessage.mutate({
-      conversationId,
-      senderId: session.userId,
-      mediaUri: result.assets[0].uri,
+    const asset = result.assets[0];
+    devLog('storage', 'chat-image:selected', {
+      uriScheme: asset.uri.split(':')[0],
+      width: asset.width,
+      height: asset.height,
+      mimeType: asset.mimeType ?? null,
+      fileSize: asset.fileSize ?? null,
     });
+
+    sendImageMessage.mutate(
+      {
+        conversationId,
+        senderId: session.userId,
+        mediaUri: asset.uri,
+      },
+      {
+        onError: (error) => {
+          devError('storage', 'chat-image:send-failed', error, { conversationId });
+        },
+      },
+    );
   };
 
   if (conversationQuery.isLoading || messagesQuery.isLoading) {
@@ -317,6 +382,23 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
+    gap: Spacing.xs,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+  },
+  metaOnPrimary: {
+    opacity: 0.85,
+  },
+  imageBubbleWrapper: {
+    maxWidth: '80%',
+    gap: Spacing.xs,
+  },
+  imageMetaRow: {
+    justifyContent: 'flex-end',
   },
   imageBubble: {
     width: 220,

@@ -42,6 +42,8 @@ export function mapMessageRow(row: MessageRow): Message {
     type: row.message_type,
     content: row.content,
     mediaUrl: row.media_url,
+    deliveredAt: row.delivered_at,
+    readAt: row.read_at,
     createdAt: row.created_at,
   };
 }

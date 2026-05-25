@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
+import { baseMapProps, mapLayoutStyles } from '@/components/map/map-config';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getMapRegion, toMapCoordinate } from '@/shared/utils/geo';
@@ -20,14 +21,13 @@ export function StaticLocationMap({ latitude, longitude, title }: StaticLocation
   }
 
   return (
-    <View style={[styles.container, { borderColor: theme.border }]}>
+    <View style={[styles.container, mapLayoutStyles.rounded, { borderColor: theme.border }]}>
       <MapView
+        {...baseMapProps}
         initialRegion={getMapRegion(coordinate, 0.008)}
-        pitchEnabled={false}
-        rotateEnabled={false}
         scrollEnabled={false}
-        zoomEnabled={false}
-        style={styles.map}>
+        style={[mapLayoutStyles.fill, mapLayoutStyles.rounded]}
+        zoomEnabled={false}>
         <Marker coordinate={coordinate} title={title} />
       </MapView>
     </View>
@@ -37,11 +37,6 @@ export function StaticLocationMap({ latitude, longitude, title }: StaticLocation
 const styles = StyleSheet.create({
   container: {
     height: 180,
-    borderRadius: Radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-  },
-  map: {
-    flex: 1,
   },
 });

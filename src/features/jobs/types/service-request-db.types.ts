@@ -8,8 +8,8 @@ export type ServiceRequestRow = {
   urgency: string;
   status: string;
   location_label: string | null;
-  location_lat: number | null;
-  location_lng: number | null;
+  location_lat: number;
+  location_lng: number;
   assigned_professional_id: string | null;
   created_at: string;
   updated_at: string;

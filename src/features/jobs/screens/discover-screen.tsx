@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { JobMapView, type JobMapViewHandle } from '@/components/map/job-map-view';
+import { LocationStatusBanner } from '@/components/map/location-status-banner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -19,6 +20,8 @@ import { Layout, Radius, Spacing } from '@/constants/theme';
 import { Routes } from '@/constants/routes';
 import { JobOpportunityCard } from '@/features/jobs/components/discover/job-opportunity-card';
 import { usePublishedServiceRequests } from '@/features/jobs/hooks/use-service-requests';
+import { usePublishedJobsRealtime } from '@/features/jobs/hooks/use-published-jobs-realtime';
+import { devLog } from '@/lib/dev-logger';
 import type { ServiceRequest } from '@/features/jobs/types/service-request.types';
 import { useStartConversation } from '@/features/messages/hooks/use-conversations';
 import { ActiveModeBanner } from '@/features/profile/components/active-mode-banner';
@@ -50,14 +53,31 @@ export function DiscoverScreen() {
 
   const {
     location: userLocation,
-    error: locationError,
+    access: locationAccess,
     isLoading: isLocationLoading,
     refresh: refreshLocation,
-  } = useUserLocation({ enabled: Boolean(profile?.isProfessional && isProfessionalMode) });
+    openSettings: openLocationSettings,
+  } = useUserLocation({
+    enabled: Boolean(profile?.isProfessional && isProfessionalMode),
+    requestPermissionOnMount: true,
+  });
 
   const publishedRequests = usePublishedServiceRequests(
     Boolean(profile?.isProfessional && isProfessionalMode),
   );
+
+  usePublishedJobsRealtime({
+    enabled: Boolean(profile?.isProfessional && isProfessionalMode),
+  });
+
+  useEffect(() => {
+    devLog('location', 'discover:access-state', {
+      issue: locationAccess.issue,
+      servicesEnabled: locationAccess.servicesEnabled,
+      permissionStatus: locationAccess.permissionStatus,
+      hasLocation: Boolean(userLocation),
+    });
+  }, [locationAccess, userLocation]);
 
   const professionalAreas = profile?.professionalSubcategoryIds ?? [];
 
@@ -228,6 +248,7 @@ export function DiscoverScreen() {
         markers={markers}
         onMarkerPress={handleSelectRequest}
         selectedId={selectedRequestId}
+        showUserLocation={locationAccess.issue === 'none'}
         userLocation={userLocation}
       />
 
@@ -237,17 +258,15 @@ export function DiscoverScreen() {
             <View style={styles.headerText}>
               <AppText variant="title">Oportunidades</AppText>
               <AppText color="textSecondary" variant="caption">
-                {nearbyOpportunities.length} en mapa · actualización cada 15 s
+                {nearbyOpportunities.length} en mapa · tiempo real
+                {userLocation ? ' · GPS activo' : locationAccess.isReady ? ' · sin GPS' : ''}
               </AppText>
             </View>
             <Pressable
               accessibilityRole="button"
               onPress={() => {
-                if (userLocation) {
-                  setSelectedRequestId(null);
-                }
-
-                void refreshLocation();
+                setSelectedRequestId(null);
+                void refreshLocation({ requestPermission: true });
                 void publishedRequests.refetch();
               }}
               style={[styles.refreshButton, { borderColor: theme.border, backgroundColor: theme.backgroundSecondary }]}>
@@ -255,16 +274,18 @@ export function DiscoverScreen() {
             </Pressable>
           </View>
           <ActiveModeBanner mode="professional" />
+
+          <LocationStatusBanner
+            access={locationAccess}
+            onOpenSettings={() => {
+              void openLocationSettings();
+            }}
+            onRequestPermission={() => {
+              void refreshLocation({ requestPermission: true });
+            }}
+          />
         </View>
       </SafeAreaView>
-
-      {locationError ? (
-        <View style={[styles.locationBanner, { backgroundColor: theme.background }]}>
-          <AppText color="textSecondary" variant="caption">
-            {locationError}
-          </AppText>
-        </View>
-      ) : null}
 
       <View style={styles.bottomPanel}>
         {nearbyOpportunities.length === 0 ? (
@@ -363,15 +384,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  locationBanner: {
-    position: 'absolute',
-    top: 140,
-    left: Layout.screenPaddingHorizontal,
-    right: Layout.screenPaddingHorizontal,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
   },
   bottomPanel: {
     position: 'absolute',

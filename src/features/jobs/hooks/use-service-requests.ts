@@ -11,15 +11,14 @@ export function useClientServiceRequests(clientId: string | undefined) {
   });
 }
 
-const PUBLISHED_REQUESTS_REFRESH_MS = 15_000;
+const PUBLISHED_REQUESTS_STALE_MS = 30_000;
 
 export function usePublishedServiceRequests(enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.jobs.published,
     queryFn: () => serviceRequestService.getPublishedRequests(),
     enabled,
-    refetchInterval: enabled ? PUBLISHED_REQUESTS_REFRESH_MS : false,
-    refetchIntervalInBackground: false,
+    staleTime: PUBLISHED_REQUESTS_STALE_MS,
   });
 }
 

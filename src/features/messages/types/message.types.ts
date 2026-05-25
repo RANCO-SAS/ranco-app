@@ -21,6 +21,8 @@ export type Conversation = {
 
 export type MessageType = 'text' | 'image';
 
+export type MessageDeliveryStatus = 'sent' | 'delivered' | 'read';
+
 export type Message = {
   id: string;
   conversationId: string;
@@ -28,6 +30,8 @@ export type Message = {
   type: MessageType;
   content: string;
   mediaUrl: string | null;
+  deliveredAt: string | null;
+  readAt: string | null;
   createdAt: string;
 };
 
