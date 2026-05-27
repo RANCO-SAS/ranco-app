@@ -1,21 +1,22 @@
+import Constants from 'expo-constants';
+
 type Env = {
   supabaseUrl: string;
   supabaseAnonKey: string;
 };
 
-function getRequiredEnv(key: string): string {
-  const value = process.env[key];
+type SupabaseExtra = {
+  supabaseUrl?: string;
+  supabaseAnonKey?: string;
+};
 
-  if (!value) {
-    return '';
-  }
-
-  return value;
-}
+const extra = Constants.expoConfig?.extra as SupabaseExtra | undefined;
 
 export const env: Env = {
-  supabaseUrl: getRequiredEnv('EXPO_PUBLIC_SUPABASE_URL'),
-  supabaseAnonKey: getRequiredEnv('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
+  supabaseUrl:
+    process.env.EXPO_PUBLIC_SUPABASE_URL ?? extra?.supabaseUrl ?? '',
+  supabaseAnonKey:
+    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? extra?.supabaseAnonKey ?? '',
 };
 
 export function isSupabaseConfigured(): boolean {
