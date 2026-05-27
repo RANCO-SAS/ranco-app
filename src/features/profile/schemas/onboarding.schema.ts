@@ -4,23 +4,20 @@ import { PROFESSIONAL_SERVICE_SELECTION } from '@/constants/profile';
 
 export const onboardingSchema = z
   .object({
-    fullName: z.string().min(2, 'Ingresa tu nombre completo'),
-    phone: z.string().optional(),
-    locationLabel: z.string().optional(),
-    avatarUrl: z
-      .string()
-      .optional()
-      .refine((value) => !value || z.url().safeParse(value).success, 'Ingresa una URL válida'),
+    fullName: z.string().trim().min(2, 'Ingresa tu nombre completo'),
+    phone: z.string().trim().optional().or(z.literal('')),
+    locationLabel: z.string().trim().optional().or(z.literal('')),
+    avatarUrl: z.string().optional().or(z.literal('')),
     isClient: z.boolean(),
     isProfessional: z.boolean(),
     professionalSubcategoryIds: z.array(z.string().uuid()),
   })
   .refine((data) => data.isClient || data.isProfessional, {
-    message: 'Selecciona al menos un rol: cliente o profesional',
+    message: 'Elige al menos una forma de usar Ranco',
     path: ['isClient'],
   })
   .refine((data) => !data.isProfessional || data.professionalSubcategoryIds.length > 0, {
-    message: 'Agrega al menos un servicio que ofreces como profesional',
+    message: 'Elige al menos un servicio que ofreces',
     path: ['professionalSubcategoryIds'],
   })
   .refine(
@@ -34,3 +31,9 @@ export const onboardingSchema = z
   );
 
 export type OnboardingFormData = z.infer<typeof onboardingSchema>;
+
+export const ONBOARDING_PROFILE_FIELDS = ['fullName', 'phone', 'locationLabel', 'avatarUrl'] as const;
+
+export const ONBOARDING_ROLE_FIELDS = ['isClient', 'isProfessional'] as const;
+
+export const ONBOARDING_SERVICES_FIELDS = ['professionalSubcategoryIds'] as const;

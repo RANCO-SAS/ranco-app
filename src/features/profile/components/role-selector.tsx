@@ -1,138 +1,125 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
-import { Card } from '@/components/ui/card';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-type RoleOption = 'client' | 'professional';
+type RoleSelection = {
+  isClient: boolean;
+  isProfessional: boolean;
+};
 
 type RoleSelectorProps = {
   isClient: boolean;
   isProfessional: boolean;
-  onToggleClient: () => void;
-  onToggleProfessional: () => void;
-  onActivateProfessional?: () => void;
+  onChange: (selection: RoleSelection) => void;
   error?: string;
   disabled?: boolean;
 };
 
-function canDisableRole(props: RoleSelectorProps, role: RoleOption): boolean {
-  if (role === 'client') {
-    return props.isClient && props.isProfessional;
-  }
-
-  return props.isProfessional && props.isClient;
-}
-
-const ROLE_OPTIONS: Array<{
-  key: RoleOption;
+type RoleOption = {
+  key: 'client' | 'professional';
   title: string;
-  description: string;
-  isSelected: (props: RoleSelectorProps) => boolean;
-  onToggle: (props: RoleSelectorProps) => void;
-}> = [
+  emoji: string;
+};
+
+const ROLE_OPTIONS: RoleOption[] = [
   {
     key: 'client',
-    title: 'Cliente',
-    description: 'Pedir y publicar servicios',
-    isSelected: (props) => props.isClient,
-    onToggle: (props) => props.onToggleClient,
+    emoji: '🏠',
+    title: 'Busco servicios',
   },
   {
     key: 'professional',
-    title: 'Profesional',
-    description: 'Ofrecer servicios y ver oportunidades',
-    isSelected: (props) => props.isProfessional,
-    onToggle: (props) => props.onToggleProfessional,
+    emoji: '🛠️',
+    title: 'Ofrezco servicios',
   },
 ];
 
-export function RoleSelector(props: RoleSelectorProps) {
+function isSelected(selection: RoleSelection, key: RoleOption['key']): boolean {
+  return key === 'client' ? selection.isClient : selection.isProfessional;
+}
+
+function toggleRole(selection: RoleSelection, key: RoleOption['key']): RoleSelection | null {
+  const nextClient = key === 'client' ? !selection.isClient : selection.isClient;
+  const nextProfessional =
+    key === 'professional' ? !selection.isProfessional : selection.isProfessional;
+
+  if (!nextClient && !nextProfessional) {
+    return null;
+  }
+
+  return {
+    isClient: nextClient,
+    isProfessional: nextProfessional,
+  };
+}
+
+export function RoleSelector({
+  isClient,
+  isProfessional,
+  onChange,
+  error,
+  disabled = false,
+}: RoleSelectorProps) {
   const theme = useTheme();
-  const { error, disabled } = props;
+  const selection = { isClient, isProfessional };
 
   return (
     <View style={styles.wrapper}>
-      <AppText color="textMuted" variant="small">
-        TUS ROLES EN RANCO
-      </AppText>
-      <AppText color="textSecondary" variant="caption">
-        Puedes activar uno o ambos. Necesitas al menos uno activo.
-      </AppText>
+      <AppText variant="subtitle">¿Cómo quieres usar Ranco?</AppText>
 
       <View style={styles.options}>
         {ROLE_OPTIONS.map((option) => {
-          const selected = option.isSelected(props);
-          const canDisable = canDisableRole(props, option.key);
-          const isLocked = selected && !canDisable;
+          const selected = isSelected(selection, option.key);
 
           return (
             <Pressable
               key={option.key}
-              accessibilityRole="switch"
-              accessibilityState={{ checked: selected, disabled: disabled || isLocked }}
-              disabled={disabled || isLocked}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: selected, disabled }}
+              disabled={disabled}
               onPress={() => {
-                if (disabled) {
+                const nextSelection = toggleRole(selection, option.key);
+
+                if (!nextSelection) {
                   return;
                 }
 
-                if (selected && !canDisable) {
-                  return;
-                }
-
-                if (option.key === 'professional' && !selected && props.onActivateProfessional) {
-                  props.onActivateProfessional();
-                  return;
-                }
-
-                option.onToggle(props);
+                onChange(nextSelection);
               }}
-              style={[
+              style={({ pressed }) => [
                 styles.option,
                 {
-                  backgroundColor: selected ? theme.text : theme.backgroundSecondary,
-                  borderColor: selected ? theme.text : theme.border,
-                  opacity: disabled ? 0.5 : 1,
+                  backgroundColor: selected ? `${theme.primary}12` : theme.background,
+                  borderColor: selected ? theme.primary : theme.border,
+                  opacity: disabled ? 0.6 : pressed ? 0.92 : 1,
                 },
               ]}>
               <View style={styles.optionHeader}>
-                <AppText color={selected ? 'background' : 'text'} variant="bodyMedium">
-                  {option.title}
-                </AppText>
+                <View style={styles.titleRow}>
+                  <AppText style={styles.emoji}>{option.emoji}</AppText>
+                  <AppText variant="bodyMedium">{option.title}</AppText>
+                </View>
                 <View
                   style={[
-                    styles.badge,
+                    styles.checkbox,
                     {
-                      backgroundColor: selected ? theme.background : theme.backgroundElement,
+                      borderColor: selected ? theme.primary : theme.border,
+                      backgroundColor: selected ? theme.primary : theme.background,
                     },
                   ]}>
-                  <AppText color={selected ? 'text' : 'textMuted'} variant="small">
-                    {selected ? 'Activo' : 'Inactivo'}
-                  </AppText>
+                  {selected ? (
+                    <AppText color="background" variant="small">
+                      ✓
+                    </AppText>
+                  ) : null}
                 </View>
               </View>
-              <AppText color={selected ? 'background' : 'textSecondary'} variant="caption">
-                {option.description}
-              </AppText>
-              {isLocked ? (
-                <AppText color={selected ? 'background' : 'textMuted'} variant="small">
-                  Debes mantener al menos un rol activo
-                </AppText>
-              ) : null}
             </Pressable>
           );
         })}
       </View>
-
-      {props.isClient && props.isProfessional ? (
-        <Card>
-          <AppText color="textSecondary" variant="caption">
-            Tienes ambos roles. En Perfil podrás alternar entre modo cliente y modo profesional.
-          </AppText>
-        </Card>
-      ) : null}
 
       {error ? (
         <AppText color="destructive" variant="small">
@@ -145,26 +132,38 @@ export function RoleSelector(props: RoleSelectorProps) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
   options: {
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   option: {
-    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderWidth: 2,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
-    gap: Spacing.sm,
   },
   optionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
-  badge: {
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    flex: 1,
+  },
+  emoji: {
+    fontSize: 22,
+    lineHeight: 26,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
     borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
