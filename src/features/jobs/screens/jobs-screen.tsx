@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ScreenLayout } from '@/components/layout/screen-layout';
@@ -64,18 +64,15 @@ export function JobsScreen() {
             {requests.length === 0 ? (
               <EmptyState title="Sin solicitudes" />
             ) : (
-              <FlatList
-                data={requests}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
+              <View style={styles.list}>
+                {requests.map((item) => (
                   <ServiceRequestCard
+                    key={item.id}
                     onPress={() => router.push(Routes.app.jobDetail(item.id))}
                     request={item}
                   />
-                )}
-                scrollEnabled={false}
-                contentContainerStyle={styles.list}
-              />
+                ))}
+              </View>
             )}
           </>
         )}

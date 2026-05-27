@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { FlatList, Pressable, StyleSheet, type ListRenderItem } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { Section } from '@/components/layout/section';
@@ -73,15 +73,6 @@ export function DiscoverScreen() {
     );
   };
 
-  const renderOpportunity: ListRenderItem<ServiceRequest> = ({ item }) => (
-    <JobOpportunityCard
-      isContactLoading={startConversation.isPending}
-      onContactPress={() => handleContact(item.id, item.clientId)}
-      onDetailsPress={() => router.push(Routes.app.jobDetail(item.id))}
-      request={item}
-    />
-  );
-
   if (publishedRequests.isLoading) {
     return (
       <ScreenLayout loading loadingMessage="Cargando..." safeArea="tab" />
@@ -137,7 +128,7 @@ export function DiscoverScreen() {
   }
 
   return (
-    <ScreenLayout safeArea="tab">
+    <ScreenLayout safeArea="tab" scrollable>
       <Section title="Oportunidades">
         <Pressable
           accessibilityRole="button"
@@ -153,13 +144,17 @@ export function DiscoverScreen() {
         {opportunities.length === 0 ? (
           <EmptyState title="Sin oportunidades" />
         ) : (
-          <FlatList
-            contentContainerStyle={styles.listContent}
-            data={opportunities}
-            keyExtractor={(item) => item.id}
-            renderItem={renderOpportunity}
-            scrollEnabled={false}
-          />
+          <View style={styles.listContent}>
+            {opportunities.map((item) => (
+              <JobOpportunityCard
+                key={item.id}
+                isContactLoading={startConversation.isPending}
+                onContactPress={() => handleContact(item.id, item.clientId)}
+                onDetailsPress={() => router.push(Routes.app.jobDetail(item.id))}
+                request={item}
+              />
+            ))}
+          </View>
         )}
       </Section>
     </ScreenLayout>

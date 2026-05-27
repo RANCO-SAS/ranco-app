@@ -1,4 +1,4 @@
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { Avatar } from '@/components/ui/avatar';
@@ -98,19 +98,16 @@ export function MessagesListScreen() {
         {conversations.length === 0 ? (
           <EmptyState title="Sin conversaciones" />
         ) : (
-          <FlatList
-            data={conversations}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
+          <View style={styles.list}>
+            {conversations.map((item) => (
               <ConversationListItem
+                key={item.id}
                 conversation={item}
                 currentUserId={profile?.id ?? ''}
                 onPress={() => router.push(Routes.app.conversation(item.id))}
               />
-            )}
-            scrollEnabled={false}
-            contentContainerStyle={styles.list}
-          />
+            ))}
+          </View>
         )}
       </Section>
     </ScreenLayout>

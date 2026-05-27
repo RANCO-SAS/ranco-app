@@ -1,7 +1,9 @@
 import { Platform, Text, type ColorValue } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 
 import { AppTabBar } from '@/components/navigation/app-tab-bar';
+import { Routes } from '@/constants/routes';
 import { Colors, Spacing } from '@/constants/theme';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -9,7 +11,20 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const router = useRouter();
+  const pathname = usePathname();
   const { showDiscoverTab, showJobsTab } = useActiveMode();
+
+  useEffect(() => {
+    if (!showDiscoverTab && pathname.includes('(tabs)/discover')) {
+      router.replace(Routes.app.home);
+      return;
+    }
+
+    if (!showJobsTab && pathname.includes('(tabs)/jobs')) {
+      router.replace(Routes.app.home);
+    }
+  }, [pathname, router, showDiscoverTab, showJobsTab]);
 
   return (
     <Tabs
