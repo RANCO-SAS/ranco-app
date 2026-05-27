@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ranco",
+    "name": "Ranco",
     "slug": "ranco",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,6 +8,7 @@
     "scheme": "ranco",
     "userInterfaceStyle": "automatic",
     "android": {
+      "package": "com.ranco.app",
       "adaptiveIcon": {
         "backgroundColor": "#208AEF",
         "foregroundImage": "./assets/images/ranco-icon.png"
