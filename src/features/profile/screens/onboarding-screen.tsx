@@ -209,7 +209,7 @@ export function OnboardingScreen() {
                     throw new Error('Sesión no disponible.');
                   }
 
-                  return storageService.uploadAvatar(session.userId, uri);
+                  return storageService.uploadAvatar(session.userId, uri, profile?.avatarUrl);
                 }}
                 value={avatarUrl}
               />

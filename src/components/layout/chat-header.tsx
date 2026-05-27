@@ -13,12 +13,14 @@ type ChatHeaderProps = {
   title: string;
   participant: ConversationParticipant;
   serviceRequestStatus: ServiceRequestStatus;
+  onParticipantPress?: () => void;
 };
 
 export function ChatHeader({
   title,
   participant,
   serviceRequestStatus,
+  onParticipantPress,
 }: ChatHeaderProps) {
   const router = useRouter();
   const theme = useTheme();
@@ -36,7 +38,11 @@ export function ChatHeader({
         </AppText>
       </Pressable>
 
-      <View style={styles.center}>
+      <Pressable
+        accessibilityRole="button"
+        disabled={!onParticipantPress}
+        onPress={onParticipantPress}
+        style={styles.center}>
         <Avatar imageUrl={participant.avatarUrl} name={participant.fullName} size={40} />
         <View style={styles.meta}>
           <AppText numberOfLines={1} variant="bodyMedium">
@@ -46,7 +52,7 @@ export function ChatHeader({
             {title} · {SERVICE_REQUEST_STATUS_LABELS[serviceRequestStatus]}
           </AppText>
         </View>
-      </View>
+      </Pressable>
 
       <View style={styles.backButton} />
     </View>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
@@ -6,48 +6,88 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { AppText } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
+import { ReviewEvidenceUploader } from '@/features/reviews/components/review-evidence-uploader';
+import { ReviewSummaryCard } from '@/features/reviews/components/review-summary-card';
+import { TraitRatingRow } from '@/features/reviews/components/trait-rating-row';
+import {
+  buildDefaultTraits,
+  computeAverageRating,
+  getReviewTraitsForReviewee,
+  validateTraits,
+  type ReviewTraits,
+} from '@/features/reviews/constants/review-traits';
 import { useCreateReview } from '@/features/reviews/hooks/use-reviews';
+import type { Review } from '@/features/reviews/types/review.types';
 
 type ReviewFormProps = {
   serviceRequestId: string;
   reviewerId: string;
   revieweeId: string;
   revieweeName: string;
-  existingRating?: number;
+  revieweeIsProfessional: boolean;
+  existingReview?: Review | null;
 };
-
-const RATING_OPTIONS = [1, 2, 3, 4, 5] as const;
 
 export function ReviewForm({
   serviceRequestId,
   reviewerId,
   revieweeId,
   revieweeName,
-  existingRating,
+  revieweeIsProfessional,
+  existingReview,
 }: ReviewFormProps) {
   const createReview = useCreateReview();
-  const [rating, setRating] = useState(existingRating ?? 5);
+  const traitDefinitions = useMemo(
+    () => getReviewTraitsForReviewee(revieweeIsProfessional),
+    [revieweeIsProfessional],
+  );
+  const [traits, setTraits] = useState<ReviewTraits>(
+    existingReview?.traits ?? buildDefaultTraits(traitDefinitions),
+  );
   const [comment, setComment] = useState('');
+  const [submittedReview, setSubmittedReview] = useState<Review | null>(existingReview ?? null);
 
-  if (existingRating) {
+  const activeReview = submittedReview ?? existingReview ?? null;
+
+  if (activeReview) {
     return (
       <Card>
-        <AppText variant="bodyMedium">{existingRating}★</AppText>
+        <AppText variant="bodyMedium">Tu reseña</AppText>
+        <View style={styles.existingReview}>
+          <ReviewSummaryCard review={activeReview} revieweeIsProfessional={revieweeIsProfessional} />
+        </View>
+        <ReviewEvidenceUploader
+          initialUrls={activeReview.evidenceUrls}
+          reviewId={activeReview.id}
+          reviewerId={reviewerId}
+        />
       </Card>
     );
   }
 
+  const averageRating = computeAverageRating(traits);
+  const canSubmit = validateTraits(traits, traitDefinitions);
+
   return (
     <Card>
-      <AppText variant="bodyMedium">{revieweeName}</AppText>
+      <AppText variant="bodyMedium">Valorar a {revieweeName}</AppText>
+      <AppText color="textSecondary" variant="caption">
+        Promedio: {averageRating.toFixed(1)}★
+      </AppText>
 
-      <View style={styles.ratingRow}>
-        {RATING_OPTIONS.map((value) => (
-          <Button
-            key={value}
-            label={`${value}★`}
-            onPress={() => setRating(value)}
-            variant={rating === value ? 'dark' : 'secondary'}
+      <View style={styles.traits}>
+        {traitDefinitions.map((definition) => (
+          <TraitRatingRow
+            key={definition.key}
+            definition={definition}
+            disabled={createReview.isPending}
+            onChange={(value) => {
+              setTraits((current) => ({
+                ...current,
+                [definition.key]: value,
+              }));
+            }}
+            value={traits[definition.key] ?? 5}
           />
         ))}
       </View>
@@ -63,16 +103,28 @@ export function ReviewForm({
       />
 
       <Button
-        disabled={createReview.isPending}
+        disabled={createReview.isPending || !canSubmit}
         label={createReview.isPending ? 'Enviando reseña...' : 'Publicar reseña'}
         onPress={() => {
-          createReview.mutate({
-            serviceRequestId,
-            reviewerId,
-            revieweeId,
-            rating,
-            comment,
-          });
+          if (!validateTraits(traits, traitDefinitions)) {
+            return;
+          }
+
+          createReview.mutate(
+            {
+              serviceRequestId,
+              reviewerId,
+              revieweeId,
+              rating: computeAverageRating(traits),
+              traits,
+              comment,
+            },
+            {
+              onSuccess: (review) => {
+                setSubmittedReview(review);
+              },
+            },
+          );
         }}
         variant="dark"
       />
@@ -81,10 +133,11 @@ export function ReviewForm({
 }
 
 const styles = StyleSheet.create({
-  ratingRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
+  traits: {
+    gap: Spacing.md,
     marginVertical: Spacing.md,
+  },
+  existingReview: {
+    marginTop: Spacing.md,
   },
 });

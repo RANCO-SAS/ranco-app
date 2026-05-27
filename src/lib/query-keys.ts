@@ -9,6 +9,7 @@ export const queryKeys = {
     detail: (jobId: string) => ['jobs', jobId] as const,
     client: (clientId: string) => ['jobs', 'client', clientId] as const,
     published: ['jobs', 'published'] as const,
+    completedHistory: (userId: string) => ['jobs', 'completed-history', userId] as const,
   },
   messages: {
     all: ['messages'] as const,
@@ -20,5 +21,7 @@ export const queryKeys = {
     profile: (userId: string) => ['reviews', 'profile', userId] as const,
     job: (serviceRequestId: string, reviewerId: string) =>
       ['reviews', 'job', serviceRequestId, reviewerId] as const,
+    portfolio: (userId: string) => ['reviews', 'portfolio', userId] as const,
+    ratedJobs: (userId: string) => ['reviews', 'rated-jobs', userId] as const,
   },
 } as const;

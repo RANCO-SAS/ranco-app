@@ -40,3 +40,14 @@ export type UpdateProfileInput = {
   isProfessional?: boolean;
   professionalSubcategoryIds?: string[];
 };
+
+export type PublicProfileTab = 'summary' | 'reviews' | 'jobs';
+
+export type UserJobHistoryItem = {
+  id: string;
+  title: string;
+  categoryName: string;
+  subcategoryName: string;
+  completedAt: string;
+  role: 'client' | 'professional';
+};

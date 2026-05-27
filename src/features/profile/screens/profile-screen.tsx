@@ -16,7 +16,10 @@ import { useLogout } from '@/features/auth/hooks/use-logout';
 import { mapAuthError } from '@/features/auth/utils/map-auth-error';
 import { ProfileModeSection } from '@/features/profile/components/profile-mode-section';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
-import { useProfileReviews } from '@/features/reviews/hooks/use-reviews';
+import { ReviewSummaryCard } from '@/features/reviews/components/review-summary-card';
+import { isProfessionalReview } from '@/features/reviews/constants/review-traits';
+import { useProfileReviews, useRatedJobs, useReviewPortfolio } from '@/features/reviews/hooks/use-reviews';
+import { WorkShowcaseCard } from '@/features/reviews/components/work-showcase-card';
 
 export function ProfileScreen() {
   const router = useRouter();
@@ -24,6 +27,8 @@ export function ProfileScreen() {
   const { profile } = useCurrentProfile();
   const logout = useLogout();
   const reviewsQuery = useProfileReviews(profile?.id);
+  const portfolioQuery = useReviewPortfolio(profile?.id);
+  const ratedJobsQuery = useRatedJobs(profile?.id);
 
   return (
     <ScreenLayout safeArea="tab" scrollable>
@@ -75,12 +80,50 @@ export function ProfileScreen() {
               <Spacer size="md" />
               {reviewsQuery.data.reviews.slice(0, 5).map((review) => (
                 <View key={review.id} style={styles.reviewItem}>
-                  <AppText variant="bodyMedium">{review.rating}★ · {review.reviewerName}</AppText>
-                  {review.comment ? (
-                    <AppText color="textSecondary" variant="caption">
-                      {review.comment}
-                    </AppText>
-                  ) : null}
+                  <ReviewSummaryCard
+                    review={review}
+                    revieweeIsProfessional={isProfessionalReview(review)}
+                  />
+                </View>
+              ))}
+            </Card>
+          </>
+        ) : null}
+
+        {(portfolioQuery.data?.length ?? 0) > 0 ? (
+          <>
+            <Spacer size="lg" />
+            <Card>
+              <AppText variant="bodyMedium">Portfolio</AppText>
+              <Spacer size="md" />
+              {portfolioQuery.data?.map((item) => (
+                <View key={item.reviewId} style={styles.reviewItem}>
+                  <WorkShowcaseCard
+                    evidenceUrls={item.evidenceUrls}
+                    rating={item.rating}
+                    subtitle={item.comment ?? undefined}
+                    title={item.title}
+                  />
+                </View>
+              ))}
+            </Card>
+          </>
+        ) : null}
+
+        {(ratedJobsQuery.data?.length ?? 0) > 0 ? (
+          <>
+            <Spacer size="lg" />
+            <Card>
+              <AppText variant="bodyMedium">Trabajos valorados</AppText>
+              <Spacer size="md" />
+              {ratedJobsQuery.data?.map((item) => (
+                <View key={item.reviewId} style={styles.reviewItem}>
+                  <WorkShowcaseCard
+                    evidenceUrls={item.ownEvidenceUrls}
+                    rating={item.rating}
+                    subtitle={`Valorado por ${item.reviewerName}`}
+                    title={item.title}
+                  />
                 </View>
               ))}
             </Card>

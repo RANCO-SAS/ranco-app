@@ -17,6 +17,7 @@ import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
 import { useStartConversation } from '@/features/messages/hooks/use-conversations';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
+import { useProfile } from '@/features/profile/hooks/use-profile';
 import { ReviewForm } from '@/features/reviews/components/review-form';
 import { useJobReview } from '@/features/reviews/hooks/use-reviews';
 
@@ -27,12 +28,19 @@ export function ServiceRequestDetailScreen() {
   const { activeMode } = useActiveMode();
   const requestQuery = useServiceRequest(id);
   const startConversation = useStartConversation();
+  const request = requestQuery.data;
+  const jobReviewQuery = useJobReview(
+    request?.id ?? id,
+    request?.status === 'completed' ? profile?.id : undefined,
+  );
+  const assignedProfessionalQuery = useProfile(request?.assignedProfessionalId ?? undefined);
+  const assignedProfessionalName = assignedProfessionalQuery.data?.fullName ?? 'Profesional';
 
   if (requestQuery.isLoading) {
     return <ScreenLayout loading loadingMessage="Cargando solicitud..." />;
   }
 
-  if (requestQuery.error || !requestQuery.data) {
+  if (requestQuery.error || !request) {
     return (
       <ScreenLayout>
         <StackHeader title="Solicitud" />
@@ -41,20 +49,16 @@ export function ServiceRequestDetailScreen() {
     );
   }
 
-  const request = requestQuery.data;
   const isOwner = profile?.id === request.clientId;
   const isAssignedProfessional = profile?.id === request.assignedProfessionalId;
   const canContact =
     !isOwner &&
     activeMode === 'professional' &&
     profile?.isProfessional &&
-    (request.status === 'published' || request.status === 'in_negotiation');
+    (request.status === 'published' || request.status === 'in_negotiation') &&
+    (!request.assignedProfessionalId || request.assignedProfessionalId === profile.id);
 
   const revieweeId = isOwner ? request.assignedProfessionalId : request.clientId;
-  const jobReviewQuery = useJobReview(
-    request.id,
-    request.status === 'completed' ? profile?.id : undefined,
-  );
 
   const handleContact = () => {
     if (!profile) {
@@ -118,6 +122,9 @@ export function ServiceRequestDetailScreen() {
             clientId={request.clientId}
             isClient={isOwner}
             professionalId={request.assignedProfessionalId ?? profile.id}
+            professionalName={
+              isOwner ? assignedProfessionalName : profile.fullName || 'Profesional'
+            }
             requestId={request.id}
             status={request.status}
             userId={profile.id}
@@ -129,9 +136,10 @@ export function ServiceRequestDetailScreen() {
       {request.status === 'completed' && revieweeId && profile?.id ? (
         <>
           <ReviewForm
-            existingRating={jobReviewQuery.data?.rating}
+            existingReview={jobReviewQuery.data}
             revieweeId={revieweeId}
-            revieweeName={isOwner ? 'el profesional' : 'el cliente'}
+            revieweeIsProfessional={isOwner}
+            revieweeName={isOwner ? assignedProfessionalName : 'el cliente'}
             reviewerId={profile.id}
             serviceRequestId={request.id}
           />
@@ -162,7 +170,9 @@ export function ServiceRequestDetailScreen() {
               <AppText variant="bodyMedium">Solicitud no disponible</AppText>
               <Spacer size="xs" />
               <AppText variant="caption" color="textSecondary">
-                Esta solicitud ya no acepta nuevos contactos o ya avanzó de estado.
+                {request.assignedProfessionalId && request.assignedProfessionalId !== profile?.id
+                  ? 'El cliente ya seleccionó a otro profesional.'
+                  : 'Esta solicitud ya no acepta nuevos contactos o ya avanzó de estado.'}
               </AppText>
             </Card>
           )}

@@ -4,6 +4,7 @@ import type {
   ServiceRequest,
   UpdateServiceRequestStatusInput,
 } from '@/features/jobs/types/service-request.types';
+import type { UserJobHistoryItem } from '@/features/profile/types/profile.types';
 import { mapServiceRequestRow } from '@/features/jobs/services/service-request.mapper';
 import {
   canUserUpdateStatus,
@@ -122,16 +123,41 @@ async function updateServiceRequestStatus(
     throw new Error('Debes asignar un profesional antes de aceptar la solicitud.');
   }
 
+  if (
+    input.status === 'accepted' &&
+    current.assignedProfessionalId &&
+    assignedProfessionalId &&
+    current.assignedProfessionalId !== assignedProfessionalId
+  ) {
+    throw new Error('Esta solicitud ya tiene un profesional asignado.');
+  }
+
+  if (
+    input.status === 'accepted' &&
+    current.status !== 'in_negotiation' &&
+    current.status !== 'accepted'
+  ) {
+    throw new Error('Esta solicitud ya no acepta profesionales.');
+  }
+
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from(SERVICE_REQUESTS_TABLE)
     .update({
       status: input.status,
       assigned_professional_id: assignedProfessionalId,
     })
-    .eq('id', input.requestId)
-    .select(SERVICE_REQUEST_SELECT)
-    .single();
+    .eq('id', input.requestId);
+
+  if (input.status === 'accepted') {
+    query = query.eq('status', 'in_negotiation');
+  }
+
+  const { data, error } = await query.select(SERVICE_REQUEST_SELECT).single();
+
+  if (error?.code === 'PGRST116') {
+    throw new Error('Esta solicitud ya no acepta profesionales.');
+  }
 
   if (error) {
     throw error;
@@ -140,10 +166,39 @@ async function updateServiceRequestStatus(
   return mapServiceRequestRow(data as ServiceRequestRow);
 }
 
+async function getCompletedJobsForUser(userId: string): Promise<UserJobHistoryItem[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from(SERVICE_REQUESTS_TABLE)
+    .select(SERVICE_REQUEST_SELECT)
+    .eq('status', 'completed')
+    .or(`client_id.eq.${userId},assigned_professional_id.eq.${userId}`)
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as ServiceRequestRow[]).map((row) => {
+    const mapped = mapServiceRequestRow(row);
+    const role = mapped.clientId === userId ? 'client' : 'professional';
+
+    return {
+      id: mapped.id,
+      title: mapped.title,
+      categoryName: mapped.categoryName,
+      subcategoryName: mapped.subcategoryName,
+      completedAt: mapped.updatedAt,
+      role,
+    };
+  });
+}
+
 export const serviceRequestService = {
   getClientRequests,
   getPublishedRequests,
   getServiceRequestById,
   createServiceRequest,
   updateServiceRequestStatus,
+  getCompletedJobsForUser,
 };

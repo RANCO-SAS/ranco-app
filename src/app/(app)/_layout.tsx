@@ -59,6 +59,7 @@ export default function AppLayout() {
       <Stack.Screen name="jobs/create" />
       <Stack.Screen name="jobs/[id]" />
       <Stack.Screen name="messages/[conversationId]" />
+      <Stack.Screen name="users/[userId]" />
     </Stack>
   );
 }
