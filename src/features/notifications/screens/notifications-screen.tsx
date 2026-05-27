@@ -10,7 +10,6 @@ import {
   useMarkNotificationRead,
   useNotifications,
 } from '@/features/notifications/hooks/use-notifications';
-import { useNotificationsRealtime } from '@/features/notifications/hooks/use-notifications-realtime';
 import type { AppNotification } from '@/features/notifications/types/notification.types';
 import { resolveNotificationRoute } from '@/features/notifications/utils/notification-route';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
@@ -58,11 +57,6 @@ export function NotificationsScreen() {
   const notificationsQuery = useNotifications(profile?.id);
   const markRead = useMarkNotificationRead(profile?.id);
   const markAllRead = useMarkAllNotificationsRead(profile?.id);
-
-  useNotificationsRealtime({
-    enabled: Boolean(profile?.id),
-    userId: profile?.id,
-  });
 
   const handlePress = (notification: AppNotification) => {
     if (!notification.readAt) {

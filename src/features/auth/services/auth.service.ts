@@ -19,6 +19,30 @@ async function getSession(): Promise<AuthSession | null> {
   return mapSupabaseSession(data.session);
 }
 
+async function getValidatedSession(): Promise<AuthSession | null> {
+  const supabase = getSupabaseClient();
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError) {
+    throw sessionError;
+  }
+
+  const session = mapSupabaseSession(sessionData.session);
+
+  if (!session) {
+    return null;
+  }
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !userData.user) {
+    await supabase.auth.signOut({ scope: 'local' });
+    return null;
+  }
+
+  return session;
+}
+
 async function signInWithPassword(input: SignInInput): Promise<AuthSession> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -115,6 +139,7 @@ function onAuthStateChange(
 
 export const authService = {
   getSession,
+  getValidatedSession,
   signInWithPassword,
   signUp,
   resetPasswordForEmail,

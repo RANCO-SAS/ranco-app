@@ -12,7 +12,6 @@ import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
 import { JobOpportunityCard } from '@/features/jobs/components/discover/job-opportunity-card';
-import { usePublishedJobsRealtime } from '@/features/jobs/hooks/use-published-jobs-realtime';
 import { usePublishedServiceRequests } from '@/features/jobs/hooks/use-service-requests';
 import type { ServiceRequest } from '@/features/jobs/types/service-request.types';
 import { useStartConversation } from '@/features/messages/hooks/use-conversations';
@@ -30,10 +29,6 @@ export function DiscoverScreen() {
   const publishedRequests = usePublishedServiceRequests(
     Boolean(profile?.isProfessional && isProfessionalMode),
   );
-
-  usePublishedJobsRealtime({
-    enabled: Boolean(profile?.isProfessional && isProfessionalMode),
-  });
 
   const professionalAreas = profile?.professionalSubcategoryIds ?? [];
 

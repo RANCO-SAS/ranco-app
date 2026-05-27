@@ -20,18 +20,27 @@ export function useAuthInit() {
         return;
       }
 
+      let isInitialized = false;
+
       try {
-        const session = await authService.getSession();
-        setSession(session);
         unsubscribe = authService.onAuthStateChange((event, session) => {
+          if (!isInitialized && event === 'INITIAL_SESSION') {
+            return;
+          }
+
           setSession(session);
 
           if (event === 'SIGNED_OUT') {
             resetSessionState();
           }
         });
+
+        const session = await authService.getValidatedSession();
+        setSession(session);
+        isInitialized = true;
       } catch {
         setSession(null);
+        isInitialized = true;
       } finally {
         setHydrated(true);
       }

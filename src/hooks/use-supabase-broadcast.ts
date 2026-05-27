@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
+import { isSupabaseConfigured } from '@/lib/env';
 import { getSupabaseClient } from '@/services/supabase/client';
 
 type UseSupabaseBroadcastOptions<TPayload extends Record<string, unknown>> = {
@@ -23,7 +24,7 @@ export function useSupabaseBroadcast<TPayload extends Record<string, unknown>>({
   }, [onPayload]);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !isSupabaseConfigured()) {
       return;
     }
 
@@ -59,7 +60,7 @@ export function useSupabaseBroadcastSender(channelName: string, enabled = true) 
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !isSupabaseConfigured()) {
       return;
     }
 

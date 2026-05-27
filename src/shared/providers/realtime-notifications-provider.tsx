@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { useInboxMessagesRealtime } from '@/features/messages/hooks/use-inbox-messages-realtime';
+import { useConversationsRealtime } from '@/features/messages/hooks/use-messages-realtime';
 import { useNotificationsRealtime } from '@/features/notifications/hooks/use-notifications-realtime';
 import { usePushRegistration } from '@/features/notifications/hooks/use-push-registration';
 import { usePublishedJobsRealtime } from '@/features/jobs/hooks/use-published-jobs-realtime';
@@ -19,6 +20,11 @@ export function RealtimeNotificationsProvider({ children }: RealtimeNotification
   usePushRegistration({ enabled: Boolean(userId), userId });
 
   useInboxMessagesRealtime({
+    enabled: Boolean(userId),
+    userId,
+  });
+
+  useConversationsRealtime({
     enabled: Boolean(userId),
     userId,
   });

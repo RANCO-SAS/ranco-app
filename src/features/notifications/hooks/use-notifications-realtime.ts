@@ -4,7 +4,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 import { mapNotificationRow, type NotificationRow } from '@/features/notifications/types/notification-db.types';
-import { supportsNativePushNotifications } from '@/features/notifications/utils/push-environment';
+import {
+  canUseExpoNotifications,
+  loadExpoNotificationsModule,
+} from '@/features/notifications/utils/notifications-module';
 import { useSupabasePostgresChanges } from '@/hooks/use-supabase-postgres-changes';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -35,22 +38,26 @@ export function useNotificationsRealtime({
         return;
       }
 
-      if (AppState.currentState === 'active' || !supportsNativePushNotifications()) {
+      if (AppState.currentState === 'active' || !canUseExpoNotifications()) {
         return;
       }
 
       const notification = mapNotificationRow(payload.new);
 
-      void import('expo-notifications').then((Notifications) =>
-        Notifications.scheduleNotificationAsync({
+      void loadExpoNotificationsModule().then((Notifications) => {
+        if (!Notifications) {
+          return;
+        }
+
+        return Notifications.scheduleNotificationAsync({
           content: {
             title: notification.title,
             body: notification.body,
             data: notification.data,
           },
           trigger: null,
-        }),
-      );
+        });
+      });
     },
     [queryClient, userId],
   );

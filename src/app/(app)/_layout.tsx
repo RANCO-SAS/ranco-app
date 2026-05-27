@@ -1,4 +1,4 @@
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, usePathname } from 'expo-router';
 
 import { Loader } from '@/components/ui/loader';
 import { Routes } from '@/constants/routes';
@@ -18,6 +18,7 @@ import {
 } from '@/stores/profile-store';
 
 export default function AppLayout() {
+  const pathname = usePathname();
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
   const isAuthHydrated = useAuthStore(selectIsHydrated);
   const isProfileHydrated = useProfileStore(selectIsProfileHydrated);
@@ -25,6 +26,7 @@ export default function AppLayout() {
   const profile = useProfileStore(selectProfile);
   const isAppStoreHydrated = useAppStore(selectHasAppStoreHydrated);
   const pendingModeSelection = useAppStore(selectPendingModeSelection);
+  const isOnChooseMode = pathname.includes('choose-mode');
 
   if (
     !isAuthHydrated ||
@@ -42,13 +44,8 @@ export default function AppLayout() {
     return <Redirect href={Routes.onboarding.setup} />;
   }
 
-  if (profile && isHybridUser(profile) && pendingModeSelection) {
-    return (
-      <Stack screenOptions={{ headerShown: false }}>
-        <Redirect href={Routes.app.chooseMode} />
-        <Stack.Screen name="choose-mode" />
-      </Stack>
-    );
+  if (profile && isHybridUser(profile) && pendingModeSelection && !isOnChooseMode) {
+    return <Redirect href={Routes.app.chooseMode} />;
   }
 
   return (

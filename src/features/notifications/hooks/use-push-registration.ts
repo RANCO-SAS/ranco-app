@@ -3,7 +3,10 @@ import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
 import { pushTokenService } from '@/features/notifications/services/push-token.service';
-import { supportsNativePushNotifications } from '@/features/notifications/utils/push-environment';
+import {
+  canUseExpoNotifications,
+  loadExpoNotificationsModule,
+} from '@/features/notifications/utils/notifications-module';
 
 type UsePushRegistrationOptions = {
   userId: string | undefined;
@@ -12,7 +15,7 @@ type UsePushRegistrationOptions = {
 
 export function usePushRegistration({ userId, enabled = true }: UsePushRegistrationOptions) {
   const registeredTokenRef = useRef<string | null>(null);
-  const isEnabled = enabled && Boolean(userId) && supportsNativePushNotifications();
+  const isEnabled = enabled && Boolean(userId) && canUseExpoNotifications();
 
   useEffect(() => {
     if (!isEnabled || !userId) {
@@ -26,7 +29,11 @@ export function usePushRegistration({ userId, enabled = true }: UsePushRegistrat
         return;
       }
 
-      const Notifications = await import('expo-notifications');
+      const Notifications = await loadExpoNotificationsModule();
+
+      if (!Notifications || !isMounted) {
+        return;
+      }
 
       Notifications.setNotificationHandler({
         handleNotification: async () => ({
@@ -63,7 +70,7 @@ export function usePushRegistration({ userId, enabled = true }: UsePushRegistrat
         return;
       }
 
-      await pushTokenService.upsertToken(userId!, token);
+      await pushTokenService.upsertToken(userId, token);
       registeredTokenRef.current = token;
     }
 
