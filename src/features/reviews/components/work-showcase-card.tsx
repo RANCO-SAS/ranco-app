@@ -1,7 +1,7 @@
-import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
+import { ZoomableImage } from '@/components/ui/zoomable-image';
 import { Radius, Spacing } from '@/constants/theme';
 
 type WorkShowcaseCardProps = {
@@ -35,7 +35,7 @@ export function WorkShowcaseCard({
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.gallery}>
             {evidenceUrls.map((url) => (
-              <Image key={url} contentFit="cover" source={{ uri: url }} style={styles.image} />
+              <ZoomableImage key={url} contentFit="cover" style={styles.image} uri={url} />
             ))}
           </View>
         </ScrollView>

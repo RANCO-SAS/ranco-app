@@ -1,11 +1,11 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
+import { ZoomableImage } from '@/components/ui/zoomable-image';
 import { Radius, Spacing } from '@/constants/theme';
 import { useUpdateReviewEvidence } from '@/features/reviews/hooks/use-reviews';
 import { useTheme } from '@/hooks/use-theme';
@@ -43,6 +43,7 @@ export function ReviewEvidenceUploader({
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.85,
+      copyToCacheDirectory: true,
     });
 
     if (result.canceled || !result.assets[0]) {
@@ -101,7 +102,7 @@ export function ReviewEvidenceUploader({
           <View style={styles.gallery}>
             {evidenceUrls.map((url) => (
               <View key={url} style={styles.imageWrapper}>
-                <Image contentFit="cover" source={{ uri: url }} style={styles.image} />
+                <ZoomableImage contentFit="cover" style={styles.image} uri={url} />
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => {

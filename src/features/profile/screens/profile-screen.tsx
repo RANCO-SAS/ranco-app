@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/avatar';
@@ -8,7 +7,6 @@ import { Section } from '@/components/layout/section';
 import { AppText } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ImagePreviewModal } from '@/components/ui/image-preview-modal';
 import { Spacer } from '@/components/ui/spacer';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
@@ -28,7 +26,6 @@ export function ProfileScreen() {
   const { profile } = useCurrentProfile();
   const { activeMode } = useActiveMode();
   const logout = useLogout();
-  const [isAvatarPreviewVisible, setIsAvatarPreviewVisible] = useState(false);
   const reviewsQuery = useProfileReviews(profile?.id);
   useProfileReviewsRealtime({
     enabled: Boolean(profile?.id),
@@ -58,16 +55,13 @@ export function ProfileScreen() {
           <>
             <Card>
               <View style={styles.profileRow}>
-                {profile.avatarUrl ? (
-                  <Pressable
-                    accessibilityLabel="Ver foto de perfil"
-                    accessibilityRole="button"
-                    onPress={() => setIsAvatarPreviewVisible(true)}>
-                    <Avatar imageUrl={profile.avatarUrl} name={profile.fullName} size={72} />
-                  </Pressable>
-                ) : (
-                  <Avatar imageUrl={profile.avatarUrl} name={profile.fullName} size={72} />
-                )}
+                <Avatar
+                  imageUrl={profile.avatarUrl}
+                  name={profile.fullName}
+                  previewTitle={profile.fullName || 'Foto de perfil'}
+                  previewable={Boolean(profile.avatarUrl)}
+                  size={72}
+                />
 
                 <Pressable
                   accessibilityRole="button"
@@ -97,15 +91,6 @@ export function ProfileScreen() {
                 </Pressable>
               </View>
             </Card>
-
-            {profile.avatarUrl ? (
-              <ImagePreviewModal
-                imageUrl={profile.avatarUrl}
-                onClose={() => setIsAvatarPreviewVisible(false)}
-                title={profile.fullName || 'Foto de perfil'}
-                visible={isAvatarPreviewVisible}
-              />
-            ) : null}
           </>
         ) : null}
 

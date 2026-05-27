@@ -1,9 +1,9 @@
-import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
+import { ZoomableImage } from '@/components/ui/zoomable-image';
 import { Radius, Spacing } from '@/constants/theme';
 import type { CreateServiceRequestFormData } from '@/features/jobs/schemas/create-service-request.schema';
 import type { ServiceCategory } from '@/features/jobs/types/service-category.types';
@@ -68,11 +68,11 @@ export function RequestSummaryCard({ values, categories, photos = [] }: RequestS
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.photoRow}>
               {photos.map((photo) => (
-                <Image
+                <ZoomableImage
                   key={photo.id}
                   contentFit="cover"
-                  source={{ uri: photo.uri }}
                   style={[styles.photo, { backgroundColor: theme.backgroundElement }]}
+                  uri={photo.uri}
                 />
               ))}
             </View>

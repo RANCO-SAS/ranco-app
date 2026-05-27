@@ -1,10 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Image } from 'expo-image';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
+import { ZoomableImage } from '@/components/ui/zoomable-image';
 import { Radius, Spacing } from '@/constants/theme';
 import {
   createLocalPhotoItem,
@@ -41,6 +41,7 @@ export function ServiceRequestPhotoPicker({
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.85,
+      copyToCacheDirectory: true,
     });
 
     if (result.canceled || !result.assets[0]) {
@@ -72,10 +73,10 @@ export function ServiceRequestPhotoPicker({
           <View style={styles.gallery}>
             {photos.map((photo) => (
               <View key={photo.id} style={styles.imageWrapper}>
-                <Image
+                <ZoomableImage
                   contentFit="cover"
-                  source={{ uri: photo.uri }}
                   style={[styles.image, { backgroundColor: theme.backgroundElement }]}
+                  uri={photo.uri}
                 />
                 <Pressable
                   accessibilityRole="button"

@@ -8,7 +8,6 @@ import { Section } from '@/components/layout/section';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ImagePreviewModal } from '@/components/ui/image-preview-modal';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
@@ -57,7 +56,6 @@ export function PublicProfileScreen() {
   const router = useRouter();
   const { userId, view } = useLocalSearchParams<PublicProfileParams>();
   const [activeTab, setActiveTab] = useState<PublicProfileTab>('summary');
-  const [isAvatarPreviewVisible, setIsAvatarPreviewVisible] = useState(false);
   const profileQuery = useProfile(userId);
   const profile = profileQuery.data;
   const primaryRole = profile
@@ -119,17 +117,15 @@ export function PublicProfileScreen() {
       <Spacer size="md" />
 
       <Card>
-        {profile.avatarUrl ? (
-          <Pressable
-            accessibilityLabel="Ver foto de perfil"
-            accessibilityRole="button"
-            onPress={() => setIsAvatarPreviewVisible(true)}
-            style={styles.avatarButton}>
-            <Avatar imageUrl={profile.avatarUrl} name={profile.fullName} size={72} />
-          </Pressable>
-        ) : (
-          <Avatar imageUrl={profile.avatarUrl} name={profile.fullName} size={72} />
-        )}
+        <View style={styles.avatarButton}>
+          <Avatar
+            imageUrl={profile.avatarUrl}
+            name={profile.fullName}
+            previewTitle={profile.fullName || 'Foto de perfil'}
+            previewable={Boolean(profile.avatarUrl)}
+            size={72}
+          />
+        </View>
         <Spacer size="md" />
         <AppText variant="title">{profile.fullName || 'Usuario'}</AppText>
         {profile.locationLabel ? (
@@ -156,15 +152,6 @@ export function PublicProfileScreen() {
           </>
         ) : null}
       </Card>
-
-      {profile.avatarUrl ? (
-        <ImagePreviewModal
-          imageUrl={profile.avatarUrl}
-          onClose={() => setIsAvatarPreviewVisible(false)}
-          title={profile.fullName || 'Foto de perfil'}
-          visible={isAvatarPreviewVisible}
-        />
-      ) : null}
 
       <Spacer size="lg" />
 

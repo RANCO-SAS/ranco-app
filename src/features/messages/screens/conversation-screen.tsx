@@ -1,5 +1,4 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Image } from 'expo-image';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -14,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Loader } from '@/components/ui/loader';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
+import { ZoomableImage } from '@/components/ui/zoomable-image';
 import { Layout, Radius, Spacing } from '@/constants/theme';
 import { JobEngagementPanel } from '@/features/jobs/components/job-engagement-panel';
 import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
@@ -55,10 +55,10 @@ function MessageBubble({ message, isOwn }: MessageBubbleProps) {
     return (
       <View style={[styles.bubbleRow, isOwn ? styles.bubbleRowOwn : styles.bubbleRowOther]}>
         <View style={styles.imageBubbleWrapper}>
-          <Image
+          <ZoomableImage
             contentFit="cover"
-            source={{ uri: message.mediaUrl }}
             style={[styles.imageBubble, { backgroundColor: theme.backgroundElement }]}
+            uri={message.mediaUrl}
           />
           <View style={[styles.metaRow, styles.imageMetaRow]}>
             <AppText color="textMuted" variant="small">
@@ -201,6 +201,7 @@ export function ConversationScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.85,
+      copyToCacheDirectory: true,
     });
 
     if (result.canceled || !result.assets[0]) {

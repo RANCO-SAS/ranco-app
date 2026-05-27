@@ -1,6 +1,6 @@
-import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { ZoomableImage } from '@/components/ui/zoomable-image';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -19,11 +19,11 @@ export function ServiceRequestPhotoGallery({ photoUrls }: ServiceRequestPhotoGal
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       <View style={styles.gallery}>
         {photoUrls.map((url) => (
-          <Image
+          <ZoomableImage
             key={url}
             contentFit="cover"
-            source={{ uri: url }}
             style={[styles.image, { backgroundColor: theme.backgroundElement }]}
+            uri={url}
           />
         ))}
       </View>
