@@ -1,9 +1,10 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Avatar } from '@/components/ui/avatar';
+import { ProfileAvatarLink } from '@/components/ui/profile-avatar-link';
 import { AppText } from '@/components/ui/text';
 import { Layout, Spacing } from '@/constants/theme';
+import { Routes } from '@/constants/routes';
 import { SERVICE_REQUEST_STATUS_LABELS } from '@/features/jobs/constants/service-request-labels';
 import type { ServiceRequestStatus } from '@/features/jobs/types/service-request.types';
 import type { ConversationParticipant } from '@/features/messages/types/message.types';
@@ -13,17 +14,25 @@ type ChatHeaderProps = {
   title: string;
   participant: ConversationParticipant;
   serviceRequestStatus: ServiceRequestStatus;
-  onParticipantPress?: () => void;
+  participantView?: 'client' | 'professional';
 };
 
 export function ChatHeader({
   title,
   participant,
   serviceRequestStatus,
-  onParticipantPress,
+  participantView,
 }: ChatHeaderProps) {
   const router = useRouter();
   const theme = useTheme();
+
+  const handleOpenProfile = () => {
+    if (!participant.id) {
+      return;
+    }
+
+    router.push(Routes.app.userProfile(participant.id, participantView));
+  };
 
   return (
     <View style={[styles.container, { borderBottomColor: theme.border, backgroundColor: theme.background }]}>
@@ -38,21 +47,27 @@ export function ChatHeader({
         </AppText>
       </Pressable>
 
-      <Pressable
-        accessibilityRole="button"
-        disabled={!onParticipantPress}
-        onPress={onParticipantPress}
-        style={styles.center}>
-        <Avatar imageUrl={participant.avatarUrl} name={participant.fullName} size={40} />
-        <View style={styles.meta}>
+      <View style={styles.center}>
+        <ProfileAvatarLink
+          imageUrl={participant.avatarUrl}
+          name={participant.fullName}
+          size={40}
+          userId={participant.id}
+          view={participantView}
+        />
+        <Pressable
+          accessibilityRole="button"
+          disabled={!participant.id}
+          onPress={handleOpenProfile}
+          style={styles.meta}>
           <AppText numberOfLines={1} variant="bodyMedium">
             {participant.fullName}
           </AppText>
           <AppText color="primary" numberOfLines={1} variant="small">
             {title} · {SERVICE_REQUEST_STATUS_LABELS[serviceRequestStatus]}
           </AppText>
-        </View>
-      </Pressable>
+        </Pressable>
+      </View>
 
       <View style={styles.backButton} />
     </View>

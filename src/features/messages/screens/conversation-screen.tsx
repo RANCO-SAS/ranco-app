@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Loader } from '@/components/ui/loader';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
-import { Routes } from '@/constants/routes';
 import { Layout, Radius, Spacing } from '@/constants/theme';
 import { JobEngagementPanel } from '@/features/jobs/components/job-engagement-panel';
 import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
@@ -105,7 +104,6 @@ function resolveCounterpart(conversation: Conversation, userId: string | undefin
 }
 
 export function ConversationScreen() {
-  const router = useRouter();
   const theme = useTheme();
   const { session } = useAuth();
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
@@ -216,16 +214,6 @@ export function ConversationScreen() {
     );
   };
 
-  const handleOpenProfile = () => {
-    if (!counterpart?.id) {
-      return;
-    }
-
-    router.push(
-      Routes.app.userProfile(counterpart.id, isClient ? 'professional' : 'client'),
-    );
-  };
-
   if (conversationQuery.isLoading || messagesQuery.isLoading) {
     return (
       <SafeAreaView edges={['top', 'bottom']} style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -254,8 +242,8 @@ export function ConversationScreen() {
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <ChatHeader
-        onParticipantPress={handleOpenProfile}
         participant={counterpart}
+        participantView={isClient ? 'professional' : 'client'}
         serviceRequestStatus={serviceRequestStatus}
         title={conversation.serviceRequestTitle}
       />

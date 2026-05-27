@@ -9,6 +9,11 @@ export function mapServiceRequestRow(row: ServiceRequestRow): ServiceRequest {
   return {
     id: row.id,
     clientId: row.client_id,
+    client: {
+      id: row.client?.id ?? row.client_id,
+      fullName: row.client?.full_name?.trim() || 'Cliente',
+      avatarUrl: row.client?.avatar_url ?? null,
+    },
     title: row.title,
     description: row.description,
     categoryId: row.category_id,

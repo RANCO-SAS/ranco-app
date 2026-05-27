@@ -13,6 +13,7 @@ import {
   SERVICE_REQUEST_URGENCY_LABELS,
 } from '@/features/jobs/constants/service-request-labels';
 import { JobEngagementPanel } from '@/features/jobs/components/job-engagement-panel';
+import { ServiceRequestAuthorHeader } from '@/features/jobs/components/service-request-author-header';
 import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
 import { useStartConversation } from '@/features/messages/hooks/use-conversations';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
@@ -86,10 +87,12 @@ export function ServiceRequestDetailScreen() {
       <Spacer size="md" />
 
       <Card>
-        <AppText variant="caption" color="primary">
-          {request.categoryName} · {request.subcategoryName}
-        </AppText>
-        <Spacer size="xs" />
+        <ServiceRequestAuthorHeader
+          client={request.client}
+          createdAt={request.createdAt}
+          subtitle={`${request.categoryName} · ${SERVICE_REQUEST_URGENCY_LABELS[request.urgency]}`}
+        />
+        <Spacer size="md" />
         <AppText variant="title">{request.title}</AppText>
         <Spacer size="sm" />
         <AppText variant="body" color="textSecondary">
@@ -98,9 +101,6 @@ export function ServiceRequestDetailScreen() {
         <Spacer size="md" />
         <AppText variant="small" color="textMuted">
           Estado: {SERVICE_REQUEST_STATUS_LABELS[request.status]}
-        </AppText>
-        <AppText variant="small" color="textMuted">
-          Urgencia: {SERVICE_REQUEST_URGENCY_LABELS[request.urgency]}
         </AppText>
       {request.locationLabel ? (
           <AppText variant="small" color="textMuted">

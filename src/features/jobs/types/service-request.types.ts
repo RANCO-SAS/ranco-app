@@ -8,9 +8,16 @@ export type ServiceRequestStatus =
 
 export type ServiceRequestUrgency = 'low' | 'normal' | 'high' | 'urgent';
 
+export type ServiceRequestClientPreview = {
+  id: string;
+  fullName: string;
+  avatarUrl: string | null;
+};
+
 export type ServiceRequest = {
   id: string;
   clientId: string;
+  client: ServiceRequestClientPreview;
   title: string;
   description: string;
   categoryId: string;

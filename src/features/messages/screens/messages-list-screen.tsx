@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Avatar } from '@/components/ui/avatar';
+import { ProfileAvatarLink } from '@/components/ui/profile-avatar-link';
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { Section } from '@/components/layout/section';
 import { Card } from '@/components/ui/card';
@@ -34,15 +34,19 @@ type ConversationListItemProps = {
 function ConversationListItem({ conversation, currentUserId, onPress }: ConversationListItemProps) {
   const counterpart =
     currentUserId === conversation.clientId ? conversation.professional : conversation.client;
+  const counterpartView =
+    currentUserId === conversation.clientId ? 'professional' : 'client';
 
   return (
     <Pressable accessibilityRole="button" onPress={onPress}>
       <Card>
         <View style={styles.row}>
-          <Avatar
+          <ProfileAvatarLink
             imageUrl={counterpart.avatarUrl}
             name={counterpart.fullName}
             size={48}
+            userId={counterpart.id}
+            view={counterpartView}
           />
           <View style={styles.meta}>
             <AppText variant="bodyMedium">{counterpart.fullName}</AppText>

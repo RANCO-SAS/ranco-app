@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AppText } from '@/components/ui/text';
 import { Radius, Spacing } from '@/constants/theme';
+import { ServiceRequestAuthorHeader } from '@/features/jobs/components/service-request-author-header';
 import type { ServiceRequest } from '@/features/jobs/types/service-request.types';
 import { getCategoryIcon } from '@/features/jobs/utils/category-icons';
 import { useTheme } from '@/hooks/use-theme';
@@ -42,23 +43,29 @@ export function JobOpportunityCard({
             backgroundColor: theme.background,
           },
         ]}>
+        <ServiceRequestAuthorHeader
+          client={request.client}
+          createdAt={request.createdAt}
+          subtitle={`${request.categoryName} · ${URGENCY_LABELS[request.urgency]}`}
+        />
+
         <View style={styles.header}>
           <AppText style={styles.icon}>{getCategoryIcon('other')}</AppText>
           <View style={styles.headerText}>
-            <AppText numberOfLines={1} variant="subtitle">
+            <AppText numberOfLines={2} variant="subtitle">
               {request.title}
             </AppText>
-            <AppText color="textSecondary" numberOfLines={1} variant="caption">
-              {request.categoryName} · {URGENCY_LABELS[request.urgency]}
-            </AppText>
+            {request.locationLabel ? (
+              <AppText color="textMuted" numberOfLines={1} variant="small">
+                {request.locationLabel}
+              </AppText>
+            ) : null}
           </View>
         </View>
 
-        {request.locationLabel ? (
-          <AppText color="textMuted" numberOfLines={1} variant="small">
-            {request.locationLabel}
-          </AppText>
-        ) : null}
+        <AppText color="textSecondary" numberOfLines={3} variant="body">
+          {request.description}
+        </AppText>
 
         <View style={styles.actions}>
           <Button

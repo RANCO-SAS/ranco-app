@@ -15,4 +15,5 @@ export type ServiceRequestRow = {
   updated_at: string;
   category: { id: string; name: string; slug: string } | null;
   subcategory: { id: string; name: string; slug: string } | null;
+  client: { id: string; full_name: string; avatar_url: string | null } | null;
 };

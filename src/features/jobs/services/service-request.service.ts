@@ -17,7 +17,8 @@ const SERVICE_REQUESTS_TABLE = 'service_requests';
 const SERVICE_REQUEST_SELECT = `
   *,
   category:service_categories ( id, name, slug ),
-  subcategory:service_subcategories ( id, name, slug )
+  subcategory:service_subcategories ( id, name, slug ),
+  client:user_profiles!client_id ( id, full_name, avatar_url )
 `;
 
 async function getClientRequests(clientId: string): Promise<ServiceRequest[]> {
