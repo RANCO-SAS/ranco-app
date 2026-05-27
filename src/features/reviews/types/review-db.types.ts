@@ -12,6 +12,7 @@ export type ReviewRow = {
   created_at: string;
   reviewer: {
     full_name: string;
+    avatar_url: string | null;
   } | null;
   service_request?: {
     title: string;

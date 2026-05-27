@@ -59,6 +59,19 @@ export function isProfessionalReview(review: { traits: ReviewTraits }): boolean 
   return Boolean(review.traits.quality || review.traits.professionalism || review.traits.punctuality);
 }
 
+export type RevieweeRole = 'client' | 'professional';
+
+export function getRevieweeRole(review: { traits: ReviewTraits }): RevieweeRole {
+  return isProfessionalReview(review) ? 'professional' : 'client';
+}
+
+export function filterReviewsByRole<T extends { traits: ReviewTraits }>(
+  reviews: T[],
+  role: RevieweeRole,
+): T[] {
+  return reviews.filter((review) => getRevieweeRole(review) === role);
+}
+
 export function validateTraits(
   traits: ReviewTraits,
   definitions: ReviewTraitDefinition[],

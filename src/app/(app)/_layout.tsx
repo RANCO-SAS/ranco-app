@@ -60,6 +60,7 @@ export default function AppLayout() {
       <Stack.Screen name="jobs/[id]" />
       <Stack.Screen name="messages/[conversationId]" />
       <Stack.Screen name="users/[userId]" />
+      <Stack.Screen name="reviews/[reviewId]" />
     </Stack>
   );
 }

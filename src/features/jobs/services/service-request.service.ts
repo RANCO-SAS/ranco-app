@@ -44,7 +44,8 @@ async function getPublishedRequests(): Promise<ServiceRequest[]> {
   const { data, error } = await supabase
     .from(SERVICE_REQUESTS_TABLE)
     .select(SERVICE_REQUEST_SELECT)
-    .eq('status', 'published')
+    .in('status', ['published', 'in_negotiation'])
+    .is('assigned_professional_id', null)
     .order('created_at', { ascending: false });
 
   if (error) {

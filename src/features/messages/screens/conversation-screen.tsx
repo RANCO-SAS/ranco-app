@@ -271,14 +271,22 @@ export function ConversationScreen() {
               {request?.status === 'completed' && revieweeId && session?.userId ? (
                 <>
                   <Spacer size="md" />
-                  <ReviewForm
-                    existingReview={jobReviewQuery.data}
-                    revieweeId={revieweeId}
-                    revieweeIsProfessional={isClient}
-                    revieweeName={revieweeName}
-                    reviewerId={session.userId}
-                    serviceRequestId={request.id}
-                  />
+                  {jobReviewQuery.isLoading ? (
+                    <Card>
+                      <AppText color="textSecondary" variant="caption">
+                        Cargando reseña...
+                      </AppText>
+                    </Card>
+                  ) : (
+                    <ReviewForm
+                      existingReview={jobReviewQuery.data}
+                      revieweeId={revieweeId}
+                      revieweeIsProfessional={isClient}
+                      revieweeName={revieweeName}
+                      reviewerId={session.userId}
+                      serviceRequestId={request.id}
+                    />
+                  )}
                 </>
               ) : null}
 

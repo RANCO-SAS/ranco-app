@@ -1,12 +1,16 @@
-import { StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
+import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import type { CreateServiceRequestFormData } from '@/features/jobs/schemas/create-service-request.schema';
 import type { ServiceCategory } from '@/features/jobs/types/service-category.types';
+import type { ServiceRequestPhotoItem } from '@/features/jobs/types/service-request-photo.types';
 import type { ServiceRequestUrgency } from '@/features/jobs/types/service-request.types';
 import { getCategoryIcon } from '@/features/jobs/utils/category-icons';
+import { useTheme } from '@/hooks/use-theme';
 
 const URGENCY_LABELS: Record<ServiceRequestUrgency, string> = {
   low: 'Flexible',
@@ -18,9 +22,11 @@ const URGENCY_LABELS: Record<ServiceRequestUrgency, string> = {
 type RequestSummaryCardProps = {
   values: CreateServiceRequestFormData;
   categories: ServiceCategory[];
+  photos?: ServiceRequestPhotoItem[];
 };
 
-export function RequestSummaryCard({ values, categories }: RequestSummaryCardProps) {
+export function RequestSummaryCard({ values, categories, photos = [] }: RequestSummaryCardProps) {
+  const theme = useTheme();
   const category = categories.find((item) => item.id === values.categoryId);
   const subcategory = category?.subcategories.find((item) => item.id === values.subcategoryId);
 
@@ -49,7 +55,30 @@ export function RequestSummaryCard({ values, categories }: RequestSummaryCardPro
             Ubicación: {values.locationLabel}
           </AppText>
         ) : null}
+        {photos.length > 0 ? (
+          <AppText color="textMuted" variant="small">
+            Fotos: {photos.length}
+          </AppText>
+        ) : null}
       </View>
+
+      {photos.length > 0 ? (
+        <>
+          <Spacer size="sm" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.photoRow}>
+              {photos.map((photo) => (
+                <Image
+                  key={photo.id}
+                  contentFit="cover"
+                  source={{ uri: photo.uri }}
+                  style={[styles.photo, { backgroundColor: theme.backgroundElement }]}
+                />
+              ))}
+            </View>
+          </ScrollView>
+        </>
+      ) : null}
     </Card>
   );
 }
@@ -71,5 +100,14 @@ const styles = StyleSheet.create({
   meta: {
     gap: Spacing.xs,
     marginTop: Spacing.md,
+  },
+  photoRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  photo: {
+    width: 72,
+    height: 72,
+    borderRadius: Radius.md,
   },
 });

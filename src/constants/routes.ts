@@ -34,6 +34,10 @@ export const Routes = {
       pathname: '/(app)/users/[userId]',
       params: view ? { userId, view } : { userId },
     }),
+    reviewDetail: (reviewId: string): Href => ({
+      pathname: '/(app)/reviews/[reviewId]',
+      params: { reviewId },
+    }),
     profile: '/(app)/(tabs)/profile',
     editProfile: '/(app)/edit-profile',
     activateProfessional: '/(app)/activate-professional',

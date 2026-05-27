@@ -1,13 +1,16 @@
-import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
+import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
 import { ReviewEvidenceUploader } from '@/features/reviews/components/review-evidence-uploader';
-import { ReviewSummaryCard } from '@/features/reviews/components/review-summary-card';
+import { ReviewDetailCard } from '@/features/reviews/components/review-detail-card';
 import { TraitRatingRow } from '@/features/reviews/components/trait-rating-row';
 import {
   buildDefaultTraits,
@@ -36,31 +39,71 @@ export function ReviewForm({
   revieweeIsProfessional,
   existingReview,
 }: ReviewFormProps) {
+  const router = useRouter();
   const createReview = useCreateReview();
-  const traitDefinitions = useMemo(
-    () => getReviewTraitsForReviewee(revieweeIsProfessional),
-    [revieweeIsProfessional],
-  );
+  const traitDefinitions = getReviewTraitsForReviewee(revieweeIsProfessional);
   const [traits, setTraits] = useState<ReviewTraits>(
     existingReview?.traits ?? buildDefaultTraits(traitDefinitions),
   );
   const [comment, setComment] = useState('');
   const [submittedReview, setSubmittedReview] = useState<Review | null>(existingReview ?? null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const activeReview = submittedReview ?? existingReview ?? null;
 
+  useEffect(() => {
+    if (!existingReview) {
+      return;
+    }
+
+    setSubmittedReview(existingReview);
+    setIsExpanded(false);
+  }, [existingReview]);
+
   if (activeReview) {
     return (
-      <Card>
-        <AppText variant="bodyMedium">Tu reseña</AppText>
-        <View style={styles.existingReview}>
-          <ReviewSummaryCard review={activeReview} revieweeIsProfessional={revieweeIsProfessional} />
-        </View>
-        <ReviewEvidenceUploader
-          initialUrls={activeReview.evidenceUrls}
-          reviewId={activeReview.id}
-          reviewerId={reviewerId}
-        />
+      <Card style={styles.compactCard}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setIsExpanded((value) => !value)}
+          style={styles.compactHeader}>
+          <View style={styles.compactMeta}>
+            <AppText variant="bodyMedium">Tu reseña · {activeReview.rating.toFixed(1)}★</AppText>
+            {!isExpanded && activeReview.comment ? (
+              <AppText color="textSecondary" numberOfLines={1} variant="caption">
+                {activeReview.comment}
+              </AppText>
+            ) : null}
+          </View>
+          <AppText color="textMuted" variant="body">
+            {isExpanded ? '▲' : '▼'}
+          </AppText>
+        </Pressable>
+
+        {isExpanded ? (
+          <>
+            <Spacer size="md" />
+            <ReviewDetailCard
+              review={activeReview}
+              revieweeIsProfessional={revieweeIsProfessional}
+              showReviewerLink={false}
+            />
+            <ReviewEvidenceUploader
+              initialUrls={activeReview.evidenceUrls}
+              reviewId={activeReview.id}
+              reviewerId={reviewerId}
+            />
+          </>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push(Routes.app.reviewDetail(activeReview.id))}
+            style={styles.detailLink}>
+            <AppText color="primary" variant="caption">
+              Ver detalle completo ›
+            </AppText>
+          </Pressable>
+        )}
       </Card>
     );
   }
@@ -122,6 +165,7 @@ export function ReviewForm({
             {
               onSuccess: (review) => {
                 setSubmittedReview(review);
+                setIsExpanded(false);
               },
             },
           );
@@ -133,11 +177,24 @@ export function ReviewForm({
 }
 
 const styles = StyleSheet.create({
+  compactCard: {
+    paddingVertical: Spacing.md,
+  },
+  compactHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  compactMeta: {
+    flex: 1,
+    gap: 2,
+  },
+  detailLink: {
+    marginTop: Spacing.sm,
+  },
   traits: {
     gap: Spacing.md,
     marginVertical: Spacing.md,
-  },
-  existingReview: {
-    marginTop: Spacing.md,
   },
 });

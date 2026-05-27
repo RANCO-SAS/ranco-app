@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/avatar';
@@ -7,6 +8,7 @@ import { Section } from '@/components/layout/section';
 import { AppText } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ImagePreviewModal } from '@/components/ui/image-preview-modal';
 import { Spacer } from '@/components/ui/spacer';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
@@ -17,7 +19,7 @@ import { mapAuthError } from '@/features/auth/utils/map-auth-error';
 import { ProfileModeSection } from '@/features/profile/components/profile-mode-section';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
-import { useProfileReviews } from '@/features/reviews/hooks/use-reviews';
+import { useProfileReviews, selectRoleReviewSummary } from '@/features/reviews/hooks/use-reviews';
 
 export function ProfileScreen() {
   const router = useRouter();
@@ -25,7 +27,11 @@ export function ProfileScreen() {
   const { profile } = useCurrentProfile();
   const { activeMode } = useActiveMode();
   const logout = useLogout();
+  const [isAvatarPreviewVisible, setIsAvatarPreviewVisible] = useState(false);
   const reviewsQuery = useProfileReviews(profile?.id);
+  const activeRole = activeMode === 'professional' ? 'professional' : 'client';
+  const roleSummary = selectRoleReviewSummary(reviewsQuery.data, activeRole);
+  const roleLabel = activeRole === 'professional' ? 'como profesional' : 'como cliente';
 
   const handleOpenPublicProfile = () => {
     if (!profile?.id) {
@@ -44,35 +50,58 @@ export function ProfileScreen() {
     <ScreenLayout safeArea="tab" scrollable>
       <Section title="Perfil">
         {profile ? (
-          <Pressable accessibilityRole="button" onPress={handleOpenPublicProfile}>
+          <>
             <Card>
               <View style={styles.profileRow}>
-                <Avatar imageUrl={profile.avatarUrl} name={profile.fullName} size={72} />
+                {profile.avatarUrl ? (
+                  <Pressable
+                    accessibilityLabel="Ver foto de perfil"
+                    accessibilityRole="button"
+                    onPress={() => setIsAvatarPreviewVisible(true)}>
+                    <Avatar imageUrl={profile.avatarUrl} name={profile.fullName} size={72} />
+                  </Pressable>
+                ) : (
+                  <Avatar imageUrl={profile.avatarUrl} name={profile.fullName} size={72} />
+                )}
 
-                <View style={styles.profileMeta}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={handleOpenPublicProfile}
+                  style={styles.profileMeta}>
                   <AppText variant="subtitle">{profile.fullName || 'Usuario'}</AppText>
                   {session?.email ? (
                     <AppText color="textSecondary" numberOfLines={1} variant="caption">
                       {session.email}
                     </AppText>
                   ) : null}
-                  {reviewsQuery.data && reviewsQuery.data.totalReviews > 0 ? (
+                  {roleSummary && roleSummary.totalReviews > 0 ? (
                     <AppText color="textSecondary" variant="caption">
-                      {reviewsQuery.data.averageRating.toFixed(1)} ·{' '}
-                      {reviewsQuery.data.totalReviews} reseñas
+                      {roleSummary.averageRating.toFixed(1)}★ · {roleSummary.totalReviews} reseñas{' '}
+                      {roleLabel}
                     </AppText>
                   ) : null}
                   <AppText color="primary" variant="small">
                     Ver resumen público
                   </AppText>
-                </View>
+                </Pressable>
 
-                <AppText color="textMuted" variant="subtitle">
-                  ›
-                </AppText>
+                <Pressable accessibilityRole="button" onPress={handleOpenPublicProfile}>
+                  <AppText color="textMuted" variant="subtitle">
+                    ›
+                  </AppText>
+                </Pressable>
               </View>
             </Card>
-          </Pressable>
+
+            {profile.avatarUrl ? (
+              <ImagePreviewModal
+                imageUrl={profile.avatarUrl}
+                onClose={() => setIsAvatarPreviewVisible(false)}
+                title={profile.fullName || 'Foto de perfil'}
+                visible={isAvatarPreviewVisible}
+              />
+            ) : null}
+          </>
         ) : null}
 
         <Spacer size="lg" />

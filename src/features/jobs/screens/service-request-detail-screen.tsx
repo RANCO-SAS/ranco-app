@@ -47,7 +47,10 @@ export function ServiceRequestDetailScreen() {
     return (
       <ScreenLayout>
         <StackHeader title="Solicitud" />
-        <EmptyState title="Solicitud no disponible" />
+        <EmptyState
+          description="Puede que la solicitud ya no esté abierta o no tengas acceso a ella."
+          title="Solicitud no disponible"
+        />
       </ScreenLayout>
     );
   }
@@ -145,14 +148,22 @@ export function ServiceRequestDetailScreen() {
 
       {request.status === 'completed' && revieweeId && profile?.id ? (
         <>
-          <ReviewForm
-            existingReview={jobReviewQuery.data}
-            revieweeId={revieweeId}
-            revieweeIsProfessional={isOwner}
-            revieweeName={isOwner ? assignedProfessionalName : 'el cliente'}
-            reviewerId={profile.id}
-            serviceRequestId={request.id}
-          />
+          {jobReviewQuery.isLoading ? (
+            <Card>
+              <AppText color="textSecondary" variant="caption">
+                Cargando reseña...
+              </AppText>
+            </Card>
+          ) : (
+            <ReviewForm
+              existingReview={jobReviewQuery.data}
+              revieweeId={revieweeId}
+              revieweeIsProfessional={isOwner}
+              revieweeName={isOwner ? assignedProfessionalName : 'el cliente'}
+              reviewerId={profile.id}
+              serviceRequestId={request.id}
+            />
+          )}
           <Spacer size="md" />
         </>
       ) : null}

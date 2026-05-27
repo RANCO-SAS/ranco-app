@@ -1,10 +1,9 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
 import {
-  CLIENT_REVIEW_TRAITS,
-  PROFESSIONAL_REVIEW_TRAITS,
+  getReviewTraitsForReviewee,
   type ReviewTraits,
 } from '@/features/reviews/constants/review-traits';
 import type { Review } from '@/features/reviews/types/review.types';
@@ -12,38 +11,63 @@ import type { Review } from '@/features/reviews/types/review.types';
 type ReviewSummaryCardProps = {
   review: Review;
   revieweeIsProfessional: boolean;
+  showNavigateHint?: boolean;
 };
 
-function resolveTraitLabel(key: string, revieweeIsProfessional: boolean): string {
-  const definitions = revieweeIsProfessional ? PROFESSIONAL_REVIEW_TRAITS : CLIENT_REVIEW_TRAITS;
-  return definitions.find((definition) => definition.key === key)?.label ?? key;
-}
+function renderTraitPreview(traits: ReviewTraits, revieweeIsProfessional: boolean) {
+  const definitions = getReviewTraitsForReviewee(revieweeIsProfessional);
+  const preview = definitions
+    .map((definition) => {
+      const value = traits[definition.key];
+      if (typeof value !== 'number') {
+        return null;
+      }
 
-function renderTraitLines(traits: ReviewTraits, revieweeIsProfessional: boolean) {
-  const entries = Object.entries(traits).filter(
-    (entry): entry is [string, number] => typeof entry[1] === 'number',
-  );
+      return `${definition.label}: ${value}★`;
+    })
+    .filter((line): line is string => Boolean(line))
+    .slice(0, 2);
 
-  if (entries.length === 0) {
+  if (preview.length === 0) {
     return null;
   }
 
-  return entries.map(([key, value]) => (
-    <AppText key={key} color="textSecondary" variant="caption">
-      {resolveTraitLabel(key, revieweeIsProfessional)}: {value}★
+  return preview.map((line) => (
+    <AppText key={line} color="textSecondary" numberOfLines={1} variant="caption">
+      {line}
     </AppText>
   ));
 }
 
-export function ReviewSummaryCard({ review, revieweeIsProfessional }: ReviewSummaryCardProps) {
+export function ReviewSummaryCard({
+  review,
+  revieweeIsProfessional,
+  showNavigateHint = false,
+}: ReviewSummaryCardProps) {
   return (
     <View style={styles.container}>
-      <AppText variant="bodyMedium">
-        {review.rating.toFixed(1)}★ · {review.reviewerName}
-      </AppText>
-      <View style={styles.traits}>{renderTraitLines(review.traits, revieweeIsProfessional)}</View>
+      <View style={styles.headerRow}>
+        <View style={styles.headerMeta}>
+          <AppText variant="bodyMedium">
+            {review.rating.toFixed(1)}★ · {review.reviewerName}
+          </AppText>
+          {review.serviceRequestTitle ? (
+            <AppText color="textSecondary" numberOfLines={1} variant="caption">
+              {review.serviceRequestTitle}
+            </AppText>
+          ) : null}
+        </View>
+        {showNavigateHint ? (
+          <AppText color="textMuted" variant="subtitle">
+            ›
+          </AppText>
+        ) : null}
+      </View>
+
+      <View style={styles.traits}>{renderTraitPreview(review.traits, revieweeIsProfessional)}</View>
+
       {review.comment ? (
-        <AppText color="textSecondary" variant="caption">
+        <AppText color="textSecondary" numberOfLines={2} variant="caption">
           {review.comment}
         </AppText>
       ) : null}
@@ -54,6 +78,15 @@ export function ReviewSummaryCard({ review, revieweeIsProfessional }: ReviewSumm
 const styles = StyleSheet.create({
   container: {
     gap: Spacing.xs,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  headerMeta: {
+    flex: 1,
+    gap: 2,
   },
   traits: {
     gap: 2,

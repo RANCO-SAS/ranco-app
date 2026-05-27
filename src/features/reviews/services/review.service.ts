@@ -1,15 +1,19 @@
 import {
   computeAverageRating,
+  filterReviewsByRole,
+  getReviewTraitsForReviewee,
   type ReviewTraitDefinition,
   type ReviewTraits,
+  type RevieweeRole,
 } from '@/features/reviews/constants/review-traits';
 import type { ReviewRow } from '@/features/reviews/types/review-db.types';
 import type {
   CreateReviewInput,
-  ProfileReviewSummary,
+  ProfileReviewsByRole,
   RatedJobItem,
   Review,
   ReviewPortfolioItem,
+  RoleReviewSummary,
   UpdateReviewEvidenceInput,
 } from '@/features/reviews/types/review.types';
 import { getSupabaseClient } from '@/services/supabase/client';
@@ -17,7 +21,8 @@ import { storageService } from '@/services/storage/storage.service';
 
 const REVIEWS_TABLE = 'reviews';
 
-const REVIEW_SELECT = '*, reviewer:reviewer_id(full_name), service_request:service_request_id(title)';
+const REVIEW_SELECT =
+  '*, reviewer:reviewer_id(full_name, avatar_url), service_request:service_request_id(title)';
 
 function mapReviewRow(row: ReviewRow): Review {
   const traits = row.traits ?? {};
@@ -33,6 +38,7 @@ function mapReviewRow(row: ReviewRow): Review {
     evidenceUrls: row.evidence_urls ?? [],
     createdAt: row.created_at,
     reviewerName: row.reviewer?.full_name ?? 'Usuario',
+    reviewerAvatarUrl: row.reviewer?.avatar_url ?? null,
     serviceRequestTitle: row.service_request?.title,
   };
 }
@@ -122,7 +128,26 @@ async function updateReviewEvidence(input: UpdateReviewEvidenceInput): Promise<R
   return mapReviewRow(data as ReviewRow);
 }
 
-async function getReviewsForUser(userId: string): Promise<ProfileReviewSummary> {
+function buildRoleReviewSummary(reviews: Review[], role: RevieweeRole): RoleReviewSummary {
+  const filtered = filterReviewsByRole(reviews, role);
+  const traitDefinitions = getReviewTraitsForReviewee(role === 'professional');
+  const traitAverages = computeTraitAverages(filtered, traitDefinitions);
+  const weightedAverage = computeAverageRating(traitAverages);
+  const fallbackAverage =
+    filtered.length === 0
+      ? 0
+      : filtered.reduce((sum, review) => sum + review.rating, 0) / filtered.length;
+  const averageRating = weightedAverage > 0 ? weightedAverage : fallbackAverage;
+
+  return {
+    averageRating: Math.round(averageRating * 10) / 10,
+    totalReviews: filtered.length,
+    traitAverages,
+    reviews: filtered,
+  };
+}
+
+async function getReviewsForUser(userId: string): Promise<ProfileReviewsByRole> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from(REVIEWS_TABLE)
@@ -135,23 +160,10 @@ async function getReviewsForUser(userId: string): Promise<ProfileReviewSummary> 
   }
 
   const reviews = ((data ?? []) as ReviewRow[]).map(mapReviewRow);
-  const totalReviews = reviews.length;
-  const averageRating =
-    totalReviews === 0
-      ? 0
-      : reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews;
-
-  const allTraitKeys = new Set(reviews.flatMap((review) => Object.keys(review.traits)));
-  const traitDefinitions = Array.from(allTraitKeys).map((key) => ({
-    key: key as ReviewTraitDefinition['key'],
-    label: key,
-  }));
 
   return {
-    averageRating,
-    totalReviews,
-    traitAverages: computeTraitAverages(reviews, traitDefinitions),
-    reviews,
+    client: buildRoleReviewSummary(reviews, 'client'),
+    professional: buildRoleReviewSummary(reviews, 'professional'),
   };
 }
 
@@ -165,6 +177,25 @@ async function getReviewForJobByReviewer(
     .select(REVIEW_SELECT)
     .eq('service_request_id', serviceRequestId)
     .eq('reviewer_id', reviewerId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapReviewRow(data as ReviewRow);
+}
+
+async function getReviewById(reviewId: string): Promise<Review | null> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from(REVIEWS_TABLE)
+    .select(REVIEW_SELECT)
+    .eq('id', reviewId)
     .maybeSingle();
 
   if (error) {
@@ -203,7 +234,7 @@ async function getReviewPortfolio(userId: string): Promise<ReviewPortfolioItem[]
     }));
 }
 
-async function getRatedJobs(userId: string): Promise<RatedJobItem[]> {
+async function getRatedJobs(userId: string, role?: RevieweeRole): Promise<RatedJobItem[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from(REVIEWS_TABLE)
@@ -215,7 +246,13 @@ async function getRatedJobs(userId: string): Promise<RatedJobItem[]> {
     throw error;
   }
 
-  const receivedReviews = (data ?? []) as ReviewRow[];
+  const receivedReviews = ((data ?? []) as ReviewRow[]).filter((row) => {
+    if (!role) {
+      return true;
+    }
+
+    return filterReviewsByRole([{ traits: row.traits ?? {} }], role).length > 0;
+  });
 
   if (receivedReviews.length === 0) {
     return [];
@@ -255,6 +292,7 @@ export const reviewService = {
   createReview,
   updateReviewEvidence,
   getReviewsForUser,
+  getReviewById,
   getReviewForJobByReviewer,
   getReviewPortfolio,
   getRatedJobs,

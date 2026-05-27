@@ -11,6 +11,7 @@ export type Review = {
   evidenceUrls: string[];
   createdAt: string;
   reviewerName: string;
+  reviewerAvatarUrl: string | null;
   serviceRequestTitle?: string;
 };
 
@@ -50,9 +51,14 @@ export type RatedJobItem = {
   ownEvidenceUrls: string[];
 };
 
-export type ProfileReviewSummary = {
+export type RoleReviewSummary = {
   averageRating: number;
   totalReviews: number;
   traitAverages: ReviewTraits;
   reviews: Review[];
+};
+
+export type ProfileReviewsByRole = {
+  client: RoleReviewSummary;
+  professional: RoleReviewSummary;
 };

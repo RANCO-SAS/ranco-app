@@ -325,7 +325,13 @@ export function CreateServiceRequestScreen() {
 
           {currentStep === 2 ? (
             <View style={styles.stepContent}>
-              <RequestSummaryCard categories={categories} values={formValues} />
+              <RequestSummaryCard categories={categories} photos={photos} values={formValues} />
+
+              <ServiceRequestPhotoPicker
+                disabled={createRequest.isPending}
+                onChange={setPhotos}
+                photos={photos}
+              />
 
               <Controller
                 control={control}
@@ -378,7 +384,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Layout.screenPaddingHorizontal,
     paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.xxl,
     gap: Spacing.lg,
     maxWidth: Layout.maxContentWidth,
     width: '100%',
