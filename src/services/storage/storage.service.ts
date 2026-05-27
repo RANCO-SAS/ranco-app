@@ -2,6 +2,7 @@ import { File } from 'expo-file-system';
 
 import { devError, devLog, devWarn } from '@/lib/dev-logger';
 import { getSupabaseClient } from '@/services/supabase/client';
+import { withImageCacheBuster } from '@/shared/utils/image-uri';
 
 const AVATARS_BUCKET = 'avatars';
 const CHAT_MEDIA_BUCKET = 'chat-media';
@@ -124,10 +125,7 @@ async function deleteAvatarFiles(userId: string, keepPath?: string): Promise<voi
   }
 
   const pathsToDelete =
-    files
-      ?.filter((file) => file.name.startsWith('avatar.'))
-      .map((file) => `${userId}/${file.name}`)
-      .filter((path) => path !== keepPath) ?? [];
+    files?.map((file) => `${userId}/${file.name}`).filter((path) => path !== keepPath) ?? [];
 
   await deleteStorageObjects(AVATARS_BUCKET, pathsToDelete);
 }
@@ -202,8 +200,9 @@ async function uploadImage(input: UploadImageInput): Promise<string> {
 
   if (input.bucket === AVATARS_BUCKET || input.bucket === WORK_EVIDENCE_BUCKET || input.bucket === REQUEST_PHOTOS_BUCKET) {
     const { data } = supabase.storage.from(input.bucket).getPublicUrl(input.path);
-    devLog('storage', 'uploadImage:public-url', { urlPreview: data.publicUrl.slice(0, 120) });
-    return data.publicUrl;
+    const publicUrl = withImageCacheBuster(data.publicUrl);
+    devLog('storage', 'uploadImage:public-url', { urlPreview: publicUrl.slice(0, 120) });
+    return publicUrl;
   }
 
   const { data, error: signedUrlError } = await supabase.storage
@@ -233,7 +232,7 @@ async function uploadAvatar(
   devLog('storage', 'uploadAvatar:start', { userId, uriScheme: getUriScheme(uri) });
 
   const extension = resolveFileExtension(uri);
-  const nextPath = `${userId}/avatar.${extension}`;
+  const nextPath = `${userId}/avatar-${Date.now()}.${extension}`;
 
   await deleteAvatarFiles(userId, nextPath);
   await deletePreviousAvatarUrl(previousAvatarUrl);
@@ -268,13 +267,12 @@ async function uploadReviewEvidence(
   index: number,
 ): Promise<string> {
   const extension = resolveFileExtension(uri);
-  const path = `${userId}/${reviewId}/${index}.${extension}`;
+  const path = `${userId}/${reviewId}/${Date.now()}-${index}.${extension}`;
 
   return uploadImage({
     bucket: WORK_EVIDENCE_BUCKET,
     path,
     uri,
-    upsert: true,
   });
 }
 
@@ -293,13 +291,12 @@ async function uploadRequestPhoto(
   index: number,
 ): Promise<string> {
   const extension = resolveFileExtension(uri);
-  const path = `${clientId}/${requestId}/${index}.${extension}`;
+  const path = `${clientId}/${requestId}/${Date.now()}-${index}.${extension}`;
 
   return uploadImage({
     bucket: REQUEST_PHOTOS_BUCKET,
     path,
     uri,
-    upsert: true,
   });
 }
 

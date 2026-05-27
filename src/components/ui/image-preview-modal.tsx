@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
+import { resolveImageCachePolicy } from '@/shared/utils/image-uri';
 
 type ImagePreviewModalProps = {
   visible: boolean;
@@ -47,7 +48,13 @@ export function ImagePreviewModal({
           </View>
 
           <Pressable accessibilityRole="imagebutton" onPress={onClose} style={styles.imageArea}>
-            <Image contentFit="contain" source={{ uri: imageUrl }} style={styles.image} />
+            <Image
+              cachePolicy={resolveImageCachePolicy(imageUrl)}
+              contentFit="contain"
+              recyclingKey={imageUrl}
+              source={{ uri: imageUrl }}
+              style={styles.image}
+            />
           </Pressable>
         </SafeAreaView>
       </View>

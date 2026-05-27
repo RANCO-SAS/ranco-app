@@ -27,6 +27,8 @@ export function ProfileAvatarPicker({
 }: ProfileAvatarPickerProps) {
   const theme = useTheme();
   const [isUploading, setIsUploading] = useState(false);
+  const [localPreviewUri, setLocalPreviewUri] = useState<string | null>(null);
+  const displayImageUrl = localPreviewUri ?? value;
 
   const handlePickImage = async () => {
     if (disabled || isUploading) {
@@ -50,6 +52,7 @@ export function ProfileAvatarPicker({
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.85,
+      copyToCacheDirectory: true,
     });
 
     if (result.canceled || !result.assets[0]) {
@@ -58,6 +61,7 @@ export function ProfileAvatarPicker({
     }
 
     const asset = result.assets[0];
+    setLocalPreviewUri(asset.uri);
     devLog('storage', 'avatar-picker:selected', {
       uriScheme: asset.uri.split(':')[0],
       width: asset.width,
@@ -73,8 +77,10 @@ export function ProfileAvatarPicker({
         urlPreview: avatarUrl.slice(0, 120),
       });
       onChange(avatarUrl);
+      setLocalPreviewUri(null);
     } catch (error) {
       devError('storage', 'avatar-picker:upload-failed', error);
+      setLocalPreviewUri(null);
       onError?.('No pudimos subir tu foto. Inténtalo de nuevo.');
     } finally {
       setIsUploading(false);
@@ -90,7 +96,7 @@ export function ProfileAvatarPicker({
       }}
       style={styles.wrapper}>
       <View style={styles.avatarWrapper}>
-        <Avatar imageUrl={value} name={name} size={88} />
+        <Avatar imageUrl={displayImageUrl} name={name} size={88} />
         {isUploading ? (
           <View style={[styles.overlay, { backgroundColor: `${theme.text}55` }]}>
             <ActivityIndicator color={theme.background} />
