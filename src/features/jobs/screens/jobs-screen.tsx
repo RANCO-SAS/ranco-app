@@ -12,7 +12,6 @@ import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
 import { ServiceRequestCard } from '@/features/jobs/components/service-request-card';
 import { useClientServiceRequests } from '@/features/jobs/hooks/use-service-requests';
-import { ActiveModeBanner } from '@/features/profile/components/active-mode-banner';
 import { ModeGateEmptyState } from '@/features/profile/components/mode-gate-empty-state';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
@@ -28,17 +27,17 @@ export function JobsScreen() {
 
   if (clientRequests.isLoading) {
     return (
-      <ScreenLayout loading loadingMessage="Cargando solicitudes..." safeArea="tab" />
+      <ScreenLayout loading loadingMessage="Cargando..." safeArea="tab" />
     );
   }
 
   if (clientRequests.error) {
     return (
       <ScreenLayout safeArea="tab">
-        <Section title="Mis solicitudes" description="Gestiona lo que has publicado como cliente.">
+        <Section title="Mis solicitudes">
           <Card>
             <AppText variant="body" color="destructive">
-              No pudimos cargar tus solicitudes. Inténtalo de nuevo.
+              No se pudieron cargar las solicitudes.
             </AppText>
           </Card>
         </Section>
@@ -50,17 +49,9 @@ export function JobsScreen() {
 
   return (
     <ScreenLayout safeArea="tab" scrollable>
-      <Section
-        title="Mis solicitudes"
-        description="Publica y da seguimiento a tus trabajos como cliente.">
-        <ActiveModeBanner mode="client" />
-        <Spacer size="lg" />
-
+      <Section title="Mis solicitudes">
         {!profile?.isClient ? (
-          <EmptyState
-            description="Activa el rol de cliente en tu perfil para publicar solicitudes."
-            title="Rol cliente no activo"
-          />
+          <EmptyState title="Rol cliente inactivo" />
         ) : !isClientMode ? (
           <ModeGateEmptyState requiredMode="client" />
         ) : (
@@ -71,10 +62,7 @@ export function JobsScreen() {
             />
             <Spacer size="lg" />
             {requests.length === 0 ? (
-              <EmptyState
-                description="Publica tu primera solicitud para que los profesionales puedan encontrarla."
-                title="No hay solicitudes activas"
-              />
+              <EmptyState title="Sin solicitudes" />
             ) : (
               <FlatList
                 data={requests}

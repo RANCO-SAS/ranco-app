@@ -98,7 +98,7 @@ export function ProfileAvatarPicker({
         ) : null}
       </View>
       <AppText color="primary" variant="caption">
-        {isUploading ? 'Subiendo foto...' : 'Elegir foto de perfil'}
+        {isUploading ? 'Subiendo...' : 'Elegir foto'}
       </AppText>
     </Pressable>
   );

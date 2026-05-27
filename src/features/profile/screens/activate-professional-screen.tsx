@@ -105,17 +105,8 @@ export function ActivateProfessionalScreen() {
       <Spacer size="lg" />
 
       <View style={styles.hero}>
-        <AppText color="textMuted" variant="small">
-          {isEditingExisting ? 'EDITAR OFICIOS' : 'ACTIVAR PROFESIONAL'}
-        </AppText>
         <AppText variant="subtitle">
-          {isEditingExisting
-            ? 'Actualiza los servicios que ofreces'
-            : '¿Qué servicios ofreces?'}
-        </AppText>
-        <AppText color="textSecondary" variant="caption">
-          Elige entre {PROFESSIONAL_SERVICE_SELECTION.min} y {PROFESSIONAL_SERVICE_SELECTION.max}{' '}
-          oficios. Con esto verás oportunidades relacionadas con lo que haces.
+          {isEditingExisting ? 'Mis servicios' : 'Servicios'}
         </AppText>
       </View>
 
@@ -123,17 +114,11 @@ export function ActivateProfessionalScreen() {
 
       <Card>
         <View style={styles.counterRow}>
-          <AppText variant="bodyMedium">Servicios seleccionados</AppText>
+          <AppText variant="bodyMedium">Seleccionados</AppText>
           <AppText color={canSubmit ? 'success' : 'textMuted'} variant="bodyMedium">
             {selectedCount}/{PROFESSIONAL_SERVICE_SELECTION.max}
           </AppText>
         </View>
-        <Spacer size="xs" />
-        <AppText color="textSecondary" variant="caption">
-          {canSubmit
-            ? 'Listo. Puedes guardar tu perfil profesional.'
-            : `Agrega al menos ${PROFESSIONAL_SERVICE_SELECTION.min} servicio para continuar.`}
-        </AppText>
       </Card>
 
       <Spacer size="lg" />

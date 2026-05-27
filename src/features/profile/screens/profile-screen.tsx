@@ -15,35 +15,19 @@ import { useAuth } from '@/features/auth/hooks/use-auth';
 import { useLogout } from '@/features/auth/hooks/use-logout';
 import { mapAuthError } from '@/features/auth/utils/map-auth-error';
 import { ProfileModeSection } from '@/features/profile/components/profile-mode-section';
-import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
 import { useProfileReviews } from '@/features/reviews/hooks/use-reviews';
-
-function formatRoles(isClient: boolean, isProfessional: boolean): string {
-  if (isClient && isProfessional) {
-    return 'Cliente y profesional';
-  }
-
-  if (isProfessional) {
-    return 'Profesional';
-  }
-
-  return 'Cliente';
-}
 
 export function ProfileScreen() {
   const router = useRouter();
   const { session } = useAuth();
   const { profile } = useCurrentProfile();
   const logout = useLogout();
-  const { activeMode } = useActiveMode();
   const reviewsQuery = useProfileReviews(profile?.id);
-
-  const activeModeLabel = activeMode === 'client' ? 'Cliente' : 'Profesional';
 
   return (
     <ScreenLayout safeArea="tab" scrollable>
-      <Section title="Perfil" description="Tu cuenta, modo de uso y preferencias.">
+      <Section title="Perfil">
         {profile ? (
           <Card>
             <Avatar imageUrl={profile.avatarUrl} name={profile.fullName} size={72} />
@@ -71,13 +55,6 @@ export function ProfileScreen() {
                 </AppText>
               </>
             ) : null}
-            <Spacer size="sm" />
-            <AppText color="textMuted" variant="caption">
-              Roles: {formatRoles(profile.isClient, profile.isProfessional)}
-            </AppText>
-            <AppText color="primary" variant="caption">
-              Usando ahora: {activeModeLabel}
-            </AppText>
             {reviewsQuery.data && reviewsQuery.data.totalReviews > 0 ? (
               <>
                 <Spacer size="sm" />

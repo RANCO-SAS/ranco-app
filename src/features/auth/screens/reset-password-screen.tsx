@@ -95,7 +95,7 @@ export function ResetPasswordScreen() {
 
   return (
     <ScreenLayout scrollable centered>
-      <AuthLayout subtitle="Elige una contraseña nueva para tu cuenta." title="Nueva contraseña">
+      <AuthLayout title="Nueva contraseña">
         {sessionError ? <AuthMessage message={sessionError} variant="error" /> : null}
 
         {resetPassword.error ? (

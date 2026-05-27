@@ -44,16 +44,13 @@ export function RegisterScreen() {
 
   return (
     <ScreenLayout scrollable centered>
-      <AuthLayout title="Crear cuenta" subtitle="Regístrate con correo y contraseña">
+      <AuthLayout title="Crear cuenta">
         {signUp.error ? (
           <AuthMessage message={mapAuthError(signUp.error)} variant="error" />
         ) : null}
 
         {signUp.isSuccess && !signUp.data ? (
-          <AuthMessage
-            message="Revisa tu correo para confirmar la cuenta antes de iniciar sesión."
-            variant="success"
-          />
+          <AuthMessage message="Revisa tu correo para confirmar la cuenta." variant="success" />
         ) : null}
 
         <Controller

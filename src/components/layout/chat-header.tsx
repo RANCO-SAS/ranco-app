@@ -11,14 +11,12 @@ import { useTheme } from '@/hooks/use-theme';
 
 type ChatHeaderProps = {
   title: string;
-  subtitle: string;
   participant: ConversationParticipant;
   serviceRequestStatus: ServiceRequestStatus;
 };
 
 export function ChatHeader({
   title,
-  subtitle,
   participant,
   serviceRequestStatus,
 }: ChatHeaderProps) {
@@ -44,10 +42,7 @@ export function ChatHeader({
           <AppText numberOfLines={1} variant="bodyMedium">
             {participant.fullName}
           </AppText>
-          <AppText color="textSecondary" numberOfLines={1} variant="caption">
-            {subtitle}
-          </AppText>
-          <AppText color="primary" variant="small">
+          <AppText color="primary" numberOfLines={1} variant="small">
             {title} · {SERVICE_REQUEST_STATUS_LABELS[serviceRequestStatus]}
           </AppText>
         </View>

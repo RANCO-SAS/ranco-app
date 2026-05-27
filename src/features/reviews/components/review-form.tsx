@@ -32,20 +32,14 @@ export function ReviewForm({
   if (existingRating) {
     return (
       <Card>
-        <AppText variant="bodyMedium">Reseña enviada</AppText>
-        <AppText color="textSecondary" variant="caption">
-          Ya dejaste {existingRating} estrellas para {revieweeName}.
-        </AppText>
+        <AppText variant="bodyMedium">{existingRating}★</AppText>
       </Card>
     );
   }
 
   return (
     <Card>
-      <AppText variant="bodyMedium">Califica a {revieweeName}</AppText>
-      <AppText color="textSecondary" variant="caption">
-        El trabajo terminó. Comparte tu experiencia en su perfil.
-      </AppText>
+      <AppText variant="bodyMedium">{revieweeName}</AppText>
 
       <View style={styles.ratingRow}>
         {RATING_OPTIONS.map((value) => (

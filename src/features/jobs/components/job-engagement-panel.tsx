@@ -69,11 +69,7 @@ export function JobEngagementPanel(props: JobEngagementPanelProps) {
 
   return (
     <Card>
-      <AppText variant="bodyMedium">Estado del trabajo</AppText>
-      <Spacer />
-      <AppText color="textSecondary" variant="caption">
-        {SERVICE_REQUEST_STATUS_LABELS[props.status]}
-      </AppText>
+      <AppText variant="bodyMedium">{SERVICE_REQUEST_STATUS_LABELS[props.status]}</AppText>
       {actions.length > 0 ? (
         <View style={styles.actions}>
           {actions.map((action) => (

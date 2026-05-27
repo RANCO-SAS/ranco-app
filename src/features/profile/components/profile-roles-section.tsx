@@ -28,7 +28,6 @@ export function ProfileRolesSection() {
           .map((subcategory) => ({
             id: subcategory.id,
             name: subcategory.name,
-            categoryName: category.name,
           })),
       )
     : [];
@@ -36,9 +35,6 @@ export function ProfileRolesSection() {
   return (
     <View style={styles.wrapper}>
       <AppText variant="subtitle">Roles</AppText>
-      <AppText color="textSecondary" variant="caption">
-        El rol cliente te permite pedir servicios. El rol profesional te permite ver oportunidades.
-      </AppText>
 
       <Spacer size="sm" />
 
@@ -51,9 +47,6 @@ export function ProfileRolesSection() {
             </AppText>
           </View>
         </View>
-        <AppText color="textSecondary" variant="caption">
-          Publicar solicitudes y contratar profesionales.
-        </AppText>
       </Card>
 
       <Card>
@@ -68,11 +61,6 @@ export function ProfileRolesSection() {
 
         {profile.isProfessional ? (
           <>
-            <AppText color="textSecondary" variant="caption">
-              {selectedServices.length > 0
-                ? 'Estos son los servicios que ofreces:'
-                : 'Completa tu perfil profesional eligiendo tus servicios.'}
-            </AppText>
             {selectedServices.length > 0 ? (
               <>
                 <Spacer size="sm" />
@@ -89,20 +77,16 @@ export function ProfileRolesSection() {
             ) : null}
             <Spacer size="md" />
             <Button
-              label={selectedServices.length > 0 ? 'Editar servicios' : 'Completar perfil profesional'}
+              label={selectedServices.length > 0 ? 'Editar servicios' : 'Configurar servicios'}
               onPress={() => router.push(Routes.app.activateProfessional)}
               variant="secondary"
             />
           </>
         ) : (
           <>
-            <AppText color="textSecondary" variant="caption">
-              Configura entre 1 y 3 servicios para activar tu perfil profesional y ver ofertas
-              relevantes.
-            </AppText>
             <Spacer size="md" />
             <Button
-              label="Configurar perfil profesional"
+              label="Activar profesional"
               onPress={() => router.push(Routes.app.activateProfessional)}
               variant="dark"
             />

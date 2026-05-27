@@ -228,14 +228,10 @@ export function ConversationScreen() {
         <ChatHeader
           participant={{ id: '', fullName: 'Chat', avatarUrl: null }}
           serviceRequestStatus="published"
-          subtitle="Conversación"
           title="Chat"
         />
         <View style={styles.emptyContainer}>
-          <EmptyState
-            description="No encontramos esta conversación o no tienes acceso."
-            title="Chat no disponible"
-          />
+          <EmptyState title="Chat no disponible" />
         </View>
       </SafeAreaView>
     );
@@ -248,7 +244,6 @@ export function ConversationScreen() {
       <ChatHeader
         participant={counterpart}
         serviceRequestStatus={serviceRequestStatus}
-        subtitle={isClient ? 'Profesional' : 'Cliente'}
         title={conversation.serviceRequestTitle}
       />
 
@@ -287,10 +282,7 @@ export function ConversationScreen() {
               {messages.length === 0 ? (
                 <>
                   <Spacer size="md" />
-                  <EmptyState
-                    description="Envía el primer mensaje o comparte una foto."
-                    title="Sin mensajes aún"
-                  />
+                  <EmptyState title="Sin mensajes" />
                 </>
               ) : null}
             </View>

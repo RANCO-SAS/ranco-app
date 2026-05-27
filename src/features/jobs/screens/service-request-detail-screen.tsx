@@ -36,10 +36,7 @@ export function ServiceRequestDetailScreen() {
     return (
       <ScreenLayout>
         <StackHeader title="Solicitud" />
-        <EmptyState
-          description="No encontramos esta solicitud o no tienes acceso."
-          title="Solicitud no disponible"
-        />
+        <EmptyState title="Solicitud no disponible" />
       </ScreenLayout>
     );
   }

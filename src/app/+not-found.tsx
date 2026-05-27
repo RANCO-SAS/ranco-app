@@ -11,7 +11,7 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: 'No encontrado' }} />
       <ScreenLayout centered>
-        <Section title="Pantalla no encontrada" description="La ruta solicitada no existe.">
+        <Section title="Pantalla no encontrada">
           <AppText variant="body" color="textSecondary" align="center">
             Verifica la URL o vuelve al inicio de la aplicación.
           </AppText>

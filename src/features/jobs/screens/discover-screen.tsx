@@ -1,22 +1,21 @@
-import { useMemo } from 'react';
-import { FlatList, Pressable, StyleSheet, View, type ListRenderItem } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
+import { FlatList, Pressable, StyleSheet, type ListRenderItem } from 'react-native';
 
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { Section } from '@/components/layout/section';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { AppText } from '@/components/ui/text';
 import { Spacer } from '@/components/ui/spacer';
+import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
 import { JobOpportunityCard } from '@/features/jobs/components/discover/job-opportunity-card';
-import { usePublishedServiceRequests } from '@/features/jobs/hooks/use-service-requests';
 import { usePublishedJobsRealtime } from '@/features/jobs/hooks/use-published-jobs-realtime';
+import { usePublishedServiceRequests } from '@/features/jobs/hooks/use-service-requests';
 import type { ServiceRequest } from '@/features/jobs/types/service-request.types';
 import { useStartConversation } from '@/features/messages/hooks/use-conversations';
-import { ActiveModeBanner } from '@/features/profile/components/active-mode-banner';
 import { ModeGateEmptyState } from '@/features/profile/components/mode-gate-empty-state';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
@@ -85,7 +84,7 @@ export function DiscoverScreen() {
 
   if (publishedRequests.isLoading) {
     return (
-      <ScreenLayout loading loadingMessage="Buscando oportunidades..." safeArea="tab" />
+      <ScreenLayout loading loadingMessage="Cargando..." safeArea="tab" />
     );
   }
 
@@ -95,7 +94,7 @@ export function DiscoverScreen() {
         <Section title="Oportunidades">
           <Card>
             <AppText color="destructive" variant="body">
-              No pudimos cargar oportunidades. Inténtalo de nuevo.
+              No se pudieron cargar las oportunidades.
             </AppText>
           </Card>
         </Section>
@@ -107,10 +106,7 @@ export function DiscoverScreen() {
     return (
       <ScreenLayout safeArea="tab">
         <Section title="Oportunidades">
-          <EmptyState
-            description="Activa el rol de profesional en tu perfil para ver oportunidades."
-            title="Rol profesional no activo"
-          />
+          <EmptyState title="Rol profesional inactivo" />
         </Section>
       </ScreenLayout>
     );
@@ -128,13 +124,10 @@ export function DiscoverScreen() {
     return (
       <ScreenLayout safeArea="tab">
         <Section title="Oportunidades">
-          <EmptyState
-            description="Configura qué servicios ofreces para recibir solicitudes relevantes."
-            title="Define tu oficio"
-          />
+          <EmptyState title="Sin servicios configurados" />
           <Spacer size="md" />
           <Button
-            label="Configurar áreas de servicio"
+            label="Configurar servicios"
             onPress={() => router.push(Routes.app.activateProfessional)}
             variant="dark"
           />
@@ -145,28 +138,20 @@ export function DiscoverScreen() {
 
   return (
     <ScreenLayout safeArea="tab">
-      <Section
-        description="Solicitudes en tus áreas de servicio · tiempo real"
-        title="Oportunidades">
-        <View style={styles.headerRow}>
-          <ActiveModeBanner mode="professional" />
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              void publishedRequests.refetch();
-            }}
-            style={styles.refreshButton}>
-            <AppText variant="small">↻ Actualizar</AppText>
-          </Pressable>
-        </View>
+      <Section title="Oportunidades">
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            void publishedRequests.refetch();
+          }}
+          style={styles.refreshButton}>
+          <AppText variant="small">↻ Actualizar</AppText>
+        </Pressable>
 
         <Spacer size="lg" />
 
         {opportunities.length === 0 ? (
-          <EmptyState
-            description="Cuando haya solicitudes en tus áreas de servicio, aparecerán aquí en tiempo real."
-            title="Sin oportunidades por ahora"
-          />
+          <EmptyState title="Sin oportunidades" />
         ) : (
           <FlatList
             contentContainerStyle={styles.listContent}
@@ -182,9 +167,6 @@ export function DiscoverScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerRow: {
-    gap: Spacing.sm,
-  },
   refreshButton: {
     alignSelf: 'flex-start',
     paddingVertical: Spacing.xs,

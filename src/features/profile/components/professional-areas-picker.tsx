@@ -82,10 +82,6 @@ export function ProfessionalAreasPicker({
 
   return (
     <View style={styles.wrapper}>
-      <AppText color="textMuted" variant="small">
-        TUS OFICIOS
-      </AppText>
-
       <UberSearchField
         autoCapitalize="none"
         autoCorrect={false}
@@ -95,11 +91,9 @@ export function ProfessionalAreasPicker({
         value={query}
       />
 
-      {maxSelections !== undefined ? (
-        <AppText color={isAtMax ? 'warning' : 'textSecondary'} variant="caption">
-          {isAtMax
-            ? `Ya seleccionaste ${maxSelections} servicios. Quita uno para cambiar.`
-            : `Puedes agregar hasta ${maxSelections} servicios.`}
+      {maxSelections !== undefined && isAtMax ? (
+        <AppText color="warning" variant="caption">
+          Máximo {maxSelections} servicios.
         </AppText>
       ) : null}
 

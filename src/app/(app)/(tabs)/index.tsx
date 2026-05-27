@@ -1,6 +1,6 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { UberActionCard } from '@/components/ui/uber-action-card';
@@ -19,7 +19,7 @@ import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile'
 export default function HomeScreen() {
   const router = useRouter();
   const { profile } = useCurrentProfile();
-  const { activeMode, canSwitchMode } = useActiveMode();
+  const { activeMode } = useActiveMode();
   const categoriesQuery = useServiceCategories();
 
   const isClientHome = activeMode === 'client';
@@ -32,26 +32,9 @@ export default function HomeScreen() {
 
   return (
     <ScreenLayout safeArea="tab" scrollable>
-      <View style={styles.header}>
-        <AppText variant="title">{firstName ? `Hola, ${firstName}` : 'Hola'}</AppText>
-        <AppText color="textSecondary" variant="body">
-          {isClientHome ? '¿Qué servicio necesitas hoy?' : 'Oportunidades cerca de ti'}
-        </AppText>
-      </View>
+      <AppText variant="title">{firstName ? `Hola, ${firstName}` : 'Hola'}</AppText>
 
-      {canSwitchMode ? (
-        <>
-          <Pressable accessibilityRole="button" onPress={() => router.push(Routes.app.profile)}>
-            <AppText color="textSecondary" variant="caption">
-              Modo {isClientHome ? 'cliente' : 'profesional'} activo ·{' '}
-              <AppText color="primary" variant="caption">
-                Cambiar en Perfil
-              </AppText>
-            </AppText>
-          </Pressable>
-          <Spacer size="lg" />
-        </>
-      ) : null}
+      <Spacer size="lg" />
 
       {isClientHome ? (
         profile?.isClient ? (
@@ -68,25 +51,20 @@ export default function HomeScreen() {
 
             {shortcuts.length > 0 ? (
               <>
-                <AppText color="textMuted" variant="small">
-                  ACCESOS RÁPIDOS
-                </AppText>
-                <Spacer size="sm" />
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View style={styles.shortcuts}>
                     {shortcuts.map((item) => (
-                  <View key={item.subcategoryId} style={styles.shortcutCard}>
-                      <UberActionCard
-                        leading={
-                          <AppText style={styles.shortcutIcon}>
-                            {getCategoryIcon(item.categorySlug)}
-                          </AppText>
-                        }
-                        onPress={() => router.push(Routes.app.createJob)}
-                        subtitle={item.categoryName}
-                        title={item.subcategoryName}
-                      />
-                    </View>
+                      <View key={item.subcategoryId} style={styles.shortcutCard}>
+                        <UberActionCard
+                          leading={
+                            <AppText style={styles.shortcutIcon}>
+                              {getCategoryIcon(item.categorySlug)}
+                            </AppText>
+                          }
+                          onPress={() => router.push(Routes.app.createJob)}
+                          title={item.subcategoryName}
+                        />
+                      </View>
                     ))}
                   </View>
                 </ScrollView>
@@ -96,51 +74,40 @@ export default function HomeScreen() {
 
             <UberActionCard
               onPress={() => router.push(Routes.app.jobs)}
-              subtitle="Revisa lo que ya publicaste"
               title="Mis solicitudes"
             />
           </>
         ) : (
-          <AppText color="textSecondary" variant="body">
-            Activa el rol de cliente en tu perfil para pedir servicios.
-          </AppText>
+          <Button
+            label="Activar rol cliente"
+            onPress={() => router.push(Routes.app.editProfile)}
+            variant="dark"
+          />
         )
       ) : profile?.isProfessional && (profile.professionalSubcategoryIds.length ?? 0) > 0 ? (
         <>
           <UberActionCard
             onPress={() => router.push(Routes.app.discover)}
-            subtitle="Solicitudes que encajan con tu oficio"
-            title="Ver oportunidades"
+            title="Oportunidades"
           />
           <Spacer size="md" />
           <UberActionCard
             onPress={() => router.push(Routes.app.activateProfessional)}
-            subtitle="Ajusta qué servicios ofreces"
-            title="Mis áreas de servicio"
+            title="Mis servicios"
           />
         </>
       ) : (
-        <>
-          <AppText color="textSecondary" variant="body">
-            Configura entre 1 y 3 servicios para activar tu perfil profesional y ver ofertas.
-          </AppText>
-          <Spacer size="md" />
-          <Button
-            label="Configurar perfil profesional"
-            onPress={() => router.push(Routes.app.activateProfessional)}
-            variant="dark"
-          />
-        </>
+        <Button
+          label="Configurar servicios"
+          onPress={() => router.push(Routes.app.activateProfessional)}
+          variant="dark"
+        />
       )}
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: Spacing.xs,
-    marginBottom: Spacing.lg,
-  },
   shortcuts: {
     flexDirection: 'row',
     gap: Spacing.md,

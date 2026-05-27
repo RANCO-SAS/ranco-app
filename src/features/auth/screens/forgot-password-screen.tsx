@@ -40,18 +40,13 @@ export function ForgotPasswordScreen() {
 
   return (
     <ScreenLayout scrollable centered>
-      <AuthLayout
-        subtitle="Te enviaremos un enlace para restablecer tu contraseña."
-        title="Recuperar contraseña">
+      <AuthLayout title="Recuperar contraseña">
         {forgotPassword.error ? (
           <AuthMessage message={mapAuthError(forgotPassword.error)} variant="error" />
         ) : null}
 
         {forgotPassword.isSuccess ? (
-          <AuthMessage
-            message="Si existe una cuenta con ese correo, recibirás un enlace para restablecer tu contraseña."
-            variant="success"
-          />
+          <AuthMessage message="Revisa tu correo para continuar." variant="success" />
         ) : null}
 
         <Controller

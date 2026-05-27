@@ -38,7 +38,7 @@ export function LoginScreen() {
 
   return (
     <ScreenLayout scrollable centered>
-      <AuthLayout title="Ranco" subtitle="Conecta con profesionales cerca de ti">
+      <AuthLayout title="Ranco">
         {signIn.error ? (
           <AuthMessage message={mapAuthError(signIn.error)} variant="error" />
         ) : null}

@@ -84,7 +84,6 @@ export function CreateServiceRequestScreen() {
   const titleValue = watch('title');
   const descriptionValue = watch('description');
   const urgencyValue = watch('urgency');
-  const locationValue = watch('locationLabel');
   const formValues = watch();
 
   const categories = categoriesQuery.data ?? [];
@@ -254,12 +253,10 @@ export function CreateServiceRequestScreen() {
                 name="title"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <View style={styles.fieldGroup}>
-                    <AppText color="textMuted" variant="small">
-                      TÍTULO
-                    </AppText>
                     <Input
                       editable={!createRequest.isPending}
                       error={errors.title?.message}
+                      label="Título"
                       onBlur={onBlur}
                       onChangeText={onChange}
                       placeholder={titlePlaceholder}
@@ -277,25 +274,20 @@ export function CreateServiceRequestScreen() {
                 name="description"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <View style={styles.fieldGroup}>
-                    <AppText color="textMuted" variant="small">
-                      DESCRIPCIÓN
-                    </AppText>
                     <Input
                       editable={!createRequest.isPending}
                       error={errors.description?.message}
+                      label="Descripción"
                       multiline
                       numberOfLines={6}
                       onBlur={onBlur}
                       onChangeText={onChange}
-                      placeholder="Cuéntale al profesional qué necesitas, cuándo y cualquier detalle útil."
+                      placeholder="Describe qué necesitas"
                       style={styles.textArea}
                       value={value}
                     />
                     <AppText color="textMuted" variant="small">
                       {descriptionLength}/{DESCRIPTION_MAX}
-                      {descriptionLength > 0 && descriptionLength < DESCRIPTION_MIN
-                        ? ` · mínimo ${DESCRIPTION_MIN}`
-                        : ''}
                     </AppText>
                   </View>
                 )}
@@ -306,12 +298,10 @@ export function CreateServiceRequestScreen() {
                 name="locationLabel"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <View style={styles.fieldGroup}>
-                    <AppText color="textMuted" variant="small">
-                      UBICACIÓN (OPCIONAL)
-                    </AppText>
                     <Input
                       editable={!createRequest.isPending}
                       error={errors.locationLabel?.message}
+                      label="Ubicación"
                       onBlur={onBlur}
                       onChangeText={onChange}
                       placeholder="Barrio, calle, portal o referencia"
@@ -340,11 +330,6 @@ export function CreateServiceRequestScreen() {
                 )}
               />
 
-              {locationValue ? (
-                <AppText color="textMuted" variant="caption">
-                  Ubicación: {locationValue}
-                </AppText>
-              ) : null}
             </View>
           ) : null}
         </ScrollView>

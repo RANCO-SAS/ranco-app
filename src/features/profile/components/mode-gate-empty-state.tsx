@@ -8,19 +8,14 @@ type ModeGateEmptyStateProps = {
   requiredMode: UserMode;
 };
 
-const MODE_COPY: Record<
-  UserMode,
-  { title: string; description: string; actionLabel: string }
-> = {
+const MODE_COPY: Record<UserMode, { title: string; actionLabel: string }> = {
   client: {
-    title: 'Estás en modo profesional',
-    description: 'Cambia a modo cliente para ver y gestionar tus solicitudes de servicio.',
-    actionLabel: 'Cambiar a modo cliente',
+    title: 'Modo cliente requerido',
+    actionLabel: 'Modo cliente',
   },
   professional: {
-    title: 'Estás en modo cliente',
-    description: 'Cambia a modo profesional para explorar oportunidades cerca de ti.',
-    actionLabel: 'Cambiar a modo profesional',
+    title: 'Modo profesional requerido',
+    actionLabel: 'Modo profesional',
   },
 };
 
@@ -30,7 +25,7 @@ export function ModeGateEmptyState({ requiredMode }: ModeGateEmptyStateProps) {
 
   return (
     <>
-      <EmptyState title={copy.title} description={copy.description} />
+      <EmptyState title={copy.title} />
       <Spacer size="md" />
       <Button label={copy.actionLabel} onPress={() => switchMode(requiredMode)} />
     </>

@@ -54,8 +54,8 @@ function ConversationListItem({ conversation, currentUserId, onPress }: Conversa
             </AppText>
           </View>
         </View>
-        <AppText variant="caption" color="textMuted">
-          Actualizado {formatUpdatedAt(conversation.updatedAt)}
+        <AppText variant="small" color="textMuted">
+          {formatUpdatedAt(conversation.updatedAt)}
         </AppText>
       </Card>
     </Pressable>
@@ -79,7 +79,7 @@ export function MessagesListScreen() {
   if (conversationsQuery.error) {
     return (
       <ScreenLayout safeArea="tab">
-        <Section title="Mensajes" description="Conversaciones con clientes y profesionales.">
+        <Section title="Mensajes">
           <Card>
             <AppText variant="body" color="destructive">
               No pudimos cargar tus conversaciones.
@@ -94,12 +94,9 @@ export function MessagesListScreen() {
 
   return (
     <ScreenLayout safeArea="tab" scrollable>
-      <Section title="Mensajes" description="Conversaciones con clientes y profesionales.">
+      <Section title="Mensajes">
         {conversations.length === 0 ? (
-          <EmptyState
-            description="Cuando contactes a alguien desde Explorar, el chat aparecerá aquí."
-            title="Bandeja vacía"
-          />
+          <EmptyState title="Sin conversaciones" />
         ) : (
           <FlatList
             data={conversations}

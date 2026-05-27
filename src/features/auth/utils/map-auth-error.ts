@@ -18,6 +18,7 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   over_request_rate_limit: 'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
   validation_failed: 'Revisa los datos ingresados e inténtalo de nuevo.',
   user_not_found: 'No encontramos una cuenta con ese correo.',
+  signup_disabled: 'El registro con correo está deshabilitado en el proyecto.',
   same_password: 'La nueva contraseña debe ser diferente a la anterior.',
   auth_session_missing: 'No se pudo completar la autenticación.',
   invalid_request: 'Solicitud de autenticación inválida. Inténtalo de nuevo.',
