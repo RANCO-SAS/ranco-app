@@ -5,4 +5,17 @@ export type AuthSession = {
   avatarUrl: string | null;
 };
 
-export type OAuthProviderId = 'google' | 'apple';
+export type SignInInput = {
+  email: string;
+  password: string;
+};
+
+export type SignUpInput = {
+  email: string;
+  password: string;
+  fullName: string;
+};
+
+export type ResetPasswordInput = {
+  password: string;
+};

@@ -3,8 +3,10 @@ import type { Href } from 'expo-router';
 export const Routes = {
   root: '/',
   auth: {
-    login: '/(auth)/login',
-    callback: '/auth/callback',
+    login: '/(auth)/login' as Href,
+    register: '/(auth)/register' as Href,
+    forgotPassword: '/(auth)/forgot-password' as Href,
+    resetPassword: '/auth/reset-password' as Href,
   },
   onboarding: {
     setup: '/(onboarding)/setup',

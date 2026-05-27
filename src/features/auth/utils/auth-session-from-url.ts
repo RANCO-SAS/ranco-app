@@ -1,30 +1,35 @@
-import * as QueryParams from 'expo-auth-session/build/QueryParams';
+import * as Linking from 'expo-linking';
 
 import { AuthError } from '@/features/auth/utils/map-auth-error';
 import { getSupabaseClient } from '@/services/supabase/client';
 
 let exchangeInFlight: Promise<void> | null = null;
 
-function getOAuthErrorCode(url: string, params: Record<string, string>): string | undefined {
-  if (typeof params.error_code === 'string' && params.error_code.length > 0) {
-    return params.error_code;
+function getParam(params: Linking.QueryParams, key: string): string | undefined {
+  const value = params[key];
+
+  if (typeof value === 'string' && value.length > 0) {
+    return value;
   }
 
-  if (typeof params.error === 'string' && params.error.length > 0) {
-    return params.error;
+  if (Array.isArray(value) && typeof value[0] === 'string' && value[0].length > 0) {
+    return value[0];
   }
 
-  const { errorCode } = QueryParams.getQueryParams(url);
+  return undefined;
+}
 
-  return errorCode ?? undefined;
+function getAuthErrorCode(params: Linking.QueryParams): string | undefined {
+  return getParam(params, 'error_code') ?? getParam(params, 'error');
 }
 
 async function exchangeSessionFromUrl(url: string): Promise<void> {
-  const { params } = QueryParams.getQueryParams(url);
-  const oauthErrorCode = getOAuthErrorCode(url, params);
+  const { queryParams } = Linking.parse(url);
+  const params = queryParams ?? {};
+  const authErrorCode = getAuthErrorCode(params);
 
-  if (oauthErrorCode) {
-    throw new AuthError(`Error de autenticación: ${oauthErrorCode}`, oauthErrorCode);
+  if (authErrorCode) {
+    throw new AuthError(`Error de autenticación: ${authErrorCode}`, authErrorCode);
   }
 
   const supabase = getSupabaseClient();
@@ -34,34 +39,21 @@ async function exchangeSessionFromUrl(url: string): Promise<void> {
     return;
   }
 
-  const code = params.code;
-  const accessToken = params.access_token;
-  const refreshToken = params.refresh_token;
+  const code = getParam(params, 'code');
+  const accessToken = getParam(params, 'access_token');
+  const refreshToken = getParam(params, 'refresh_token');
 
-  if (typeof code === 'string' && code.length > 0) {
+  if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      if (error.code === 'bad_oauth_state' || error.message.includes('OAuth state')) {
-        const { data: retrySessionData } = await supabase.auth.getSession();
-
-        if (retrySessionData.session) {
-          return;
-        }
-      }
-
       throw error;
     }
 
     return;
   }
 
-  if (
-    typeof accessToken === 'string' &&
-    accessToken.length > 0 &&
-    typeof refreshToken === 'string' &&
-    refreshToken.length > 0
-  ) {
+  if (accessToken && refreshToken) {
     const { error } = await supabase.auth.setSession({
       access_token: accessToken,
       refresh_token: refreshToken,
@@ -74,7 +66,7 @@ async function exchangeSessionFromUrl(url: string): Promise<void> {
     return;
   }
 
-  throw new AuthError('No se pudo completar el inicio de sesión.', 'oauth_session_missing');
+  throw new AuthError('No se pudo completar la autenticación.', 'auth_session_missing');
 }
 
 export async function createSessionFromUrl(url: string): Promise<void> {

@@ -14,7 +14,7 @@ export default function RootLayout() {
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="auth/callback" options={{ animation: 'fade' }} />
+        <Stack.Screen name="auth/reset-password" options={{ animation: 'fade' }} />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(app)" />
