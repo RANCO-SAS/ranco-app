@@ -2,6 +2,7 @@ import type { ServiceRequestRow } from '@/features/jobs/types/service-request-db
 import type {
   CreateServiceRequestInput,
   ServiceRequest,
+  UpdateServiceRequestInput,
   UpdateServiceRequestStatusInput,
 } from '@/features/jobs/types/service-request.types';
 import type { UserJobHistoryItem } from '@/features/profile/types/profile.types';
@@ -10,7 +11,9 @@ import {
   canUserUpdateStatus,
   requiresAssignedProfessional,
 } from '@/features/jobs/utils/job-status-transitions';
+import { canClientEditServiceRequest } from '@/features/jobs/utils/can-client-edit-service-request';
 import { getSupabaseClient } from '@/services/supabase/client';
+import { storageService } from '@/services/storage/storage.service';
 
 const SERVICE_REQUESTS_TABLE = 'service_requests';
 
@@ -70,6 +73,35 @@ async function getServiceRequestById(requestId: string): Promise<ServiceRequest 
   return mapServiceRequestRow(data as ServiceRequestRow);
 }
 
+async function uploadRequestPhotos(
+  requestId: string,
+  clientId: string,
+  photoUris: string[],
+  startingIndex = 0,
+): Promise<string[]> {
+  const uploads = photoUris.map((uri, offset) =>
+    storageService.uploadRequestPhoto(clientId, requestId, uri, startingIndex + offset),
+  );
+
+  return Promise.all(uploads);
+}
+
+async function persistPhotoUrls(requestId: string, photoUrls: string[]): Promise<ServiceRequest> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from(SERVICE_REQUESTS_TABLE)
+    .update({ photo_urls: photoUrls })
+    .eq('id', requestId)
+    .select(SERVICE_REQUEST_SELECT)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapServiceRequestRow(data as ServiceRequestRow);
+}
+
 async function createServiceRequest(input: CreateServiceRequestInput): Promise<ServiceRequest> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
@@ -85,9 +117,85 @@ async function createServiceRequest(input: CreateServiceRequestInput): Promise<S
       location_lat: null,
       location_lng: null,
       status: 'published',
+      photo_urls: [],
     })
     .select(SERVICE_REQUEST_SELECT)
     .single();
+
+  if (error) {
+    throw error;
+  }
+
+  const request = mapServiceRequestRow(data as ServiceRequestRow);
+  const photoUris = input.newPhotoUris ?? [];
+
+  if (photoUris.length === 0) {
+    return request;
+  }
+
+  if (photoUris.length > storageService.maxRequestPhotos) {
+    throw new Error(`Puedes subir hasta ${storageService.maxRequestPhotos} fotos.`);
+  }
+
+  const photoUrls = await uploadRequestPhotos(request.id, input.clientId, photoUris);
+  return persistPhotoUrls(request.id, photoUrls);
+}
+
+async function updateServiceRequest(input: UpdateServiceRequestInput): Promise<ServiceRequest> {
+  const current = await getServiceRequestById(input.requestId);
+
+  if (!current) {
+    throw new Error('Solicitud no encontrada.');
+  }
+
+  if (current.clientId !== input.clientId) {
+    throw new Error('No puedes editar esta solicitud.');
+  }
+
+  if (!canClientEditServiceRequest(current.status)) {
+    throw new Error('Esta solicitud ya no se puede editar.');
+  }
+
+  const totalPhotos = input.keptPhotoUrls.length + input.newPhotoUris.length;
+
+  if (totalPhotos > storageService.maxRequestPhotos) {
+    throw new Error(`Puedes subir hasta ${storageService.maxRequestPhotos} fotos.`);
+  }
+
+  const removedPhotoUrls = current.photoUrls.filter((url) => !input.keptPhotoUrls.includes(url));
+
+  if (removedPhotoUrls.length > 0) {
+    await storageService.deleteRequestPhotoUrls(removedPhotoUrls);
+  }
+
+  const uploadedPhotoUrls = await uploadRequestPhotos(
+    input.requestId,
+    input.clientId,
+    input.newPhotoUris,
+    input.keptPhotoUrls.length,
+  );
+
+  const nextPhotoUrls = [...input.keptPhotoUrls, ...uploadedPhotoUrls];
+
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from(SERVICE_REQUESTS_TABLE)
+    .update({
+      title: input.title.trim(),
+      description: input.description.trim(),
+      urgency: input.urgency,
+      location_label: input.locationLabel?.trim() || null,
+      photo_urls: nextPhotoUrls,
+    })
+    .eq('id', input.requestId)
+    .eq('client_id', input.clientId)
+    .in('status', ['published', 'in_negotiation'])
+    .select(SERVICE_REQUEST_SELECT)
+    .single();
+
+  if (error?.code === 'PGRST116') {
+    throw new Error('Esta solicitud ya no se puede editar.');
+  }
 
   if (error) {
     throw error;
@@ -200,6 +308,7 @@ export const serviceRequestService = {
   getPublishedRequests,
   getServiceRequestById,
   createServiceRequest,
+  updateServiceRequest,
   updateServiceRequestStatus,
   getCompletedJobsForUser,
 };

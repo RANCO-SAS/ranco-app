@@ -6,10 +6,18 @@ import { getSupabaseClient } from '@/services/supabase/client';
 const AVATARS_BUCKET = 'avatars';
 const CHAT_MEDIA_BUCKET = 'chat-media';
 const WORK_EVIDENCE_BUCKET = 'work-evidence';
+const REQUEST_PHOTOS_BUCKET = 'request-photos';
 const MAX_REVIEW_EVIDENCE_IMAGES = 3;
+const MAX_REQUEST_PHOTOS = 5;
+
+type StorageBucket =
+  | typeof AVATARS_BUCKET
+  | typeof CHAT_MEDIA_BUCKET
+  | typeof WORK_EVIDENCE_BUCKET
+  | typeof REQUEST_PHOTOS_BUCKET;
 
 type UploadImageInput = {
-  bucket: typeof AVATARS_BUCKET | typeof CHAT_MEDIA_BUCKET | typeof WORK_EVIDENCE_BUCKET;
+  bucket: StorageBucket;
   path: string;
   uri: string;
   contentType?: string;
@@ -93,10 +101,7 @@ async function readUriAsArrayBuffer(uri: string): Promise<ArrayBuffer> {
   }
 }
 
-async function deleteStorageObjects(
-  bucket: typeof AVATARS_BUCKET | typeof WORK_EVIDENCE_BUCKET,
-  paths: string[],
-): Promise<void> {
+async function deleteStorageObjects(bucket: StorageBucket, paths: string[]): Promise<void> {
   if (paths.length === 0) {
     return;
   }
@@ -195,7 +200,7 @@ async function uploadImage(input: UploadImageInput): Promise<string> {
     path: uploadData?.path ?? input.path,
   });
 
-  if (input.bucket === AVATARS_BUCKET || input.bucket === WORK_EVIDENCE_BUCKET) {
+  if (input.bucket === AVATARS_BUCKET || input.bucket === WORK_EVIDENCE_BUCKET || input.bucket === REQUEST_PHOTOS_BUCKET) {
     const { data } = supabase.storage.from(input.bucket).getPublicUrl(input.path);
     devLog('storage', 'uploadImage:public-url', { urlPreview: data.publicUrl.slice(0, 120) });
     return data.publicUrl;
@@ -281,10 +286,38 @@ async function deleteReviewEvidenceUrls(urls: string[]): Promise<void> {
   await deleteStorageObjects(WORK_EVIDENCE_BUCKET, paths);
 }
 
+async function uploadRequestPhoto(
+  clientId: string,
+  requestId: string,
+  uri: string,
+  index: number,
+): Promise<string> {
+  const extension = resolveFileExtension(uri);
+  const path = `${clientId}/${requestId}/${index}.${extension}`;
+
+  return uploadImage({
+    bucket: REQUEST_PHOTOS_BUCKET,
+    path,
+    uri,
+    upsert: true,
+  });
+}
+
+async function deleteRequestPhotoUrls(urls: string[]): Promise<void> {
+  const paths = urls
+    .map((url) => extractStoragePath(url, REQUEST_PHOTOS_BUCKET))
+    .filter((path): path is string => Boolean(path));
+
+  await deleteStorageObjects(REQUEST_PHOTOS_BUCKET, paths);
+}
+
 export const storageService = {
   uploadAvatar,
   uploadChatImage,
   uploadReviewEvidence,
+  uploadRequestPhoto,
   deleteReviewEvidenceUrls,
+  deleteRequestPhotoUrls,
   maxReviewEvidenceImages: MAX_REVIEW_EVIDENCE_IMAGES,
+  maxRequestPhotos: MAX_REQUEST_PHOTOS,
 };

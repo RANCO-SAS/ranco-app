@@ -1,40 +1,41 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 
-import type { CreateServiceRequestFormData } from '@/features/jobs/schemas/create-service-request.schema';
+import type { UpdateServiceRequestFormData } from '@/features/jobs/schemas/update-service-request.schema';
 import { serviceRequestService } from '@/features/jobs/services/service-request.service';
 import { splitServiceRequestPhotos } from '@/features/jobs/types/service-request-photo.types';
 import type { ServiceRequestPhotoItem } from '@/features/jobs/types/service-request-photo.types';
 import { Routes } from '@/constants/routes';
 import { queryKeys } from '@/lib/query-keys';
 
-type CreateServiceRequestVariables = CreateServiceRequestFormData & {
+type UpdateServiceRequestVariables = UpdateServiceRequestFormData & {
+  requestId: string;
   clientId: string;
   photos: ServiceRequestPhotoItem[];
 };
 
-export function useCreateServiceRequest() {
+export function useUpdateServiceRequest() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ clientId, photos, ...data }: CreateServiceRequestVariables) => {
-      const { newPhotoUris } = splitServiceRequestPhotos(photos);
+    mutationFn: ({ requestId, clientId, photos, ...data }: UpdateServiceRequestVariables) => {
+      const { keptPhotoUrls, newPhotoUris } = splitServiceRequestPhotos(photos);
 
-      return serviceRequestService.createServiceRequest({
+      return serviceRequestService.updateServiceRequest({
+        requestId,
         clientId,
         title: data.title,
         description: data.description,
-        categoryId: data.categoryId,
-        subcategoryId: data.subcategoryId,
         urgency: data.urgency,
         locationLabel: data.locationLabel || undefined,
+        keptPhotoUrls,
         newPhotoUris,
       });
     },
     onSuccess: (request) => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.client(request.clientId) });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.published });
+      queryClient.setQueryData(queryKeys.jobs.detail(request.id), request);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
       router.replace(Routes.app.jobDetail(request.id));
     },
   });

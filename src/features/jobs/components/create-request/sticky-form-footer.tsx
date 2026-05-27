@@ -44,7 +44,7 @@ export function StickyFormFooter({
       ) : null}
       <Button
         disabled={primaryDisabled || primaryLoading}
-        label={primaryLoading ? 'Publicando...' : primaryLabel}
+        label={primaryLabel}
         onPress={onPrimaryPress}
         variant="dark"
       />

@@ -1,0 +1,138 @@
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Button } from '@/components/ui/button';
+import { Spacer } from '@/components/ui/spacer';
+import { AppText } from '@/components/ui/text';
+import { Radius, Spacing } from '@/constants/theme';
+import {
+  createLocalPhotoItem,
+  type ServiceRequestPhotoItem,
+} from '@/features/jobs/types/service-request-photo.types';
+import { useTheme } from '@/hooks/use-theme';
+import { storageService } from '@/services/storage/storage.service';
+
+type ServiceRequestPhotoPickerProps = {
+  photos: ServiceRequestPhotoItem[];
+  onChange: (photos: ServiceRequestPhotoItem[]) => void;
+  disabled?: boolean;
+};
+
+export function ServiceRequestPhotoPicker({
+  photos,
+  onChange,
+  disabled = false,
+}: ServiceRequestPhotoPickerProps) {
+  const theme = useTheme();
+  const canAddMore = photos.length < storageService.maxRequestPhotos;
+
+  const handlePickImage = async () => {
+    if (!canAddMore || disabled) {
+      return;
+    }
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+
+    if (result.canceled || !result.assets[0]) {
+      return;
+    }
+
+    onChange([...photos, createLocalPhotoItem(result.assets[0].uri)]);
+  };
+
+  const handleRemove = (photoId: string) => {
+    if (disabled) {
+      return;
+    }
+
+    onChange(photos.filter((photo) => photo.id !== photoId));
+  };
+
+  return (
+    <View style={styles.container}>
+      <AppText variant="bodyMedium">Fotos (opcional)</AppText>
+      <AppText color="textSecondary" variant="caption">
+        Añade hasta {storageService.maxRequestPhotos} fotos para mostrar mejor lo que necesitas.
+      </AppText>
+
+      <Spacer size="md" />
+
+      {photos.length > 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.gallery}>
+            {photos.map((photo) => (
+              <View key={photo.id} style={styles.imageWrapper}>
+                <Image
+                  contentFit="cover"
+                  source={{ uri: photo.uri }}
+                  style={[styles.image, { backgroundColor: theme.backgroundElement }]}
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={disabled}
+                  onPress={() => handleRemove(photo.id)}
+                  style={[styles.removeButton, { backgroundColor: theme.text }]}>
+                  <AppText color="background" variant="small">
+                    ×
+                  </AppText>
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      ) : null}
+
+      {canAddMore ? (
+        <>
+          <Spacer size="md" />
+          <Button
+            disabled={disabled}
+            label="Añadir foto"
+            onPress={() => {
+              void handlePickImage();
+            }}
+            variant="secondary"
+          />
+        </>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    gap: Spacing.xs,
+  },
+  gallery: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  imageWrapper: {
+    position: 'relative',
+  },
+  image: {
+    width: 112,
+    height: 112,
+    borderRadius: Radius.md,
+  },
+  removeButton: {
+    position: 'absolute',
+    top: Spacing.xs,
+    right: Spacing.xs,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

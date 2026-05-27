@@ -30,6 +30,7 @@ export type ServiceRequest = {
   locationLabel: string | null;
   locationLat: number | null;
   locationLng: number | null;
+  photoUrls: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -49,4 +50,16 @@ export type CreateServiceRequestInput = {
   subcategoryId: string;
   urgency?: ServiceRequestUrgency;
   locationLabel?: string;
+  newPhotoUris?: string[];
+};
+
+export type UpdateServiceRequestInput = {
+  requestId: string;
+  clientId: string;
+  title: string;
+  description: string;
+  urgency: ServiceRequestUrgency;
+  locationLabel?: string;
+  keptPhotoUrls: string[];
+  newPhotoUris: string[];
 };

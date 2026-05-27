@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { AppText } from '@/components/ui/text';
 import { Radius, Spacing } from '@/constants/theme';
 import { ServiceRequestAuthorHeader } from '@/features/jobs/components/service-request-author-header';
+import { ServiceRequestPhotoGallery } from '@/features/jobs/components/service-request-photo-gallery';
 import type { ServiceRequest } from '@/features/jobs/types/service-request.types';
 import { getCategoryIcon } from '@/features/jobs/utils/category-icons';
 import { useTheme } from '@/hooks/use-theme';
@@ -66,6 +67,10 @@ export function JobOpportunityCard({
         <AppText color="textSecondary" numberOfLines={3} variant="body">
           {request.description}
         </AppText>
+
+        {request.photoUrls.length > 0 ? (
+          <ServiceRequestPhotoGallery photoUrls={request.photoUrls} />
+        ) : null}
 
         <View style={styles.actions}>
           <Button

@@ -26,6 +26,7 @@ export function mapServiceRequestRow(row: ServiceRequestRow): ServiceRequest {
     locationLabel: row.location_label,
     locationLat: row.location_lat,
     locationLng: row.location_lng,
+    photoUrls: row.photo_urls ?? [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

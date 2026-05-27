@@ -14,7 +14,9 @@ import {
 } from '@/features/jobs/constants/service-request-labels';
 import { JobEngagementPanel } from '@/features/jobs/components/job-engagement-panel';
 import { ServiceRequestAuthorHeader } from '@/features/jobs/components/service-request-author-header';
+import { ServiceRequestPhotoGallery } from '@/features/jobs/components/service-request-photo-gallery';
 import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
+import { canClientEditServiceRequest } from '@/features/jobs/utils/can-client-edit-service-request';
 import { useStartConversation } from '@/features/messages/hooks/use-conversations';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
@@ -60,6 +62,8 @@ export function ServiceRequestDetailScreen() {
     (!request.assignedProfessionalId || request.assignedProfessionalId === profile.id);
 
   const revieweeId = isOwner ? request.assignedProfessionalId : request.clientId;
+  const canEditRequest =
+    isOwner && activeMode === 'client' && canClientEditServiceRequest(request.status);
 
   const handleContact = () => {
     if (!profile) {
@@ -98,6 +102,12 @@ export function ServiceRequestDetailScreen() {
         <AppText variant="body" color="textSecondary">
           {request.description}
         </AppText>
+        {request.photoUrls.length > 0 ? (
+          <>
+            <Spacer size="md" />
+            <ServiceRequestPhotoGallery photoUrls={request.photoUrls} />
+          </>
+        ) : null}
         <Spacer size="md" />
         <AppText variant="small" color="textMuted">
           Estado: {SERVICE_REQUEST_STATUS_LABELS[request.status]}
@@ -148,13 +158,25 @@ export function ServiceRequestDetailScreen() {
       ) : null}
 
       {isOwner && activeMode === 'client' ? (
-        <Card>
-          <AppText variant="bodyMedium">Tu solicitud</AppText>
-          <Spacer size="xs" />
-          <AppText variant="caption" color="textSecondary">
-            Gestiona el estado del trabajo y revisa los mensajes con profesionales interesados.
-          </AppText>
-        </Card>
+        <>
+          {canEditRequest ? (
+            <>
+              <Button
+                label="Editar solicitud"
+                onPress={() => router.push(Routes.app.editJob(request.id))}
+                variant="secondary"
+              />
+              <Spacer size="md" />
+            </>
+          ) : null}
+          <Card>
+            <AppText variant="bodyMedium">Tu solicitud</AppText>
+            <Spacer size="xs" />
+            <AppText variant="caption" color="textSecondary">
+              Gestiona el estado del trabajo y revisa los mensajes con profesionales interesados.
+            </AppText>
+          </Card>
+        </>
       ) : null}
 
       {!isOwner && activeMode === 'professional' ? (

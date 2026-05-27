@@ -10,6 +10,7 @@ import { AppText } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { AuthMessage } from '@/features/auth/components/auth-message';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { ServiceRequestPhotoPicker } from '@/features/jobs/components/service-request-photo-picker';
 import { ServiceSearchPicker } from '@/features/jobs/components/create-request/service-search-picker';
 import { RequestSummaryCard } from '@/features/jobs/components/create-request/request-summary-card';
 import { StickyFormFooter } from '@/features/jobs/components/create-request/sticky-form-footer';
@@ -21,6 +22,7 @@ import {
   type CreateServiceRequestFormData,
 } from '@/features/jobs/schemas/create-service-request.schema';
 import type { ServiceRequestUrgency } from '@/features/jobs/types/service-request.types';
+import type { ServiceRequestPhotoItem } from '@/features/jobs/types/service-request-photo.types';
 import { getSubcategoryTitleHint } from '@/features/jobs/utils/category-icons';
 import { Layout, Spacing } from '@/constants/theme';
 import { Loader } from '@/components/ui/loader';
@@ -57,6 +59,7 @@ export function CreateServiceRequestScreen() {
   const categoriesQuery = useServiceCategories();
   const createRequest = useCreateServiceRequest();
   const [currentStep, setCurrentStep] = useState(0);
+  const [photos, setPhotos] = useState<ServiceRequestPhotoItem[]>([]);
   const { keyboardBehavior, keyboardVerticalOffset } = useKeyboardLayout();
 
   const {
@@ -118,6 +121,7 @@ export function CreateServiceRequestScreen() {
 
     createRequest.mutate({
       clientId: session.userId,
+      photos,
       ...data,
     });
   };
@@ -310,6 +314,12 @@ export function CreateServiceRequestScreen() {
                   </View>
                 )}
               />
+
+              <ServiceRequestPhotoPicker
+                disabled={createRequest.isPending}
+                onChange={setPhotos}
+                photos={photos}
+              />
             </View>
           ) : null}
 
@@ -341,7 +351,13 @@ export function CreateServiceRequestScreen() {
               void handlePrimaryPress();
             }}
             primaryDisabled={createRequest.isPending}
-            primaryLabel={isLastStep ? 'Solicitar servicio' : 'Siguiente'}
+            primaryLabel={
+              createRequest.isPending
+                ? 'Publicando...'
+                : isLastStep
+                  ? 'Solicitar servicio'
+                  : 'Siguiente'
+            }
             primaryLoading={createRequest.isPending}
             showBack
           />

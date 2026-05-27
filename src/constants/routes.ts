@@ -21,6 +21,10 @@ export const Routes = {
       pathname: '/(app)/jobs/[id]',
       params: { id: jobId },
     }),
+    editJob: (jobId: string): Href => ({
+      pathname: '/(app)/jobs/[id]/edit',
+      params: { id: jobId },
+    }),
     messages: '/(app)/(tabs)/messages',
     conversation: (conversationId: string): Href => ({
       pathname: '/(app)/messages/[conversationId]',
