@@ -26,4 +26,9 @@ export const queryKeys = {
     ratedJobs: (userId: string, role?: 'client' | 'professional') =>
       role ? (['reviews', 'rated-jobs', userId, role] as const) : (['reviews', 'rated-jobs', userId] as const),
   },
+  notifications: {
+    all: ['notifications'] as const,
+    list: (userId: string) => ['notifications', 'list', userId] as const,
+    unreadCount: (userId: string) => ['notifications', 'unread-count', userId] as const,
+  },
 } as const;

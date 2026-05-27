@@ -3,6 +3,7 @@ import { Redirect, Stack } from 'expo-router';
 import { Loader } from '@/components/ui/loader';
 import { Routes } from '@/constants/routes';
 import { isHybridUser } from '@/features/profile/utils/user-mode';
+import { RealtimeNotificationsProvider } from '@/shared/providers/realtime-notifications-provider';
 import { selectIsAuthenticated, selectIsHydrated, useAuthStore } from '@/stores/auth-store';
 import {
   selectHasAppStoreHydrated,
@@ -51,16 +52,19 @@ export default function AppLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="choose-mode" />
-      <Stack.Screen name="edit-profile" />
-      <Stack.Screen name="activate-professional" />
-      <Stack.Screen name="jobs/create" />
-      <Stack.Screen name="jobs/[id]" />
-      <Stack.Screen name="messages/[conversationId]" />
-      <Stack.Screen name="users/[userId]" />
-      <Stack.Screen name="reviews/[reviewId]" />
-    </Stack>
+    <RealtimeNotificationsProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="choose-mode" />
+        <Stack.Screen name="edit-profile" />
+        <Stack.Screen name="activate-professional" />
+        <Stack.Screen name="notifications" />
+        <Stack.Screen name="jobs/create" />
+        <Stack.Screen name="jobs/[id]" />
+        <Stack.Screen name="messages/[conversationId]" />
+        <Stack.Screen name="users/[userId]" />
+        <Stack.Screen name="reviews/[reviewId]" />
+      </Stack>
+    </RealtimeNotificationsProvider>
   );
 }

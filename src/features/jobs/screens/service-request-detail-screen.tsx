@@ -16,6 +16,7 @@ import { JobEngagementPanel } from '@/features/jobs/components/job-engagement-pa
 import { ServiceRequestAuthorHeader } from '@/features/jobs/components/service-request-author-header';
 import { ServiceRequestPhotoGallery } from '@/features/jobs/components/service-request-photo-gallery';
 import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
+import { useServiceRequestRealtime } from '@/features/jobs/hooks/use-service-request-realtime';
 import { canClientEditServiceRequest } from '@/features/jobs/utils/can-client-edit-service-request';
 import { useStartConversation } from '@/features/messages/hooks/use-conversations';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
@@ -32,6 +33,14 @@ export function ServiceRequestDetailScreen() {
   const requestQuery = useServiceRequest(id);
   const startConversation = useStartConversation();
   const request = requestQuery.data;
+
+  useServiceRequestRealtime({
+    requestId: request?.id,
+    clientId: request?.clientId,
+    assignedProfessionalId: request?.assignedProfessionalId ?? undefined,
+    enabled: Boolean(request),
+  });
+
   const jobReviewQuery = useJobReview(
     request?.id ?? id,
     request?.status === 'completed' ? profile?.id : undefined,

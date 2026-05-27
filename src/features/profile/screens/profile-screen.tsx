@@ -20,6 +20,7 @@ import { ProfileModeSection } from '@/features/profile/components/profile-mode-s
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
 import { useProfileReviews, selectRoleReviewSummary } from '@/features/reviews/hooks/use-reviews';
+import { useProfileReviewsRealtime } from '@/features/reviews/hooks/use-profile-reviews-realtime';
 
 export function ProfileScreen() {
   const router = useRouter();
@@ -29,6 +30,10 @@ export function ProfileScreen() {
   const logout = useLogout();
   const [isAvatarPreviewVisible, setIsAvatarPreviewVisible] = useState(false);
   const reviewsQuery = useProfileReviews(profile?.id);
+  useProfileReviewsRealtime({
+    enabled: Boolean(profile?.id),
+    userId: profile?.id,
+  });
   const activeRole = activeMode === 'professional' ? 'professional' : 'client';
   const roleSummary = selectRoleReviewSummary(reviewsQuery.data, activeRole);
   const roleLabel = activeRole === 'professional' ? 'como profesional' : 'como cliente';

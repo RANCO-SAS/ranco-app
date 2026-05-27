@@ -11,6 +11,7 @@ import { Spacer } from '@/components/ui/spacer';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
 import { ServiceRequestCard } from '@/features/jobs/components/service-request-card';
+import { useClientJobsRealtime } from '@/features/jobs/hooks/use-client-jobs-realtime';
 import { useClientServiceRequests } from '@/features/jobs/hooks/use-service-requests';
 import { ModeGateEmptyState } from '@/features/profile/components/mode-gate-empty-state';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
@@ -24,6 +25,11 @@ export function JobsScreen() {
   const clientRequests = useClientServiceRequests(
     profile?.isClient && isClientMode ? profile.id : undefined,
   );
+
+  useClientJobsRealtime({
+    clientId: profile?.isClient && isClientMode ? profile.id : undefined,
+    enabled: Boolean(profile?.isClient && isClientMode),
+  });
 
   if (clientRequests.isLoading) {
     return (

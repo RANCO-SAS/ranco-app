@@ -26,6 +26,7 @@ import {
   PROFESSIONAL_REVIEW_TRAITS,
 } from '@/features/reviews/constants/review-traits';
 import { useProfileReviews, useRatedJobs, useReviewPortfolio, selectRoleReviewSummary } from '@/features/reviews/hooks/use-reviews';
+import { useProfileReviewsRealtime } from '@/features/reviews/hooks/use-profile-reviews-realtime';
 
 type PublicProfileParams = {
   userId: string;
@@ -63,6 +64,10 @@ export function PublicProfileScreen() {
     ? resolvePrimaryRole(view, profile.isClient, profile.isProfessional)
     : 'client';
   const reviewsQuery = useProfileReviews(userId);
+  useProfileReviewsRealtime({
+    enabled: Boolean(userId),
+    userId,
+  });
   const portfolioQuery = useReviewPortfolio(userId);
   const ratedJobsQuery = useRatedJobs(userId, primaryRole);
   const jobHistoryQuery = useUserJobHistory(userId);

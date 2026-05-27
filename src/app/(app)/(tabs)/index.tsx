@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { ScreenLayout } from '@/components/layout/screen-layout';
+import { NotificationBell } from '@/features/notifications/components/notification-bell';
 import { UberActionCard } from '@/components/ui/uber-action-card';
 import { UberSearchField } from '@/components/ui/uber-search-field';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,10 @@ export default function HomeScreen() {
 
   return (
     <ScreenLayout safeArea="tab" scrollable>
-      <AppText variant="title">{firstName ? `Hola, ${firstName}` : 'Hola'}</AppText>
+      <View style={styles.headerRow}>
+        <AppText variant="title">{firstName ? `Hola, ${firstName}` : 'Hola'}</AppText>
+        <NotificationBell />
+      </View>
 
       <Spacer size="lg" />
 
@@ -108,6 +112,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   shortcuts: {
     flexDirection: 'row',
     gap: Spacing.md,

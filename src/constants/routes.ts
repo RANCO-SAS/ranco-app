@@ -39,6 +39,7 @@ export const Routes = {
       params: { reviewId },
     }),
     profile: '/(app)/(tabs)/profile',
+    notifications: '/(app)/notifications',
     editProfile: '/(app)/edit-profile',
     activateProfessional: '/(app)/activate-professional',
   },

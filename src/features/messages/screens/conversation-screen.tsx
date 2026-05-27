@@ -28,6 +28,8 @@ import {
   useMessageReceipts,
   useMessagesRealtime,
 } from '@/features/messages/hooks/use-messages-realtime';
+import { useTypingIndicator } from '@/features/messages/hooks/use-typing-indicator';
+import { useServiceRequestRealtime } from '@/features/jobs/hooks/use-service-request-realtime';
 import type { Conversation, Message } from '@/features/messages/types/message.types';
 import {
   formatMessageTime,
@@ -136,6 +138,21 @@ export function ConversationScreen() {
     conversationId,
     enabled: Boolean(conversation),
     userId: session?.userId,
+  });
+
+  useServiceRequestRealtime({
+    requestId: conversation?.serviceRequestId,
+    clientId: conversation?.clientId,
+    assignedProfessionalId: request?.assignedProfessionalId ?? undefined,
+    enabled: Boolean(conversation && request),
+  });
+
+  const { typingLabel } = useTypingIndicator({
+    conversationId,
+    draft,
+    enabled: Boolean(conversation && session?.userId),
+    userId: session?.userId,
+    userName: session?.email?.split('@')[0] ?? 'Usuario',
   });
 
   useMessageReceipts({
@@ -247,6 +264,13 @@ export function ConversationScreen() {
         serviceRequestStatus={serviceRequestStatus}
         title={conversation.serviceRequestTitle}
       />
+      {typingLabel ? (
+        <View style={styles.typingRow}>
+          <AppText color="textMuted" variant="small">
+            {typingLabel}
+          </AppText>
+        </View>
+      ) : null}
 
       <KeyboardAvoidingView
         behavior={keyboardBehavior}
@@ -364,6 +388,10 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     paddingBottom: Spacing.md,
+  },
+  typingRow: {
+    paddingHorizontal: Layout.screenPaddingHorizontal,
+    paddingBottom: Spacing.xs,
   },
   messagesList: {
     paddingHorizontal: Layout.screenPaddingHorizontal,
