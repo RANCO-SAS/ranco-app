@@ -80,8 +80,8 @@ async function createServiceRequest(input: CreateServiceRequestInput): Promise<S
       subcategory_id: input.subcategoryId,
       urgency: input.urgency ?? 'normal',
       location_label: input.locationLabel?.trim() || null,
-      location_lat: input.locationLat,
-      location_lng: input.locationLng,
+      location_lat: null,
+      location_lng: null,
       status: 'published',
     })
     .select(SERVICE_REQUEST_SELECT)

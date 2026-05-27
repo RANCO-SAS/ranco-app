@@ -7,7 +7,6 @@ import { Radius, Spacing } from '@/constants/theme';
 import type { ServiceRequest } from '@/features/jobs/types/service-request.types';
 import { getCategoryIcon } from '@/features/jobs/utils/category-icons';
 import { useTheme } from '@/hooks/use-theme';
-import { formatDistanceKm } from '@/shared/utils/geo';
 
 const URGENCY_LABELS: Record<ServiceRequest['urgency'], string> = {
   low: 'Flexible',
@@ -18,8 +17,6 @@ const URGENCY_LABELS: Record<ServiceRequest['urgency'], string> = {
 
 type JobOpportunityCardProps = {
   request: ServiceRequest;
-  distanceKm: number | null;
-  selected?: boolean;
   isContactLoading?: boolean;
   onPress?: () => void;
   onContactPress?: () => void;
@@ -28,8 +25,6 @@ type JobOpportunityCardProps = {
 
 export function JobOpportunityCard({
   request,
-  distanceKm,
-  selected = false,
   isContactLoading = false,
   onPress,
   onContactPress,
@@ -43,7 +38,7 @@ export function JobOpportunityCard({
         style={[
           styles.card,
           {
-            borderColor: selected ? theme.primary : theme.border,
+            borderColor: theme.border,
             backgroundColor: theme.background,
           },
         ]}>
@@ -57,11 +52,6 @@ export function JobOpportunityCard({
               {request.categoryName} · {URGENCY_LABELS[request.urgency]}
             </AppText>
           </View>
-          {distanceKm !== null ? (
-            <View style={[styles.distanceBadge, { backgroundColor: theme.backgroundSecondary }]}>
-              <AppText variant="small">{formatDistanceKm(distanceKm)}</AppText>
-            </View>
-          ) : null}
         </View>
 
         {request.locationLabel ? (
@@ -94,8 +84,7 @@ export function JobOpportunityCard({
 
 const styles = StyleSheet.create({
   card: {
-    width: 300,
-    borderWidth: 2,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.lg,
     gap: Spacing.md,
   },
@@ -111,11 +100,6 @@ const styles = StyleSheet.create({
   headerText: {
     flex: 1,
     gap: Spacing.xs,
-  },
-  distanceBadge: {
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
   },
   actions: {
     flexDirection: 'row',

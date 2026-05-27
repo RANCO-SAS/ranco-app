@@ -21,8 +21,8 @@ export type ServiceRequest = {
   status: ServiceRequestStatus;
   assignedProfessionalId: string | null;
   locationLabel: string | null;
-  locationLat: number;
-  locationLng: number;
+  locationLat: number | null;
+  locationLng: number | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -42,6 +42,4 @@ export type CreateServiceRequestInput = {
   subcategoryId: string;
   urgency?: ServiceRequestUrgency;
   locationLabel?: string;
-  locationLat: number;
-  locationLng: number;
 };
