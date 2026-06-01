@@ -1,9 +1,10 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { AppIcon } from '@/components/ui/app-icon';
 import { ProfileAvatarLink } from '@/components/ui/profile-avatar-link';
 import { AppText } from '@/components/ui/text';
-import { Layout, Spacing } from '@/constants/theme';
+import { Layout, Radius, Spacing } from '@/constants/theme';
 import { Routes } from '@/constants/routes';
 import { SERVICE_REQUEST_STATUS_LABELS } from '@/features/jobs/constants/service-request-labels';
 import type { ServiceRequestStatus } from '@/features/jobs/types/service-request.types';
@@ -15,6 +16,7 @@ type ChatHeaderProps = {
   participant: ConversationParticipant;
   serviceRequestStatus: ServiceRequestStatus;
   participantView?: 'client' | 'professional';
+  serviceRequestId?: string;
 };
 
 export function ChatHeader({
@@ -22,6 +24,7 @@ export function ChatHeader({
   participant,
   serviceRequestStatus,
   participantView,
+  serviceRequestId,
 }: ChatHeaderProps) {
   const router = useRouter();
   const theme = useTheme();
@@ -34,42 +37,83 @@ export function ChatHeader({
     router.push(Routes.app.userProfile(participant.id, participantView));
   };
 
+  const handleOpenDetails = () => {
+    if (!serviceRequestId) {
+      return;
+    }
+
+    router.push(Routes.app.jobDetail(serviceRequestId));
+  };
+
   return (
-    <View style={[styles.container, { borderBottomColor: theme.border, backgroundColor: theme.background }]}>
+    <View
+      style={[
+        styles.container,
+        { borderBottomColor: theme.border, backgroundColor: theme.backgroundSecondary },
+      ]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Volver"
         hitSlop={Spacing.sm}
         onPress={() => router.back()}
-        style={styles.backButton}>
-        <AppText color="primary" variant="bodyMedium">
-          Volver
-        </AppText>
+        style={styles.sideButton}>
+        <AppIcon color={theme.text} name="chevron-back" size={24} />
       </Pressable>
 
-      <View style={styles.center}>
+      <Pressable
+        accessibilityRole="button"
+        disabled={!participant.id}
+        onPress={handleOpenProfile}
+        style={styles.center}>
         <ProfileAvatarLink
           imageUrl={participant.avatarUrl}
           name={participant.fullName}
-          size={40}
+          size={36}
           userId={participant.id}
           view={participantView}
         />
-        <Pressable
-          accessibilityRole="button"
-          disabled={!participant.id}
-          onPress={handleOpenProfile}
-          style={styles.meta}>
+        <View style={styles.meta}>
           <AppText numberOfLines={1} variant="bodyMedium">
             {participant.fullName}
           </AppText>
-          <AppText color="primary" numberOfLines={1} variant="small">
-            {title} · {SERVICE_REQUEST_STATUS_LABELS[serviceRequestStatus]}
+          <AppText color="textSecondary" numberOfLines={1} variant="small">
+            {title}
           </AppText>
-        </Pressable>
-      </View>
+        </View>
+      </Pressable>
 
-      <View style={styles.backButton} />
+      <Pressable
+        accessibilityRole="button"
+        disabled={!serviceRequestId}
+        onPress={handleOpenDetails}
+        style={[styles.detailsButton, { backgroundColor: theme.backgroundElement }]}>
+        <AppIcon color={theme.textMuted} name="information-circle-outline" size={16} />
+        <AppText color="textSecondary" variant="small">
+          Detalles
+        </AppText>
+      </Pressable>
+    </View>
+  );
+}
+
+export function ChatStatusBanner({
+  status,
+  message,
+}: {
+  status: ServiceRequestStatus;
+  message: string | null;
+}) {
+  const theme = useTheme();
+
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <View style={[styles.banner, { backgroundColor: theme.primary }]}>
+      <AppText color="primaryForeground" variant="caption">
+        {SERVICE_REQUEST_STATUS_LABELS[status]} · {message}
+      </AppText>
     </View>
   );
 }
@@ -79,14 +123,14 @@ const styles = StyleSheet.create({
     minHeight: Layout.minTouchTarget,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: Layout.screenPaddingHorizontal,
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingVertical: Spacing.sm,
+    gap: Spacing.sm,
   },
-  backButton: {
-    minWidth: 64,
-    minHeight: Layout.minTouchTarget,
+  sideButton: {
+    width: 36,
+    height: Layout.minTouchTarget,
     justifyContent: 'center',
   },
   center: {
@@ -94,10 +138,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
+    minWidth: 0,
   },
   meta: {
     flex: 1,
     gap: 2,
+    minWidth: 0,
+  },
+  detailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  banner: {
+    paddingHorizontal: Layout.screenPaddingHorizontal,
+    paddingVertical: Spacing.md,
   },
 });

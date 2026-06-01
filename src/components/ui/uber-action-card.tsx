@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { AnimatedPressable } from '@/components/ui/animated-pressable';
+import { AppIcon } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -16,7 +18,7 @@ export function UberActionCard({ title, subtitle, onPress, leading }: UberAction
   const theme = useTheme();
 
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       onPress={onPress}
       style={[
@@ -35,10 +37,8 @@ export function UberActionCard({ title, subtitle, onPress, leading }: UberAction
           </AppText>
         ) : null}
       </View>
-      <AppText color="textMuted" variant="title">
-        ›
-      </AppText>
-    </Pressable>
+      <AppIcon color={theme.textMuted} name="chevron-forward" size={18} />
+    </AnimatedPressable>
   );
 }
 

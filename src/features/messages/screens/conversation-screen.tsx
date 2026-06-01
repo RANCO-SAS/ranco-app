@@ -1,15 +1,14 @@
 import * as ImagePicker from 'expo-image-picker';
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ChatHeader } from '@/components/layout/chat-header';
+import { ChatHeader, ChatStatusBanner } from '@/components/layout/chat-header';
+import { AppIcon } from '@/components/ui/app-icon';
 import { MessageStatusIndicator } from '@/features/messages/components/message-status-indicator';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
 import { Loader } from '@/components/ui/loader';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
@@ -17,6 +16,7 @@ import { ZoomableImage } from '@/components/ui/zoomable-image';
 import { Layout, Radius, Spacing } from '@/constants/theme';
 import { JobEngagementPanel } from '@/features/jobs/components/job-engagement-panel';
 import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
+import { getJobEngagementStatusMessage } from '@/features/jobs/utils/job-engagement-status';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import {
   useConversation,
@@ -76,8 +76,9 @@ function MessageBubble({ message, isOwn }: MessageBubbleProps) {
       <View
         style={[
           styles.bubble,
+          isOwn ? styles.bubbleOwn : styles.bubbleOther,
           {
-            backgroundColor: isOwn ? theme.primary : theme.backgroundElement,
+            backgroundColor: isOwn ? theme.primary : theme.backgroundSecondary,
           },
         ]}>
         <AppText color={isOwn ? 'primaryForeground' : 'text'} variant="body">
@@ -256,15 +257,46 @@ export function ConversationScreen() {
   }
 
   const serviceRequestStatus = request?.status ?? conversation.serviceRequestStatus;
+  const engagementMessage =
+    request && session?.userId
+      ? getJobEngagementStatusMessage({
+          requestId: request.id,
+          userId: session.userId,
+          clientId: request.clientId,
+          professionalId: conversation.professionalId,
+          professionalName: counterpart.fullName,
+          status: request.status,
+          assignedProfessionalId: request.assignedProfessionalId,
+          isClient,
+        })
+      : null;
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <ChatHeader
         participant={counterpart}
         participantView={isClient ? 'professional' : 'client'}
+        serviceRequestId={conversation.serviceRequestId}
         serviceRequestStatus={serviceRequestStatus}
         title={conversation.serviceRequestTitle}
       />
+
+      <ChatStatusBanner message={engagementMessage} status={serviceRequestStatus} />
+
+      {request && session?.userId ? (
+        <JobEngagementPanel
+          assignedProfessionalId={request.assignedProfessionalId}
+          clientId={request.clientId}
+          isClient={isClient}
+          professionalId={conversation.professionalId}
+          professionalName={counterpart.fullName}
+          requestId={request.id}
+          status={request.status}
+          userId={session.userId}
+          variant="actions"
+        />
+      ) : null}
+
       {typingLabel ? (
         <View style={styles.typingRow}>
           <AppText color="textMuted" variant="small">
@@ -280,22 +312,8 @@ export function ConversationScreen() {
         <FlatList
           ListHeaderComponent={
             <View style={styles.headerContent}>
-              {request && session?.userId ? (
-                <JobEngagementPanel
-                  assignedProfessionalId={request.assignedProfessionalId}
-                  clientId={request.clientId}
-                  isClient={isClient}
-                  professionalId={conversation.professionalId}
-                  professionalName={counterpart.fullName}
-                  requestId={request.id}
-                  status={request.status}
-                  userId={session.userId}
-                />
-              ) : null}
-
               {request?.status === 'completed' && revieweeId && session?.userId ? (
                 <>
-                  <Spacer size="md" />
                   {jobReviewQuery.isLoading ? (
                     <Card>
                       <AppText color="textSecondary" variant="caption">
@@ -312,15 +330,11 @@ export function ConversationScreen() {
                       serviceRequestId={request.id}
                     />
                   )}
+                  <Spacer size="md" />
                 </>
               ) : null}
 
-              {messages.length === 0 ? (
-                <>
-                  <Spacer size="md" />
-                  <EmptyState title="Sin mensajes" />
-                </>
-              ) : null}
+              {messages.length === 0 ? <EmptyState title="Sin mensajes" /> : null}
             </View>
           }
           automaticallyAdjustKeyboardInsets
@@ -343,32 +357,42 @@ export function ConversationScreen() {
               paddingBottom: Math.max(insets.bottom, Spacing.md),
             },
           ]}>
-          <View style={styles.composerRow}>
+          <View style={[styles.inputShell, { backgroundColor: theme.backgroundSecondary }]}>
+            <TextInput
+              editable={!isPending}
+              onChangeText={setDraft}
+              placeholder="Escribe un mensaje..."
+              placeholderTextColor={theme.textMuted}
+              style={[styles.composerInput, { color: theme.text }]}
+              value={draft}
+            />
             <Pressable
               accessibilityRole="button"
               disabled={isPending}
               onPress={() => {
                 void handlePickImage();
               }}
-              style={styles.attachButton}>
-              <AppText color="primary" variant="bodyMedium">
-                📷
-              </AppText>
+              style={styles.iconButton}>
+              <AppIcon color={theme.textMuted} name="camera-outline" size={22} />
             </Pressable>
-            <View style={styles.inputWrapper}>
-              <Input
-                editable={!isPending}
-                onChangeText={setDraft}
-                placeholder="Escribe un mensaje..."
-                value={draft}
-              />
-            </View>
           </View>
-          <Button
+
+          <Pressable
+            accessibilityRole="button"
             disabled={!canSend || isPending}
-            label={isPending ? 'Enviando...' : 'Enviar'}
             onPress={handleSend}
-          />
+            style={[
+              styles.sendButton,
+              {
+                backgroundColor: canSend && !isPending ? theme.primary : theme.backgroundElement,
+              },
+            ]}>
+            <AppText
+              color={canSend && !isPending ? 'primaryForeground' : 'textMuted'}
+              variant="bodyMedium">
+              {isPending ? '...' : 'Enviar'}
+            </AppText>
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -410,11 +434,17 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   bubble: {
-    maxWidth: '80%',
-    borderRadius: Radius.md,
+    maxWidth: '82%',
+    borderRadius: Radius.lg,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     gap: Spacing.xs,
+  },
+  bubbleOwn: {
+    borderBottomRightRadius: Radius.sm,
+  },
+  bubbleOther: {
+    borderBottomLeftRadius: Radius.sm,
   },
   metaRow: {
     flexDirection: 'row',
@@ -426,7 +456,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   imageBubbleWrapper: {
-    maxWidth: '80%',
+    maxWidth: '82%',
     gap: Spacing.xs,
   },
   imageMetaRow: {
@@ -435,26 +465,41 @@ const styles = StyleSheet.create({
   imageBubble: {
     width: 220,
     height: 220,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
   },
   composer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Layout.screenPaddingHorizontal,
     paddingTop: Spacing.md,
   },
-  composerRow: {
+  inputShell: {
+    flex: 1,
+    minHeight: Layout.minTouchTarget,
+    borderRadius: Radius.full,
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.sm,
+    alignItems: 'center',
+    paddingLeft: Spacing.lg,
+    paddingRight: Spacing.sm,
   },
-  attachButton: {
-    width: 44,
-    height: 44,
+  composerInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: Spacing.sm,
+  },
+  iconButton: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  inputWrapper: {
-    flex: 1,
+  sendButton: {
+    minHeight: Layout.minTouchTarget,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -1,28 +1,30 @@
-import { useRouter } from 'expo-router';
-import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
 
+import { AppIcon } from '@/components/ui/app-icon';
 import { ProfileAvatarLink } from '@/components/ui/profile-avatar-link';
 import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
 import type { ServiceRequestClientPreview } from '@/features/jobs/types/service-request.types';
 import { formatPostedAt } from '@/shared/utils/format-posted-at';
+import { useTheme } from '@/hooks/use-theme';
 
-type ServiceRequestAuthorHeaderProps = {
+type OpportunityClientRowProps = {
   client: ServiceRequestClientPreview;
   createdAt: string;
-  subtitle?: string;
-  trailing?: ReactNode;
+  rating?: number;
+  reviewCount?: number;
 };
 
-export function ServiceRequestAuthorHeader({
+export function OpportunityClientRow({
   client,
   createdAt,
-  subtitle,
-  trailing,
-}: ServiceRequestAuthorHeaderProps) {
+  rating,
+  reviewCount,
+}: OpportunityClientRowProps) {
   const router = useRouter();
+  const theme = useTheme();
   const displayName = client.fullName.trim() || 'Cliente';
 
   return (
@@ -40,13 +42,22 @@ export function ServiceRequestAuthorHeader({
         onPress={() => router.push(Routes.app.userProfile(client.id, 'client'))}
         style={styles.meta}>
         <AppText variant="bodyMedium">{displayName}</AppText>
-        <AppText color="textMuted" numberOfLines={1} variant="small">
-          {formatPostedAt(createdAt)}
-          {subtitle ? ` · ${subtitle}` : ''}
-        </AppText>
-      </Pressable>
 
-      {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
+        <View style={styles.metaRow}>
+          {rating !== undefined && rating > 0 ? (
+            <View style={styles.ratingRow}>
+              <AppIcon color={theme.warning} name="star" size={14} />
+              <AppText color="textSecondary" variant="small">
+                {rating.toFixed(1)}
+                {reviewCount ? ` (${reviewCount})` : ''}
+              </AppText>
+            </View>
+          ) : null}
+          <AppText color="textMuted" variant="small">
+            {formatPostedAt(createdAt)}
+          </AppText>
+        </View>
+      </Pressable>
     </View>
   );
 }
@@ -59,10 +70,17 @@ const styles = StyleSheet.create({
   },
   meta: {
     flex: 1,
-    gap: 2,
-    minWidth: 0,
+    gap: Spacing.xs,
   },
-  trailing: {
-    alignSelf: 'flex-start',
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 });

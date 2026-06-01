@@ -1,12 +1,26 @@
-import { Platform, Text, type ColorValue } from 'react-native';
+import { Platform } from 'react-native';
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 
+import { AppIcon, type AppIconName } from '@/components/ui/app-icon';
 import { AppTabBar } from '@/components/navigation/app-tab-bar';
 import { Routes } from '@/constants/routes';
 import { Colors, Spacing } from '@/constants/theme';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+
+type TabIconConfig = {
+  active: AppIconName;
+  inactive: AppIconName;
+};
+
+const TAB_ICONS: Record<string, TabIconConfig> = {
+  index: { active: 'search', inactive: 'search-outline' },
+  discover: { active: 'compass', inactive: 'compass-outline' },
+  jobs: { active: 'hand-left', inactive: 'hand-left-outline' },
+  messages: { active: 'chatbubble', inactive: 'chatbubble-outline' },
+  profile: { active: 'person', inactive: 'person-outline' },
+};
 
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
@@ -40,15 +54,17 @@ export default function TabsLayout() {
           height: Platform.select({ ios: 56, default: 52 }),
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '500',
         },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Inicio',
-          tabBarIcon: ({ color }) => <TabIcon color={color} label="⌂" />,
+          title: 'Explorar',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon color={String(color)} focused={focused} routeName="index" />
+          ),
         }}
       />
       <Tabs.Screen
@@ -56,40 +72,51 @@ export default function TabsLayout() {
         options={{
           title: 'Oportunidades',
           href: showDiscoverTab ? undefined : null,
-          tabBarIcon: ({ color }) => <TabIcon color={color} label="◎" />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon color={String(color)} focused={focused} routeName="discover" />
+          ),
         }}
       />
       <Tabs.Screen
         name="jobs"
         options={{
-          title: 'Solicitudes',
+          title: 'Proyectos',
           href: showJobsTab ? undefined : null,
-          tabBarIcon: ({ color }) => <TabIcon color={color} label="▤" />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon color={String(color)} focused={focused} routeName="jobs" />
+          ),
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: 'Mensajes',
-          tabBarIcon: ({ color }) => <TabIcon color={color} label="✉" />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon color={String(color)} focused={focused} routeName="messages" />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color }) => <TabIcon color={color} label="◯" />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon color={String(color)} focused={focused} routeName="profile" />
+          ),
         }}
       />
     </Tabs>
   );
 }
 
-type TabIconProps = {
-  color: ColorValue;
-  label: string;
+type TabBarIconProps = {
+  color: string;
+  focused: boolean;
+  routeName: keyof typeof TAB_ICONS;
 };
 
-function TabIcon({ color, label }: TabIconProps) {
-  return <Text style={{ color, fontSize: 18, fontWeight: '600' }}>{label}</Text>;
+function TabBarIcon({ color, focused, routeName }: TabBarIconProps) {
+  const icons = TAB_ICONS[routeName];
+
+  return <AppIcon color={color} name={focused ? icons.active : icons.inactive} size={22} />;
 }

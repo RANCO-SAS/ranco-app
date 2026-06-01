@@ -2,14 +2,16 @@ import type { Href } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { AppIcon } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
-import { Spacing } from '@/constants/theme';
 import { useUnreadNotificationCount } from '@/features/notifications/hooks/use-notifications';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
+import { useTheme } from '@/hooks/use-theme';
 
 export function NotificationBell() {
   const router = useRouter();
+  const theme = useTheme();
   const { profile } = useCurrentProfile();
   const unreadQuery = useUnreadNotificationCount(profile?.id);
   const unreadCount = unreadQuery.data ?? 0;
@@ -20,7 +22,7 @@ export function NotificationBell() {
       accessibilityRole="button"
       onPress={() => router.push(Routes.app.notifications as Href)}
       style={styles.button}>
-      <AppText style={styles.icon}>🔔</AppText>
+      <AppIcon color={theme.text} name="notifications-outline" size={24} />
       {unreadCount > 0 ? (
         <View style={styles.badge}>
           <AppText style={styles.badgeText} variant="small">
@@ -39,9 +41,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: {
-    fontSize: 22,
-  },
   badge: {
     position: 'absolute',
     top: 2,
@@ -49,7 +48,7 @@ const styles = StyleSheet.create({
     minWidth: 18,
     height: 18,
     borderRadius: 999,
-    backgroundColor: '#E5484D',
+    backgroundColor: '#FF453A',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,

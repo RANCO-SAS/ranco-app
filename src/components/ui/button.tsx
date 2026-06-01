@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, type PressableProps, type ViewStyle } from 'react-native';
+import { StyleSheet, type PressableProps, type ViewStyle } from 'react-native';
 
+import { AnimatedPressable } from '@/components/ui/animated-pressable';
 import { AppText } from '@/components/ui/text';
 import { Layout, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -7,11 +8,12 @@ import { useTheme } from '@/hooks/use-theme';
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'dark';
 type ButtonSize = 'md' | 'lg';
 
-type ButtonProps = Omit<PressableProps, 'children'> & {
+type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   label: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
+  style?: ViewStyle;
 };
 
 export function Button({
@@ -24,40 +26,40 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const theme = useTheme();
-  const styles = getVariantStyles(theme, variant);
+  const styles = getVariantStyles(theme, variant, size);
   const height = size === 'lg' ? Layout.minTouchTarget + 4 : Layout.minTouchTarget;
 
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       disabled={disabled}
-      style={({ pressed }) => [
+      style={[
         styles.container,
-        { minHeight: height, opacity: disabled ? 0.5 : pressed ? 0.85 : 1 },
+        { minHeight: height, opacity: disabled ? 0.5 : 1 },
         fullWidth && styles.fullWidth,
-        style as ViewStyle,
+        style,
       ]}
       {...rest}>
-      <AppText
-        variant="bodyMedium"
-        color={styles.textColor}
-        align="center">
+      <AppText variant="bodyMedium" color={styles.textColor} align="center">
         {label}
       </AppText>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
 function getVariantStyles(
   theme: ReturnType<typeof useTheme>,
   variant: ButtonVariant,
+  size: ButtonSize,
 ): {
   container: ViewStyle;
   textColor: 'primaryForeground' | 'text' | 'primary' | 'destructive' | 'background';
   fullWidth: ViewStyle;
 } {
+  const isPill = variant === 'primary' && size === 'lg';
+
   const base: ViewStyle = {
-    borderRadius: Radius.md,
+    borderRadius: isPill ? Radius.full : Radius.md,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
     alignItems: 'center',
@@ -90,8 +92,8 @@ function getVariantStyles(
       };
     case 'dark':
       return {
-        container: { ...base, backgroundColor: theme.text },
-        textColor: 'background',
+        container: { ...base, backgroundColor: theme.backgroundElement },
+        textColor: 'text',
         fullWidth: { alignSelf: 'stretch' },
       };
     default:

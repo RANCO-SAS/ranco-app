@@ -1,21 +1,16 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { AnimatedPressable } from '@/components/ui/animated-pressable';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { CategoryIcon } from '@/components/ui/category-icon';
 import { AppText } from '@/components/ui/text';
 import { Radius, Spacing } from '@/constants/theme';
 import { ServiceRequestAuthorHeader } from '@/features/jobs/components/service-request-author-header';
 import { ServiceRequestPhotoGallery } from '@/features/jobs/components/service-request-photo-gallery';
+import { UrgencyBadge } from '@/features/jobs/components/urgency-badge';
 import type { ServiceRequest } from '@/features/jobs/types/service-request.types';
-import { getCategoryIcon } from '@/features/jobs/utils/category-icons';
+import { resolveCategorySlug } from '@/features/jobs/utils/resolve-category-slug';
 import { useTheme } from '@/hooks/use-theme';
-
-const URGENCY_LABELS: Record<ServiceRequest['urgency'], string> = {
-  low: 'Flexible',
-  normal: 'Normal',
-  high: 'Pronto',
-  urgent: 'Urgente',
-};
 
 type JobOpportunityCardProps = {
   request: ServiceRequest;
@@ -33,88 +28,94 @@ export function JobOpportunityCard({
   onDetailsPress,
 }: JobOpportunityCardProps) {
   const theme = useTheme();
+  const categorySlug = resolveCategorySlug(request.categoryName);
 
   return (
-    <Pressable onPress={onPress}>
-      <Card
-        style={[
-          styles.card,
-          {
-            borderColor: theme.border,
-            backgroundColor: theme.background,
-          },
-        ]}>
-        <ServiceRequestAuthorHeader
-          client={request.client}
-          createdAt={request.createdAt}
-          subtitle={`${request.categoryName} · ${URGENCY_LABELS[request.urgency]}`}
-        />
+    <AnimatedPressable
+      accessibilityRole="button"
+      disabled={!onPress}
+      onPress={onPress}
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.backgroundSecondary,
+          borderColor: theme.border,
+        },
+      ]}>
+      <ServiceRequestAuthorHeader
+        client={request.client}
+        createdAt={request.createdAt}
+        subtitle={request.categoryName}
+        trailing={<UrgencyBadge urgency={request.urgency} />}
+      />
 
-        <View style={styles.header}>
-          <AppText style={styles.icon}>{getCategoryIcon('other')}</AppText>
-          <View style={styles.headerText}>
-            <AppText numberOfLines={2} variant="subtitle">
-              {request.title}
+      <View style={styles.titleRow}>
+        <CategoryIcon slug={categorySlug} />
+        <View style={styles.titleContent}>
+          <AppText numberOfLines={2} variant="subtitle">
+            {request.subcategoryName}
+          </AppText>
+          {request.locationLabel ? (
+            <AppText color="textMuted" numberOfLines={1} variant="small">
+              {request.locationLabel}
             </AppText>
-            {request.locationLabel ? (
-              <AppText color="textMuted" numberOfLines={1} variant="small">
-                {request.locationLabel}
-              </AppText>
-            ) : null}
-          </View>
+          ) : null}
         </View>
+      </View>
 
-        <AppText color="textSecondary" numberOfLines={3} variant="body">
-          {request.description}
-        </AppText>
+      <AppText color="textSecondary" numberOfLines={4} variant="body">
+        {request.description}
+      </AppText>
 
-        {request.photoUrls.length > 0 ? (
-          <ServiceRequestPhotoGallery photoUrls={request.photoUrls} />
-        ) : null}
+      {request.photoUrls.length > 0 ? (
+        <ServiceRequestPhotoGallery photoUrls={request.photoUrls} />
+      ) : null}
 
-        <View style={styles.actions}>
+      <View style={styles.actions}>
+        <View style={styles.actionButton}>
           <Button
-            fullWidth={false}
+            fullWidth
             label="Ver detalle"
             onPress={onDetailsPress}
             size="md"
             variant="secondary"
           />
+        </View>
+        <View style={styles.actionButton}>
           <Button
             disabled={isContactLoading}
-            fullWidth={false}
+            fullWidth
             label={isContactLoading ? 'Abriendo...' : 'Contactar'}
             onPress={onContactPress}
             size="md"
-            variant="dark"
           />
         </View>
-      </Card>
-    </Pressable>
+      </View>
+    </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.lg,
-    gap: Spacing.md,
+    borderRadius: Radius.xl,
+    gap: Spacing.lg,
+    padding: Spacing.lg,
   },
-  header: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
   },
-  icon: {
-    fontSize: 24,
-    lineHeight: 28,
-  },
-  headerText: {
+  titleContent: {
     flex: 1,
     gap: Spacing.xs,
   },
   actions: {
     flexDirection: 'row',
     gap: Spacing.sm,
+  },
+  actionButton: {
+    flex: 1,
   },
 });

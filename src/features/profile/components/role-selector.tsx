@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AppIcon, type AppIconName } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -20,18 +21,18 @@ type RoleSelectorProps = {
 type RoleOption = {
   key: 'client' | 'professional';
   title: string;
-  emoji: string;
+  icon: AppIconName;
 };
 
 const ROLE_OPTIONS: RoleOption[] = [
   {
     key: 'client',
-    emoji: '🏠',
+    icon: 'home-outline',
     title: 'Busco servicios',
   },
   {
     key: 'professional',
-    emoji: '🛠️',
+    icon: 'construct-outline',
     title: 'Ofrezco servicios',
   },
 ];
@@ -98,7 +99,7 @@ export function RoleSelector({
               ]}>
               <View style={styles.optionHeader}>
                 <View style={styles.titleRow}>
-                  <AppText style={styles.emoji}>{option.emoji}</AppText>
+                  <AppIcon color={theme.primary} name={option.icon} size={22} />
                   <AppText variant="bodyMedium">{option.title}</AppText>
                 </View>
                 <View
@@ -153,10 +154,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
     flex: 1,
-  },
-  emoji: {
-    fontSize: 22,
-    lineHeight: 26,
   },
   checkbox: {
     width: 24,

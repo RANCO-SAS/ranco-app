@@ -18,18 +18,18 @@ export const Colors = {
     warning: '#D97706',
   },
   dark: {
-    text: '#ECEDEE',
-    textSecondary: '#9BA1A6',
-    textMuted: '#687076',
-    background: '#0A0A0B',
-    backgroundSecondary: '#151718',
-    backgroundElement: '#1E2022',
-    border: '#2A2D31',
-    primary: '#3B82F6',
+    text: '#FFFFFF',
+    textSecondary: '#AEAEB2',
+    textMuted: '#8E8E93',
+    background: '#000000',
+    backgroundSecondary: '#1C1C1E',
+    backgroundElement: '#2C2C2E',
+    border: '#38383A',
+    primary: '#0A84FF',
     primaryForeground: '#FFFFFF',
-    destructive: '#EF4444',
-    success: '#22C55E',
-    warning: '#F59E0B',
+    destructive: '#FF453A',
+    success: '#30D158',
+    warning: '#FF9F0A',
   },
 } as const;
 
@@ -71,6 +71,7 @@ export const Radius = {
   sm: 8,
   md: 12,
   lg: 16,
+  xl: 20,
   full: 999,
 } as const;
 

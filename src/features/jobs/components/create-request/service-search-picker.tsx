@@ -11,7 +11,7 @@ import {
   searchServiceDomains,
   type ServiceSearchResult,
 } from '@/features/jobs/utils/service-search';
-import { getCategoryIcon } from '@/features/jobs/utils/category-icons';
+import { CategoryIcon } from '@/components/ui/category-icon';
 import { useTheme } from '@/hooks/use-theme';
 
 type ServiceSearchPickerProps = {
@@ -30,7 +30,7 @@ function LeadingIcon({ slug }: { slug: string }) {
 
   return (
     <View style={[styles.iconCircle, { backgroundColor: theme.backgroundElement }]}>
-      <AppText style={styles.icon}>{getCategoryIcon(slug)}</AppText>
+      <CategoryIcon slug={slug} />
     </View>
   );
 }

@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { AppIcon } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
 import { Layout, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -22,18 +23,16 @@ export function StackHeader({ title, showBack = true }: StackHeaderProps) {
           accessibilityLabel="Volver"
           hitSlop={Spacing.sm}
           onPress={() => router.back()}
-          style={styles.backButton}>
-          <AppText variant="bodyMedium" color="primary">
-            Volver
-          </AppText>
+          style={styles.sideButton}>
+          <AppIcon color={theme.text} name="chevron-back" size={24} />
         </Pressable>
       ) : (
-        <View style={styles.backButton} />
+        <View style={styles.sideButton} />
       )}
-      <AppText variant="bodyMedium" style={styles.title}>
+      <AppText numberOfLines={1} variant="bodyMedium" style={styles.title}>
         {title}
       </AppText>
-      <View style={styles.backButton} />
+      <View style={styles.sideButton} />
     </View>
   );
 }
@@ -47,8 +46,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.screenPaddingHorizontal,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backButton: {
-    minWidth: 64,
+  sideButton: {
+    width: 40,
     minHeight: Layout.minTouchTarget,
     justifyContent: 'center',
   },
