@@ -24,8 +24,8 @@ export function NotificationBell() {
       style={styles.button}>
       <AppIcon color={theme.text} name="notifications-outline" size={24} />
       {unreadCount > 0 ? (
-        <View style={styles.badge}>
-          <AppText style={styles.badgeText} variant="small">
+        <View style={[styles.badge, { backgroundColor: theme.destructive }]}>
+          <AppText style={[styles.badgeText, { color: theme.primaryForeground }]} variant="small">
             {unreadCount > 9 ? '9+' : String(unreadCount)}
           </AppText>
         </View>
@@ -48,13 +48,11 @@ const styles = StyleSheet.create({
     minWidth: 18,
     height: 18,
     borderRadius: 999,
-    backgroundColor: '#FF453A',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '700',
   },

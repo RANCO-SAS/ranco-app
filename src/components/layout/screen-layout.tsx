@@ -24,6 +24,10 @@ type ScreenLayoutProps = ViewProps & {
   /** full = stack/modal screens, tab = screens inside bottom tabs */
   safeArea?: SafeAreaMode;
   avoidKeyboard?: boolean;
+  /** Removes default screen padding so headers can sit flush to the top edge */
+  flush?: boolean;
+  /** Background for the status bar area on edge-to-edge screens */
+  surfaceColor?: string;
   /** @deprecated Prefer safeArea="full" | "tab" */
   edges?: ('top' | 'bottom' | 'left' | 'right')[];
   scrollViewProps?: Omit<ScrollViewProps, 'children' | 'contentContainerStyle' | 'style'>;
@@ -31,10 +35,15 @@ type ScreenLayoutProps = ViewProps & {
 
 function resolveSafeAreaEdges(
   safeArea: SafeAreaMode,
+  flush: boolean,
   edges?: ScreenLayoutProps['edges'],
 ): ('top' | 'bottom' | 'left' | 'right')[] {
   if (edges) {
     return edges;
+  }
+
+  if (flush) {
+    return ['bottom'];
   }
 
   return safeArea === 'tab' ? ['top'] : ['top', 'bottom'];
@@ -47,6 +56,8 @@ export function ScreenLayout({
   loadingMessage,
   safeArea = 'full',
   avoidKeyboard = true,
+  flush = false,
+  surfaceColor,
   edges,
   scrollViewProps,
   style,
@@ -56,7 +67,15 @@ export function ScreenLayout({
   const theme = useTheme();
   const { insets, keyboardBehavior, keyboardVerticalOffset, contentPaddingBottom } =
     useKeyboardLayout();
-  const resolvedEdges = resolveSafeAreaEdges(safeArea, edges);
+  const resolvedEdges = resolveSafeAreaEdges(safeArea, flush, edges);
+  const flushContentStyle = flush
+    ? {
+        paddingTop: 0,
+        paddingHorizontal: 0,
+        paddingBottom: 0,
+      }
+    : null;
+  const shellBackgroundColor = surfaceColor ?? theme.background;
 
   if (loading) {
     return (
@@ -71,7 +90,11 @@ export function ScreenLayout({
       style={[
         styles.content,
         centered && styles.centered,
-        safeArea === 'full' && { paddingBottom: Math.max(insets.bottom, Layout.screenPaddingVertical) },
+        !flush &&
+          safeArea === 'full' && {
+            paddingBottom: Math.max(insets.bottom, Layout.screenPaddingVertical),
+          },
+        flushContentStyle,
         style,
       ]}
       {...rest}>
@@ -86,6 +109,7 @@ export function ScreenLayout({
       contentContainerStyle={[
         styles.scrollContent,
         centered && styles.centered,
+        flushContentStyle,
         {
           paddingBottom:
             safeArea === 'tab'
@@ -100,6 +124,29 @@ export function ScreenLayout({
     </ScrollView>
   );
 
+  const body = scrollable ? scrollContent : content;
+
+  if (flush) {
+    return (
+      <View
+        style={[
+          styles.safeArea,
+          {
+            backgroundColor: shellBackgroundColor,
+            paddingBottom: Math.max(insets.bottom, 0),
+          },
+        ]}>
+        <KeyboardAvoidingView
+          behavior={keyboardBehavior}
+          enabled={avoidKeyboard}
+          keyboardVerticalOffset={keyboardVerticalOffset}
+          style={styles.flex}>
+          {body}
+        </KeyboardAvoidingView>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView edges={resolvedEdges} style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <KeyboardAvoidingView
@@ -107,7 +154,7 @@ export function ScreenLayout({
         enabled={avoidKeyboard}
         keyboardVerticalOffset={keyboardVerticalOffset}
         style={styles.flex}>
-        {scrollable ? scrollContent : content}
+        {body}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

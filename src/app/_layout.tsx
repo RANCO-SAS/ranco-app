@@ -2,17 +2,14 @@ import '@/lib/polyfill-crypto';
 import 'react-native-reanimated';
 
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
 
+import { SystemChrome } from '@/components/layout/system-chrome';
 import { AppProviders } from '@/shared/providers/app-providers';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <AppProviders>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <SystemChrome />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="auth/reset-password" options={{ animation: 'fade' }} />

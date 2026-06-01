@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
@@ -9,14 +10,24 @@ import { useTheme } from '@/hooks/use-theme';
 type StackHeaderProps = {
   title: string;
   showBack?: boolean;
+  /** Adds top safe-area padding for edge-to-edge screens */
+  applyTopInset?: boolean;
 };
 
-export function StackHeader({ title, showBack = true }: StackHeaderProps) {
+export function StackHeader({ title, showBack = true, applyTopInset = false }: StackHeaderProps) {
   const router = useRouter();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { borderBottomColor: theme.border }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          borderBottomColor: theme.border,
+          paddingTop: applyTopInset ? insets.top : 0,
+        },
+      ]}>
       {showBack ? (
         <Pressable
           accessibilityRole="button"

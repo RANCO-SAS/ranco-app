@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { AppIcon } from '@/components/ui/app-icon';
+import { AppIcon, type AppIconName } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
 import { Layout, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -16,6 +16,9 @@ type InputProps = TextInputProps & {
   label?: string;
   error?: string;
   showPasswordToggle?: boolean;
+  leadingIcon?: AppIconName;
+  trailingIcon?: AppIconName;
+  onTrailingIconPress?: () => void;
 };
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
@@ -25,6 +28,9 @@ export function Input({
   error,
   showPasswordToggle = false,
   secureTextEntry,
+  leadingIcon,
+  trailingIcon,
+  onTrailingIconPress,
   style,
   onFocus,
   onBlur,
@@ -34,8 +40,9 @@ export function Input({
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const focusProgress = useSharedValue(0);
+  const hasIcons = Boolean(leadingIcon || trailingIcon || showPasswordToggle);
 
-  const animatedInputStyle = useAnimatedStyle(() => ({
+  const animatedContainerStyle = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
       focusProgress.value,
       [0, 1],
@@ -57,6 +64,35 @@ export function Input({
 
   const isSecure = Boolean(secureTextEntry && !isPasswordVisible);
 
+  const trailingControl = showPasswordToggle && secureTextEntry ? (
+    <Pressable
+      accessibilityLabel={isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+      accessibilityRole="button"
+      hitSlop={8}
+      onPress={() => setIsPasswordVisible((visible) => !visible)}
+      style={styles.trailingButton}>
+      <AppIcon
+        color={theme.textMuted}
+        name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+        size={20}
+      />
+    </Pressable>
+  ) : trailingIcon ? (
+    onTrailingIconPress ? (
+      <Pressable
+        accessibilityRole="button"
+        hitSlop={8}
+        onPress={onTrailingIconPress}
+        style={styles.trailingButton}>
+        <AppIcon color={theme.primary} name={trailingIcon} size={20} />
+      </Pressable>
+    ) : (
+      <View style={styles.trailingButton}>
+        <AppIcon color={theme.primary} name={trailingIcon} size={20} />
+      </View>
+    )
+  ) : null;
+
   return (
     <View style={styles.wrapper}>
       {label ? (
@@ -65,40 +101,51 @@ export function Input({
         </AppText>
       ) : null}
 
-      <View style={styles.inputRow}>
-        <AnimatedTextInput
-          placeholderTextColor={theme.textMuted}
-          secureTextEntry={isSecure}
+      {hasIcons ? (
+        <Animated.View
           style={[
-            styles.input,
-            showPasswordToggle && styles.inputWithToggle,
+            styles.iconInputContainer,
             {
-              backgroundColor: theme.backgroundSecondary,
-              color: theme.text,
+              backgroundColor: theme.backgroundElement,
             },
-            animatedInputStyle,
-            style,
-          ]}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          {...rest}
-        />
+            animatedContainerStyle,
+          ]}>
+          {leadingIcon ? <AppIcon color={theme.textMuted} name={leadingIcon} size={20} /> : null}
 
-        {showPasswordToggle && secureTextEntry ? (
-          <Pressable
-            accessibilityLabel={isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => setIsPasswordVisible((visible) => !visible)}
-            style={styles.toggleButton}>
-            <AppIcon
-              color={theme.textMuted}
-              name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
-              size={20}
-            />
-          </Pressable>
-        ) : null}
-      </View>
+          <AnimatedTextInput
+            placeholderTextColor={theme.textMuted}
+            secureTextEntry={isSecure}
+            style={[styles.iconInputField, { color: theme.text }, style]}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
+            {...rest}
+          />
+
+          {trailingControl}
+        </Animated.View>
+      ) : (
+        <View style={styles.inputRow}>
+          <AnimatedTextInput
+            placeholderTextColor={theme.textMuted}
+            secureTextEntry={isSecure}
+            style={[
+              styles.input,
+              showPasswordToggle && styles.inputWithToggle,
+              {
+                backgroundColor: theme.backgroundSecondary,
+                color: theme.text,
+              },
+              animatedContainerStyle,
+              style,
+            ]}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
+            {...rest}
+          />
+
+          {trailingControl}
+        </View>
+      )}
 
       {error ? (
         <AppText variant="small" color="destructive" style={styles.error}>
@@ -126,15 +173,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     fontSize: 16,
   },
+  iconInputContainer: {
+    minHeight: Layout.minTouchTarget + 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  iconInputField: {
+    flex: 1,
+    minHeight: Layout.minTouchTarget,
+    fontSize: 16,
+    paddingVertical: Spacing.sm,
+  },
   inputWithToggle: {
     paddingRight: Spacing.xxxl,
   },
-  toggleButton: {
-    position: 'absolute',
-    right: Spacing.lg,
-    top: 0,
-    bottom: 0,
+  trailingButton: {
     justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 28,
+    minHeight: 28,
   },
   error: {
     marginTop: Spacing.xs,

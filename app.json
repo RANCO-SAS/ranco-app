@@ -7,8 +7,10 @@
     "icon": "./assets/images/ranco-icon.png",
     "scheme": "ranco",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#F1F5F9",
     "android": {
       "package": "com.ranco.app",
+      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#208AEF",
         "foregroundImage": "./assets/images/ranco-icon.png"

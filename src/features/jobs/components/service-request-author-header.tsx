@@ -12,6 +12,7 @@ import { formatPostedAt } from '@/shared/utils/format-posted-at';
 type ServiceRequestAuthorHeaderProps = {
   client: ServiceRequestClientPreview;
   createdAt: string;
+  categoryLabel?: string;
   subtitle?: string;
   trailing?: ReactNode;
 };
@@ -19,6 +20,7 @@ type ServiceRequestAuthorHeaderProps = {
 export function ServiceRequestAuthorHeader({
   client,
   createdAt,
+  categoryLabel,
   subtitle,
   trailing,
 }: ServiceRequestAuthorHeaderProps) {
@@ -40,10 +42,17 @@ export function ServiceRequestAuthorHeader({
         onPress={() => router.push(Routes.app.userProfile(client.id, 'client'))}
         style={styles.meta}>
         <AppText variant="bodyMedium">{displayName}</AppText>
-        <AppText color="textMuted" numberOfLines={1} variant="small">
-          {formatPostedAt(createdAt)}
-          {subtitle ? ` · ${subtitle}` : ''}
-        </AppText>
+        {categoryLabel ? (
+          <AppText numberOfLines={1} variant="small">
+            <AppText color="primary">{categoryLabel}</AppText>
+            <AppText color="textMuted"> · </AppText>
+            <AppText color="textMuted">{formatPostedAt(createdAt)}</AppText>
+          </AppText>
+        ) : (
+          <AppText color="textMuted" numberOfLines={1} variant="small">
+            {subtitle ?? formatPostedAt(createdAt)}
+          </AppText>
+        )}
       </Pressable>
 
       {trailing ? <View style={styles.trailing}>{trailing}</View> : null}

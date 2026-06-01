@@ -1,15 +1,14 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui/animated-pressable';
+import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
-import { CategoryIcon } from '@/components/ui/category-icon';
 import { AppText } from '@/components/ui/text';
 import { Radius, Spacing } from '@/constants/theme';
 import { ServiceRequestAuthorHeader } from '@/features/jobs/components/service-request-author-header';
 import { ServiceRequestPhotoGallery } from '@/features/jobs/components/service-request-photo-gallery';
 import { UrgencyBadge } from '@/features/jobs/components/urgency-badge';
 import type { ServiceRequest } from '@/features/jobs/types/service-request.types';
-import { resolveCategorySlug } from '@/features/jobs/utils/resolve-category-slug';
 import { useTheme } from '@/hooks/use-theme';
 
 type JobOpportunityCardProps = {
@@ -28,7 +27,9 @@ export function JobOpportunityCard({
   onDetailsPress,
 }: JobOpportunityCardProps) {
   const theme = useTheme();
-  const categorySlug = resolveCategorySlug(request.categoryName);
+  const headline = request.title.trim() || request.subcategoryName;
+  const description = request.description.trim();
+  const showDescription = description.length > 0 && description !== headline;
 
   return (
     <AnimatedPressable
@@ -43,29 +44,30 @@ export function JobOpportunityCard({
         },
       ]}>
       <ServiceRequestAuthorHeader
+        categoryLabel={request.categoryName}
         client={request.client}
         createdAt={request.createdAt}
-        subtitle={request.categoryName}
-        trailing={<UrgencyBadge urgency={request.urgency} />}
+        trailing={<UrgencyBadge uppercase urgency={request.urgency} />}
       />
 
-      <View style={styles.titleRow}>
-        <CategoryIcon slug={categorySlug} />
-        <View style={styles.titleContent}>
-          <AppText numberOfLines={2} variant="subtitle">
-            {request.subcategoryName}
-          </AppText>
-          {request.locationLabel ? (
-            <AppText color="textMuted" numberOfLines={1} variant="small">
-              {request.locationLabel}
-            </AppText>
-          ) : null}
-        </View>
-      </View>
-
-      <AppText color="textSecondary" numberOfLines={4} variant="body">
-        {request.description}
+      <AppText numberOfLines={2} variant="subtitle">
+        {headline}
       </AppText>
+
+      {showDescription ? (
+        <AppText color="textSecondary" numberOfLines={3} variant="body">
+          {description}
+        </AppText>
+      ) : null}
+
+      {request.locationLabel ? (
+        <View style={styles.locationRow}>
+          <AppIcon color={theme.primary} name="location-outline" size={16} />
+          <AppText color="primary" numberOfLines={1} style={styles.locationText} variant="caption">
+            {request.locationLabel}
+          </AppText>
+        </View>
+      ) : null}
 
       {request.photoUrls.length > 0 ? (
         <ServiceRequestPhotoGallery photoUrls={request.photoUrls} />
@@ -99,21 +101,21 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.xl,
-    gap: Spacing.lg,
+    gap: Spacing.md,
     padding: Spacing.lg,
   },
-  titleRow: {
+  locationRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-  },
-  titleContent: {
-    flex: 1,
+    alignItems: 'center',
     gap: Spacing.xs,
+  },
+  locationText: {
+    flex: 1,
   },
   actions: {
     flexDirection: 'row',
     gap: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   actionButton: {
     flex: 1,

@@ -11,10 +11,12 @@ module.exports = {
     ...appJson.expo,
     android: {
       ...appJson.expo.android,
+      edgeToEdgeEnabled: true,
       ...(hasGoogleServices ? { googleServicesFile: './google-services.json' } : {}),
     },
     plugins: [
       ...(appJson.expo.plugins ?? []),
+      'expo-system-ui',
       [
         'expo-notifications',
         {

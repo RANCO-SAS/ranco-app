@@ -120,13 +120,14 @@ export function ServiceRequestDetailScreen() {
   const footerVisible = showContactFooter || showUnavailableFooter || showOwnerFooter;
 
   return (
-    <ScreenLayout scrollable={false}>
-      <StackHeader title="Detalle de oportunidad" />
+    <ScreenLayout flush scrollable={false}>
+      <StackHeader applyTopInset title="Detalle de oportunidad" />
 
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
-          footerVisible && { paddingBottom: Spacing.xxxl + Layout.minTouchTarget },
+          footerVisible && { paddingBottom: Spacing.lg },
         ]}
         showsVerticalScrollIndicator={false}>
         <StaggeredFadeIn index={0}>
@@ -306,10 +307,13 @@ export function ServiceRequestDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
   scrollContent: {
     paddingHorizontal: Layout.screenPaddingHorizontal,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
+    paddingBottom: Spacing.xl,
     maxWidth: Layout.maxContentWidth,
     width: '100%',
     alignSelf: 'center',
