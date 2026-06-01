@@ -188,7 +188,7 @@ export function EditProfileScreen() {
         disabled={updateProfile.isPending}
         label={updateProfile.isPending ? 'Guardando cambios...' : 'Guardar cambios'}
         onPress={handleSubmit(onSubmit)}
-        variant="dark"
+        variant="gradient"
       />
 
       <Spacer size="lg" />

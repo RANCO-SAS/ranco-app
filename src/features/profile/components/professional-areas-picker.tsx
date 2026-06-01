@@ -1,16 +1,19 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { UberListRow } from '@/components/ui/uber-list-row';
-import { UberSearchField } from '@/components/ui/uber-search-field';
+import { AppIcon } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
-import { Radius, Spacing } from '@/constants/theme';
+import { Input } from '@/components/ui/input';
+import { ActiveServiceCard } from '@/features/profile/components/active-service-card';
+import { ServiceAddRow, ServiceSuggestionPill } from '@/features/profile/components/service-add-row';
 import type { ServiceCategory } from '@/features/jobs/types/service-category.types';
 import {
+  buildServiceSearchIndex,
+  getPopularServiceSuggestions,
   searchServiceDomains,
   type ServiceSearchResult,
 } from '@/features/jobs/utils/service-search';
-import { CategoryIcon } from '@/components/ui/category-icon';
+import { Layout, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ProfessionalAreasPickerProps = {
@@ -22,16 +25,6 @@ type ProfessionalAreasPickerProps = {
   maxSelections?: number;
 };
 
-function LeadingIcon({ slug }: { slug: string }) {
-  const theme = useTheme();
-
-  return (
-    <View style={[styles.iconCircle, { backgroundColor: theme.backgroundElement }]}>
-      <CategoryIcon slug={slug} />
-    </View>
-  );
-}
-
 export function ProfessionalAreasPicker({
   categories,
   value,
@@ -42,7 +35,9 @@ export function ProfessionalAreasPicker({
 }: ProfessionalAreasPickerProps) {
   const theme = useTheme();
   const [query, setQuery] = useState('');
-  const isAtMax = maxSelections !== undefined && value.length >= maxSelections;
+  const maxCount = maxSelections ?? value.length;
+  const isAtMax = value.length >= maxCount;
+  const remainingSlots = Math.max(maxCount - value.length, 0);
 
   const selectedItems = useMemo(() => {
     return categories.flatMap((category) =>
@@ -57,18 +52,38 @@ export function ProfessionalAreasPicker({
     );
   }, [categories, value]);
 
-  const results = useMemo(() => {
-    if (query.trim().length < 1 || isAtMax) {
-      return [];
-    }
-
-    return searchServiceDomains(query, categories, 6).filter(
+  const suggestions = useMemo(() => {
+    return getPopularServiceSuggestions(categories, 8).filter(
       (result) => !value.includes(result.subcategoryId),
     );
-  }, [categories, isAtMax, query, value]);
+  }, [categories, value]);
+
+  const browseItems = useMemo(() => {
+    const normalizedQuery = query.trim();
+
+    if (normalizedQuery.length > 0) {
+      return searchServiceDomains(normalizedQuery, categories, 10).filter(
+        (result) => !value.includes(result.subcategoryId),
+      );
+    }
+
+    return buildServiceSearchIndex(categories)
+      .filter((entry) => !value.includes(entry.subcategoryId))
+      .slice(0, 12)
+      .map((entry) => ({
+        categoryId: entry.categoryId,
+        subcategoryId: entry.subcategoryId,
+        categoryName: entry.categoryName,
+        subcategoryName: entry.subcategoryName,
+        categorySlug: entry.categorySlug,
+        subcategorySlug: entry.subcategorySlug,
+        score: 1,
+        matchedLabel: entry.subcategoryName,
+      }));
+  }, [categories, query, value]);
 
   const handleAdd = (result: ServiceSearchResult) => {
-    if (isAtMax) {
+    if (isAtMax || disabled) {
       return;
     }
 
@@ -77,69 +92,129 @@ export function ProfessionalAreasPicker({
   };
 
   const handleRemove = (subcategoryId: string) => {
+    if (disabled) {
+      return;
+    }
+
     onChange(value.filter((item) => item !== subcategoryId));
   };
 
   return (
     <View style={styles.wrapper}>
-      <UberSearchField
-        autoCapitalize="none"
-        autoCorrect={false}
-        editable={!disabled && !isAtMax}
-        onChangeText={setQuery}
-        placeholder={isAtMax ? 'Límite alcanzado' : 'Buscar oficio...'}
-        value={query}
-      />
-
-      {maxSelections !== undefined && isAtMax ? (
-        <AppText color="warning" variant="caption">
-          Máximo {maxSelections} servicios.
-        </AppText>
-      ) : null}
-
       {selectedItems.length > 0 ? (
-        <View style={[styles.panel, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-          {selectedItems.map((item, index) => (
-            <UberListRow
-              key={item.id}
-              isLast={index === selectedItems.length - 1}
-              leading={<LeadingIcon slug={item.slug} />}
-              onPress={() => handleRemove(item.id)}
-              showChevron={false}
-              subtitle={item.subtitle}
-              title={item.label}
-              trailing={
-                <AppText color="destructive" variant="caption">
-                  Quitar
-                </AppText>
-              }
-            />
-          ))}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <AppText variant="subtitle">Servicios activos</AppText>
+            <View style={[styles.countBadge, { backgroundColor: theme.backgroundElement }]}>
+              <View style={[styles.countDot, { backgroundColor: theme.primary }]} />
+              <AppText style={styles.countText} variant="small">
+                {selectedItems.length} DE {maxCount}
+              </AppText>
+            </View>
+          </View>
+
+          <View style={styles.activeList}>
+            {selectedItems.map((item) => (
+              <ActiveServiceCard
+                key={item.id}
+                categorySlug={item.slug}
+                disabled={disabled}
+                onRemove={() => handleRemove(item.id)}
+                subtitle={item.subtitle}
+                title={item.label}
+              />
+            ))}
+          </View>
         </View>
       ) : null}
 
-      {results.length > 0 ? (
-        <View style={[styles.panel, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-          <AppText color="textMuted" style={styles.sectionLabel} variant="small">
-            AGREGAR
-          </AppText>
-          {results.map((result, index) => (
-            <UberListRow
-              key={result.subcategoryId}
-              isLast={index === results.length - 1}
-              leading={<LeadingIcon slug={result.categorySlug} />}
-              onPress={() => handleAdd(result)}
-              subtitle={result.categoryName}
-              title={result.subcategoryName}
-              trailing={
-                <AppText color="primary" variant="caption">
-                  Agregar
-                </AppText>
-              }
-            />
-          ))}
+      {!isAtMax ? (
+        <View style={styles.section}>
+          <View style={styles.sectionIntro}>
+            <AppText variant="subtitle">Agregar más servicios</AppText>
+            <AppText color="textSecondary" variant="caption">
+              {remainingSlots === 1
+                ? 'Puedes agregar 1 servicio más a tu perfil profesional.'
+                : `Puedes agregar hasta ${remainingSlots} servicios más a tu perfil profesional.`}
+            </AppText>
+          </View>
+
+          <Input
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!disabled}
+            leadingIcon="search-outline"
+            onChangeText={setQuery}
+            placeholder="Buscar servicios..."
+            value={query}
+          />
+
+          {query.trim().length === 0 && suggestions.length > 0 ? (
+            <View style={styles.suggestionsSection}>
+              <AppText color="textMuted" style={styles.suggestionsLabel} variant="small">
+                SUGERENCIAS
+              </AppText>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.suggestionsRow}>
+                  {suggestions.map((item) => (
+                    <ServiceSuggestionPill
+                      key={item.subcategoryId}
+                      disabled={disabled}
+                      label={item.subcategoryName}
+                      onPress={() => handleAdd(item)}
+                    />
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          ) : null}
+
+          {browseItems.length > 0 ? (
+            <View
+              style={[
+                styles.browsePanel,
+                {
+                  backgroundColor: theme.backgroundSecondary,
+                  borderColor: theme.border,
+                },
+              ]}>
+              {browseItems.map((item, index) => (
+                <ServiceAddRow
+                  key={item.subcategoryId}
+                  categorySlug={item.categorySlug}
+                  disabled={disabled}
+                  isLast={index === browseItems.length - 1}
+                  onAdd={() => handleAdd(item)}
+                  subtitle={item.categoryName}
+                  title={item.subcategoryName}
+                />
+              ))}
+              {browseItems.length > 0 ? (
+                <View
+                  style={[
+                    styles.panelFooter,
+                    {
+                      borderTopColor: theme.border,
+                    },
+                  ]}>
+                  <AppIcon color={theme.textMuted} name="information-circle-outline" size={14} />
+                  <AppText color="textMuted" style={styles.panelFooterText} variant="small">
+                    Selecciona los servicios que ofreces actualmente.
+                  </AppText>
+                </View>
+              ) : null}
+            </View>
+          ) : query.trim().length > 0 ? (
+            <AppText color="textSecondary" variant="caption">
+              No encontramos servicios para esa búsqueda.
+            </AppText>
+          ) : null}
         </View>
-      ) : null}
+      ) : (
+        <AppText color="warning" variant="caption">
+          Has alcanzado el máximo de {maxCount} servicios.
+        </AppText>
+      )}
 
       {error ? (
         <AppText color="destructive" variant="small">
@@ -152,28 +227,66 @@ export function ProfessionalAreasPicker({
 
 const styles = StyleSheet.create({
   wrapper: {
+    gap: Spacing.xl,
+  },
+  section: {
     gap: Spacing.md,
   },
-  panel: {
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  countBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  countDot: {
+    width: 6,
+    height: 6,
+    borderRadius: Radius.full,
+  },
+  countText: {
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
+  activeList: {
+    gap: Spacing.sm,
+  },
+  sectionIntro: {
+    gap: Spacing.xs,
+  },
+  suggestionsSection: {
+    gap: Spacing.sm,
+  },
+  suggestionsLabel: {
+    letterSpacing: 0.8,
+    fontWeight: '600',
+  },
+  suggestionsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingRight: Layout.screenPaddingHorizontal,
+  },
+  browsePanel: {
     borderRadius: Radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Spacing.lg,
     overflow: 'hidden',
   },
-  sectionLabel: {
-    letterSpacing: 0.8,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xs,
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
+  panelFooter: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingVertical: Spacing.md,
   },
-  icon: {
-    fontSize: 20,
-    lineHeight: 24,
+  panelFooterText: {
+    flex: 1,
   },
 });

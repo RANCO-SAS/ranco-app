@@ -38,7 +38,7 @@ export function ProfileModeSection() {
 
   const needsProfessionalSetup =
     !profile.isProfessional || profile.professionalSubcategoryIds.length === 0;
-  const modeIcon = activeMode === 'professional' ? 'briefcase-outline' : 'home-outline';
+  const modeIcon = activeMode === 'professional' ? 'shield-checkmark-outline' : 'home-outline';
   const modeTitle = activeMode === 'professional' ? 'Modo profesional' : 'Modo cliente';
 
   return (

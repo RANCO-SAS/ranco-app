@@ -33,6 +33,27 @@ export const Colors = {
   },
 } as const;
 
+export const BrandGradients = {
+  light: ['#2563EB', '#4F46E5', '#7C3AED'] as const,
+  dark: ['#0A84FF', '#5E5CE6', '#BF5AF2'] as const,
+} as const;
+
+export const ButtonGradients = {
+  light: ['#2563EB', '#2B6AE8', '#3270E3'] as const,
+  dark: ['#0A84FF', '#158AF6', '#1E90ED'] as const,
+} as const;
+
+export const CardGradients = {
+  light: {
+    surface: ['#FFFFFF', '#F4F7FF', '#E6EEFF'] as const,
+    glow: ['rgba(37, 99, 235, 0.11)', 'rgba(37, 99, 235, 0.04)', 'transparent'] as const,
+  },
+  dark: {
+    surface: ['#303036', '#1C1C1E', '#111113'] as const,
+    glow: ['rgba(10, 132, 255, 0.18)', 'rgba(10, 132, 255, 0.06)', 'transparent'] as const,
+  },
+} as const;
+
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 export type ColorScheme = keyof typeof Colors;
 

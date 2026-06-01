@@ -1,8 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppIcon } from '@/components/ui/app-icon';
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { NotificationBell } from '@/features/notifications/components/notification-bell';
 import { UberActionCard } from '@/components/ui/uber-action-card';
@@ -10,21 +9,21 @@ import { UberSearchField } from '@/components/ui/uber-search-field';
 import { Button } from '@/components/ui/button';
 import { AppText } from '@/components/ui/text';
 import { CategoryIcon } from '@/components/ui/category-icon';
-import { IosActionCard } from '@/components/ui/ios-action-card';
 import { StaggeredFadeIn } from '@/components/ui/staggered-fade-in';
 import { Spacer } from '@/components/ui/spacer';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
+import { ProfessionalDashboard } from '@/features/home/components/professional-dashboard';
 import { useServiceCategories } from '@/features/jobs/hooks/use-service-categories';
 import { getPopularServiceSuggestions } from '@/features/jobs/utils/service-search';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
 import { formatPersonalGreeting } from '@/shared/utils/format-greeting';
-import { useTheme } from '@/hooks/use-theme';
+
+const rancoBrandIcon = require('@/assets/images/ranco-icon.png');
 
 export default function HomeScreen() {
   const router = useRouter();
-  const theme = useTheme();
   const { profile } = useCurrentProfile();
   const { activeMode } = useActiveMode();
   const categoriesQuery = useServiceCategories();
@@ -43,10 +42,13 @@ export default function HomeScreen() {
       <StaggeredFadeIn index={0}>
         <View style={styles.headerRow}>
           <View style={styles.headerText}>
-            {!isClientHome ? (
-              <AppText variant="title">Panel profesional</AppText>
-            ) : (
+            {isClientHome ? (
               <AppText variant="title">{personalGreeting}</AppText>
+            ) : (
+              <View style={styles.titleRow}>
+                <Image accessibilityIgnoresInvertColors source={rancoBrandIcon} style={styles.brandMark} />
+                <AppText variant="title">Panel profesional</AppText>
+              </View>
             )}
             {!isClientHome ? (
               <AppText color="textSecondary" variant="body">
@@ -111,47 +113,7 @@ export default function HomeScreen() {
           </StaggeredFadeIn>
         )
       ) : profile?.isProfessional && hasProfessionalServices ? (
-        <View style={styles.dashboard}>
-          <View style={styles.gridRow}>
-            <StaggeredFadeIn index={1} style={styles.gridItem}>
-              <IosActionCard
-                featured
-                icon={<AppIcon color={theme.primary} name="briefcase-outline" size={28} />}
-                onPress={() => router.push(Routes.app.discover)}
-                subtitle="Ver trabajos disponibles"
-                title="Oportunidades"
-              />
-            </StaggeredFadeIn>
-            <StaggeredFadeIn index={2} style={styles.gridItem}>
-              <IosActionCard
-                featured
-                icon={<AppIcon color={theme.primary} name="construct-outline" size={28} />}
-                onPress={() => router.push(Routes.app.activateProfessional)}
-                subtitle="Administrar mis habilidades"
-                title="Mis servicios"
-              />
-            </StaggeredFadeIn>
-          </View>
-
-          <View style={styles.gridRow}>
-            <StaggeredFadeIn index={3} style={styles.gridItem}>
-              <IosActionCard
-                compact
-                icon={<AppIcon color={theme.textMuted} name="person-outline" size={22} />}
-                onPress={() => router.push(Routes.app.profile)}
-                title="Mi perfil"
-              />
-            </StaggeredFadeIn>
-            <StaggeredFadeIn index={4} style={styles.gridItem}>
-              <IosActionCard
-                compact
-                icon={<AppIcon color={theme.textMuted} name="settings-outline" size={22} />}
-                onPress={() => router.push(Routes.app.editProfile)}
-                title="Configuración"
-              />
-            </StaggeredFadeIn>
-          </View>
-        </View>
+        <ProfessionalDashboard />
       ) : (
         <StaggeredFadeIn index={1}>
           <Button
@@ -176,17 +138,15 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.xs,
   },
-  dashboard: {
-    gap: Spacing.md,
-  },
-  gridRow: {
+  titleRow: {
     flexDirection: 'row',
-    gap: Spacing.md,
-    alignItems: 'stretch',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
-  gridItem: {
-    flex: 1,
-    minWidth: 0,
+  brandMark: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
   shortcuts: {
     flexDirection: 'row',

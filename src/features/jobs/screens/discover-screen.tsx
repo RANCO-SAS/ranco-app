@@ -4,8 +4,7 @@ import { RefreshControl, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ScreenLayout } from '@/components/layout/screen-layout';
-import { AppIcon } from '@/components/ui/app-icon';
-import { AnimatedPressable } from '@/components/ui/animated-pressable';
+import { TabScreenHeader } from '@/components/layout/tab-screen-header';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -20,11 +19,9 @@ import { ModeGateEmptyState } from '@/features/profile/components/mode-gate-empt
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
 import { useStartConversation } from '@/features/messages/hooks/use-conversations';
-import { useTheme } from '@/hooks/use-theme';
 
 export function DiscoverScreen() {
   const router = useRouter();
-  const theme = useTheme();
   const { profile } = useCurrentProfile();
   const { activeMode } = useActiveMode();
   const isProfessionalMode = activeMode === 'professional';
@@ -147,28 +144,18 @@ export function DiscoverScreen() {
         ),
       }}>
       <Animated.View entering={fadeInDownEntrance()}>
-        <View style={styles.header}>
-          <View style={styles.headerText}>
-            <AppText variant="title">Oportunidades</AppText>
-            <AppText color="textSecondary" variant="caption">
-              {opportunities.length === 1
-                ? '1 trabajo disponible'
-                : `${opportunities.length} trabajos disponibles`}
-            </AppText>
-          </View>
-
-          <AnimatedPressable
-            accessibilityRole="button"
-            onPress={() => {
-              void publishedRequests.refetch();
-            }}
-            style={styles.refreshButton}>
-            <AppIcon color={theme.primary} name="refresh-outline" size={22} />
-          </AnimatedPressable>
-        </View>
+        <TabScreenHeader
+          subtitle="Explora solicitudes publicadas en tus áreas de servicio"
+          title="Oportunidades"
+          badge={
+            opportunities.length > 0
+              ? `${opportunities.length} ${opportunities.length === 1 ? 'DISPONIBLE' : 'DISPONIBLES'}`
+              : undefined
+          }
+        />
       </Animated.View>
 
-      <Spacer size="lg" />
+      <Spacer size="sm" />
 
       {opportunities.length === 0 ? (
         <StaggeredFadeIn index={0}>
@@ -193,20 +180,6 @@ export function DiscoverScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-  },
-  headerText: {
-    flex: 1,
-    gap: Spacing.xs,
-  },
-  refreshButton: {
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-  },
   listContent: {
     gap: Spacing.lg,
   },
