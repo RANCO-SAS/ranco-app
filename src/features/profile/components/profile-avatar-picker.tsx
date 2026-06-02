@@ -1,8 +1,9 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/avatar';
+import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { AppText } from '@/components/ui/text';
 import { devError, devLog } from '@/lib/dev-logger';
 import { Spacing } from '@/constants/theme';
@@ -99,7 +100,7 @@ export function ProfileAvatarPicker({
         <Avatar imageUrl={displayImageUrl} name={name} size={88} />
         {isUploading ? (
           <View style={[styles.overlay, { backgroundColor: `${theme.text}55` }]}>
-            <ActivityIndicator color={theme.background} />
+            <LoadingAnimation size={32} />
           </View>
         ) : null}
       </View>

@@ -7,6 +7,7 @@ import { ScreenLayout } from '@/components/layout/screen-layout';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Loader } from '@/components/ui/loader';
 import { Spacer } from '@/components/ui/spacer';
 import { StaggeredFadeIn } from '@/components/ui/staggered-fade-in';
 import { AppText } from '@/components/ui/text';
@@ -291,9 +292,7 @@ export function PublicProfileScreen() {
           {activeTab === 'reviews' ? (
             <StaggeredFadeIn index={0}>
               {reviewsQuery.isLoading ? (
-                <AppText color="textSecondary" variant="body">
-                  Cargando reseñas...
-                </AppText>
+                <Loader message="Cargando reseñas..." size="small" variant="inline" />
               ) : roleSummary && roleSummary.reviews.length > 0 ? (
                 <View style={styles.listContent}>
                   {roleSummary.reviews.map((review) => (
@@ -327,9 +326,7 @@ export function PublicProfileScreen() {
           {activeTab === 'jobs' ? (
             <StaggeredFadeIn index={0}>
               {jobHistoryQuery.isLoading || portfolioQuery.isLoading || ratedJobsQuery.isLoading ? (
-                <AppText color="textSecondary" variant="body">
-                  Cargando historial...
-                </AppText>
+                <Loader message="Cargando historial..." size="small" variant="inline" />
               ) : (
                 <View style={styles.listContent}>
                   {(portfolioQuery.data?.length ?? 0) > 0 ? (

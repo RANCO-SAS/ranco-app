@@ -31,4 +31,8 @@ export const queryKeys = {
     list: (userId: string) => ['notifications', 'list', userId] as const,
     unreadCount: (userId: string) => ['notifications', 'unread-count', userId] as const,
   },
+  featuredProfessionals: {
+    all: ['featured-professionals'] as const,
+    list: (subcategoryKey: string) => ['featured-professionals', subcategoryKey] as const,
+  },
 } as const;

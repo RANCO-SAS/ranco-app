@@ -316,9 +316,7 @@ export function ConversationScreen() {
                 <>
                   {jobReviewQuery.isLoading ? (
                     <Card>
-                      <AppText color="textSecondary" variant="caption">
-                        Cargando reseña...
-                      </AppText>
+                      <Loader message="Cargando reseña..." size="small" variant="inline" />
                     </Card>
                   ) : (
                     <ReviewForm

@@ -7,6 +7,7 @@ import { ScreenLayout } from '@/components/layout/screen-layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Loader } from '@/components/ui/loader';
 import { Spacer } from '@/components/ui/spacer';
 import { StaggeredFadeIn } from '@/components/ui/staggered-fade-in';
 import { AppText } from '@/components/ui/text';
@@ -229,9 +230,7 @@ export function ServiceRequestDetailScreen() {
             <StaggeredFadeIn index={7}>
               {jobReviewQuery.isLoading ? (
                 <Card>
-                  <AppText color="textSecondary" variant="caption">
-                    Cargando reseña...
-                  </AppText>
+                  <Loader message="Cargando reseña..." size="small" variant="inline" />
                 </Card>
               ) : (
                 <ReviewForm

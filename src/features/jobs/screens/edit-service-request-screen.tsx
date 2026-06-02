@@ -25,6 +25,7 @@ import { canClientEditServiceRequest } from '@/features/jobs/utils/can-client-ed
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
+import { Loader } from '@/components/ui/loader';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
 import { Layout, Spacing } from '@/constants/theme';
@@ -120,9 +121,7 @@ export function EditServiceRequestScreen() {
       <SafeAreaView edges={['top', 'bottom']} style={[styles.safeArea, { backgroundColor: theme.background }]}>
         <StackHeader title="Editar solicitud" />
         <View style={styles.guardContent}>
-          <AppText color="textSecondary" variant="body">
-            Cargando solicitud...
-          </AppText>
+          <Loader message="Cargando solicitud..." size="small" variant="inline" />
         </View>
       </SafeAreaView>
     );

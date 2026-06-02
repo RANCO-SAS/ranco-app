@@ -6,6 +6,7 @@ import Animated from 'react-native-reanimated';
 import { StackHeader } from '@/components/layout/stack-header';
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Loader } from '@/components/ui/loader';
 import { StaggeredFadeIn, fadeInDownEntrance } from '@/components/ui/staggered-fade-in';
 import { AppText } from '@/components/ui/text';
 import { NotificationListItem } from '@/features/notifications/components/notification-list-item';
@@ -69,7 +70,7 @@ export function NotificationsScreen() {
         style={styles.scroll}>
         {notificationsQuery.isLoading ? (
           <StaggeredFadeIn index={0}>
-            <AppText color="textSecondary">Cargando...</AppText>
+            <Loader message="Cargando..." size="small" variant="inline" />
           </StaggeredFadeIn>
         ) : notifications.length === 0 ? (
           <StaggeredFadeIn index={0}>

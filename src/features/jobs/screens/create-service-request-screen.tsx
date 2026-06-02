@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useLocalSearchParams } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -56,11 +57,16 @@ export function CreateServiceRequestScreen() {
   const { session } = useAuth();
   const { profile } = useCurrentProfile();
   const { activeMode } = useActiveMode();
+  const { categoryId: presetCategoryId, subcategoryId: presetSubcategoryId } = useLocalSearchParams<{
+    categoryId?: string;
+    subcategoryId?: string;
+  }>();
   const categoriesQuery = useServiceCategories();
   const createRequest = useCreateServiceRequest();
   const [currentStep, setCurrentStep] = useState(0);
   const [photos, setPhotos] = useState<ServiceRequestPhotoItem[]>([]);
   const { keyboardBehavior, keyboardVerticalOffset } = useKeyboardLayout();
+  const hasAppliedPresetRef = useRef(false);
 
   const {
     control,
@@ -90,6 +96,32 @@ export function CreateServiceRequestScreen() {
   const formValues = watch();
 
   const categories = categoriesQuery.data ?? [];
+
+  useEffect(() => {
+    if (hasAppliedPresetRef.current || categories.length === 0) {
+      return;
+    }
+
+    const categoryId = typeof presetCategoryId === 'string' ? presetCategoryId : undefined;
+    const subcategoryId = typeof presetSubcategoryId === 'string' ? presetSubcategoryId : undefined;
+
+    if (!categoryId || !subcategoryId) {
+      return;
+    }
+
+    const category = categories.find((item) => item.id === categoryId);
+    const subcategory = category?.subcategories.find((item) => item.id === subcategoryId);
+
+    if (!category || !subcategory) {
+      return;
+    }
+
+    setValue('categoryId', categoryId, { shouldValidate: true });
+    setValue('subcategoryId', subcategoryId, { shouldValidate: true });
+    setValue('title', subcategory.name, { shouldValidate: false });
+    setCurrentStep(1);
+    hasAppliedPresetRef.current = true;
+  }, [categories, presetCategoryId, presetSubcategoryId, setValue]);
 
   const selectedCategory = useMemo(
     () => categories.find((item) => item.id === selectedCategoryId),

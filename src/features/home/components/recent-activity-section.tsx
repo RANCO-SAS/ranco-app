@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Loader } from '@/components/ui/loader';
 import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
@@ -33,9 +34,7 @@ export function RecentActivitySection({ items, isLoading = false }: RecentActivi
       <Card padded={false} style={styles.card}>
         {isLoading ? (
           <View style={styles.stateWrap}>
-            <AppText color="textSecondary" variant="caption">
-              Cargando actividad...
-            </AppText>
+            <Loader message="Cargando actividad..." size="small" variant="inline" />
           </View>
         ) : items.length > 0 ? (
           <View style={styles.list}>
