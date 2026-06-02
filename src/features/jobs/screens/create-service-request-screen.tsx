@@ -6,11 +6,10 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { StackHeader } from '@/components/layout/stack-header';
-import { UberPlanTimeline } from '@/components/ui/uber-plan-timeline';
-import { AppText } from '@/components/ui/text';
-import { Input } from '@/components/ui/input';
 import { AuthMessage } from '@/features/auth/components/auth-message';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { CreateRequestProgressBar } from '@/features/jobs/components/create-request/create-request-progress-bar';
+import { RequestDetailsStep } from '@/features/jobs/components/create-request/request-details-step';
 import { ServiceRequestPhotoPicker } from '@/features/jobs/components/service-request-photo-picker';
 import { ServiceSearchPicker } from '@/features/jobs/components/create-request/service-search-picker';
 import { RequestSummaryCard } from '@/features/jobs/components/create-request/request-summary-card';
@@ -40,10 +39,9 @@ const STEP_FIELDS: Array<Array<keyof CreateServiceRequestFormData>> = [
 ];
 
 const STEP_TITLES = ['¿Qué necesitas?', 'Detalles', 'Confirmar'] as const;
+const TOTAL_STEPS = STEP_TITLES.length;
 
-const DESCRIPTION_MIN = 20;
 const DESCRIPTION_MAX = 1000;
-const TITLE_MAX = 80;
 
 const URGENCY_LABELS: Record<ServiceRequestUrgency, string> = {
   low: 'Flexible',
@@ -84,6 +82,8 @@ export function CreateServiceRequestScreen() {
       subcategoryId: '',
       urgency: 'normal',
       locationLabel: '',
+      locationLat: null,
+      locationLng: null,
     },
     mode: 'onChange',
   });
@@ -123,6 +123,16 @@ export function CreateServiceRequestScreen() {
     hasAppliedPresetRef.current = true;
   }, [categories, presetCategoryId, presetSubcategoryId, setValue]);
 
+  useEffect(() => {
+    if (currentStep !== 1 || formValues.locationLabel?.trim()) {
+      return;
+    }
+
+    if (profile?.locationLabel?.trim()) {
+      setValue('locationLabel', profile.locationLabel.trim(), { shouldValidate: false });
+    }
+  }, [currentStep, formValues.locationLabel, profile?.locationLabel, setValue]);
+
   const selectedCategory = useMemo(
     () => categories.find((item) => item.id === selectedCategoryId),
     [categories, selectedCategoryId],
@@ -137,10 +147,6 @@ export function CreateServiceRequestScreen() {
     () => getSubcategoryTitleHint(selectedSubcategory?.slug ?? 'other'),
     [selectedSubcategory?.slug],
   );
-
-  const serviceLabel = selectedSubcategory
-    ? `${selectedSubcategory.name} · ${selectedCategory?.name ?? ''}`
-    : undefined;
 
   const descriptionLength = descriptionValue.trim().length;
   const titleLength = titleValue.trim().length;
@@ -214,7 +220,16 @@ export function CreateServiceRequestScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <StackHeader title={STEP_TITLES[currentStep]} />
+      <StackHeader
+        subtitle={currentStep > 0 ? `Paso ${currentStep + 1} de ${TOTAL_STEPS}` : undefined}
+        title={STEP_TITLES[currentStep]}
+      />
+
+      {currentStep > 0 ? (
+        <View style={styles.progressWrap}>
+          <CreateRequestProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+        </View>
+      ) : null}
 
       <KeyboardAvoidingView
         behavior={keyboardBehavior}
@@ -228,31 +243,6 @@ export function CreateServiceRequestScreen() {
           nestedScrollEnabled={Platform.OS === 'android'}
           scrollEnabled
           showsVerticalScrollIndicator={false}>
-          {currentStep > 0 ? (
-            <UberPlanTimeline
-              steps={[
-                {
-                  label: 'Servicio',
-                  value: serviceLabel,
-                  completed: true,
-                  active: currentStep === 1,
-                },
-                {
-                  label: 'Detalles',
-                  value: titleValue.trim() || undefined,
-                  completed: currentStep > 1,
-                  active: currentStep === 1,
-                },
-                {
-                  label: 'Confirmar',
-                  value: isLastStep ? URGENCY_LABELS[urgencyValue] : undefined,
-                  completed: false,
-                  active: currentStep === 2,
-                },
-              ]}
-            />
-          ) : null}
-
           {categoriesQuery.error ? (
             <AuthMessage message="No pudimos cargar los servicios." variant="error" />
           ) : null}
@@ -283,76 +273,16 @@ export function CreateServiceRequestScreen() {
           ) : null}
 
           {currentStep === 1 ? (
-            <View style={styles.stepContent}>
-              <Controller
-                control={control}
-                name="title"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View style={styles.fieldGroup}>
-                    <Input
-                      editable={!createRequest.isPending}
-                      error={errors.title?.message}
-                      label="Título"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      placeholder={titlePlaceholder}
-                      value={value}
-                    />
-                    <AppText color="textMuted" variant="small">
-                      {titleLength}/{TITLE_MAX}
-                    </AppText>
-                  </View>
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="description"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View style={styles.fieldGroup}>
-                    <Input
-                      editable={!createRequest.isPending}
-                      error={errors.description?.message}
-                      label="Descripción"
-                      multiline
-                      numberOfLines={6}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      placeholder="Describe qué necesitas"
-                      style={styles.textArea}
-                      value={value}
-                    />
-                    <AppText color="textMuted" variant="small">
-                      {descriptionLength}/{DESCRIPTION_MAX}
-                    </AppText>
-                  </View>
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="locationLabel"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View style={styles.fieldGroup}>
-                    <Input
-                      editable={!createRequest.isPending}
-                      error={errors.locationLabel?.message}
-                      label="Ubicación"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      placeholder="Barrio, calle, portal o referencia"
-                      value={value}
-                    />
-                  </View>
-                )}
-              />
-
-              <ServiceRequestPhotoPicker
-                disabled={createRequest.isPending}
-                onChange={setPhotos}
-                photos={photos}
-              />
-            </View>
+            <RequestDetailsStep
+              control={control}
+              descriptionLength={descriptionLength}
+              disabled={createRequest.isPending}
+              errors={errors}
+              onPhotosChange={setPhotos}
+              photos={photos}
+              titleLength={titleLength}
+              titlePlaceholder={titlePlaceholder}
+            />
           ) : null}
 
           {currentStep === 2 ? (
@@ -384,6 +314,7 @@ export function CreateServiceRequestScreen() {
 
         {currentStep > 0 ? (
           <StickyFormFooter
+            layout="split"
             onBackPress={handleBackPress}
             onPrimaryPress={() => {
               void handlePrimaryPress();
@@ -397,6 +328,7 @@ export function CreateServiceRequestScreen() {
                   : 'Siguiente'
             }
             primaryLoading={createRequest.isPending}
+            primaryVariant="gradient"
             showBack
           />
         ) : null}
@@ -415,23 +347,23 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Layout.screenPaddingHorizontal,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xxl,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
     gap: Spacing.lg,
+    maxWidth: Layout.maxContentWidth,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  progressWrap: {
+    paddingHorizontal: Layout.screenPaddingHorizontal,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
     maxWidth: Layout.maxContentWidth,
     width: '100%',
     alignSelf: 'center',
   },
   stepContent: {
     gap: Spacing.lg,
-  },
-  fieldGroup: {
-    gap: Spacing.sm,
-  },
-  textArea: {
-    minHeight: 120,
-    textAlignVertical: 'top',
-    paddingTop: Spacing.md,
   },
   guardContent: {
     flex: 1,

@@ -19,10 +19,18 @@ export function mapServiceRequestRow(row: ServiceRequestRow): ServiceRequest {
     categoryId: row.category_id,
     subcategoryId: row.subcategory_id,
     categoryName: row.category?.name ?? 'Sin categoría',
+    categorySlug: row.category?.slug ?? 'other',
     subcategoryName: row.subcategory?.name ?? 'General',
     urgency: row.urgency as ServiceRequestUrgency,
     status: row.status as ServiceRequestStatus,
     assignedProfessionalId: row.assigned_professional_id,
+    assignedProfessional: row.assigned_professional
+      ? {
+          id: row.assigned_professional.id,
+          fullName: row.assigned_professional.full_name?.trim() || 'Profesional',
+          avatarUrl: row.assigned_professional.avatar_url ?? null,
+        }
+      : null,
     locationLabel: row.location_label,
     locationLat: row.location_lat,
     locationLng: row.location_lng,

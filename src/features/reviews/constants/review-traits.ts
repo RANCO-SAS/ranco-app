@@ -55,17 +55,38 @@ export function computeAverageRating(traits: ReviewTraits): number {
   return Math.round((total / values.length) * 10) / 10;
 }
 
-export function isProfessionalReview(review: { traits: ReviewTraits }): boolean {
-  return Boolean(review.traits.quality || review.traits.professionalism || review.traits.punctuality);
+export function computeStoredReviewRating(traits: ReviewTraits): number {
+  const average = computeAverageRating(traits);
+
+  if (average <= 0) {
+    return 0;
+  }
+
+  return Math.min(5, Math.max(1, Math.round(average)));
 }
 
 export type RevieweeRole = 'client' | 'professional';
 
-export function getRevieweeRole(review: { traits: ReviewTraits }): RevieweeRole {
-  return isProfessionalReview(review) ? 'professional' : 'client';
+type ReviewRoleSource = {
+  traits: ReviewTraits;
+  revieweeRole?: RevieweeRole;
+};
+
+function inferRevieweeRoleFromTraits(traits: ReviewTraits): RevieweeRole {
+  return Boolean(traits.quality || traits.professionalism || traits.punctuality)
+    ? 'professional'
+    : 'client';
 }
 
-export function filterReviewsByRole<T extends { traits: ReviewTraits }>(
+export function isProfessionalReview(review: ReviewRoleSource): boolean {
+  return (review.revieweeRole ?? inferRevieweeRoleFromTraits(review.traits)) === 'professional';
+}
+
+export function getRevieweeRole(review: ReviewRoleSource): RevieweeRole {
+  return review.revieweeRole ?? inferRevieweeRoleFromTraits(review.traits);
+}
+
+export function filterReviewsByRole<T extends ReviewRoleSource>(
   reviews: T[],
   role: RevieweeRole,
 ): T[] {

@@ -1,10 +1,11 @@
-import type { ReviewTraits } from '@/features/reviews/constants/review-traits';
+import type { ReviewTraits, RevieweeRole } from '@/features/reviews/constants/review-traits';
 
 export type Review = {
   id: string;
   serviceRequestId: string;
   reviewerId: string;
   revieweeId: string;
+  revieweeRole: RevieweeRole;
   rating: number;
   traits: ReviewTraits;
   comment: string | null;
@@ -19,6 +20,7 @@ export type CreateReviewInput = {
   serviceRequestId: string;
   reviewerId: string;
   revieweeId: string;
+  revieweeRole: RevieweeRole;
   rating: number;
   traits: ReviewTraits;
   comment?: string;

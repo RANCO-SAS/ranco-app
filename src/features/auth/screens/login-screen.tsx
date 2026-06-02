@@ -39,7 +39,7 @@ export function LoginScreen() {
 
   return (
     <ScreenLayout scrollable centered>
-      <AuthLayout brand="Ranco" title="Iniciar sesión">
+      <AuthLayout brand="Ranco" subtitle="Accede a tu cuenta para continuar." title="Iniciar sesión">
         {signIn.error ? (
           <StaggeredFadeIn index={0}>
             <AuthMessage message={mapAuthError(signIn.error)} variant="error" />
@@ -58,6 +58,7 @@ export function LoginScreen() {
                 error={errors.email?.message}
                 keyboardType="email-address"
                 label="Correo"
+                leadingIcon="mail-outline"
                 onBlur={onBlur}
                 onChangeText={onChange}
                 placeholder="ejemplo@correo.com"
@@ -78,6 +79,7 @@ export function LoginScreen() {
                 editable={!signIn.isPending}
                 error={errors.password?.message}
                 label="Contraseña"
+                leadingIcon="lock-closed-outline"
                 onBlur={onBlur}
                 onChangeText={onChange}
                 placeholder="••••••••"
@@ -110,6 +112,7 @@ export function LoginScreen() {
             onPress={() => {
               void handleSubmit(onSubmit)();
             }}
+            variant="gradient"
           />
         </StaggeredFadeIn>
 

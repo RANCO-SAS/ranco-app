@@ -4,7 +4,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ChatHeader, ChatStatusBanner } from '@/components/layout/chat-header';
+import { ChatHeader } from '@/components/layout/chat-header';
 import { AppIcon } from '@/components/ui/app-icon';
 import { MessageStatusIndicator } from '@/features/messages/components/message-status-indicator';
 import { Card } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
 import { ZoomableImage } from '@/components/ui/zoomable-image';
 import { Layout, Radius, Spacing } from '@/constants/theme';
+import { ChatJobStatusBanner } from '@/features/jobs/components/chat-job-status-banner';
 import { JobEngagementPanel } from '@/features/jobs/components/job-engagement-panel';
 import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
 import { getJobEngagementStatusMessage } from '@/features/jobs/utils/job-engagement-status';
@@ -124,12 +125,15 @@ export function ConversationScreen() {
   const counterpart = conversation ? resolveCounterpart(conversation, session?.userId) : null;
   const isClient = session?.userId === conversation?.clientId;
 
-  const revieweeId = isClient ? conversation?.professionalId : conversation?.clientId;
+  const revieweeId = isClient
+    ? (request?.assignedProfessionalId ?? conversation?.professionalId)
+    : (request?.clientId ?? conversation?.clientId);
   const revieweeName = counterpart?.fullName ?? 'Usuario';
   const jobReviewQuery = useJobReview(
     conversation?.serviceRequestId,
     request?.status === 'completed' ? session?.userId : undefined,
   );
+  const isReviewInitialLoading = jobReviewQuery.isLoading && jobReviewQuery.data === undefined;
 
   const messages = messagesQuery.data ?? [];
   const canSend = useMemo(() => draft.trim().length > 0, [draft]);
@@ -281,7 +285,7 @@ export function ConversationScreen() {
         title={conversation.serviceRequestTitle}
       />
 
-      <ChatStatusBanner message={engagementMessage} status={serviceRequestStatus} />
+      <ChatJobStatusBanner message={engagementMessage} status={serviceRequestStatus} />
 
       {request && session?.userId ? (
         <JobEngagementPanel
@@ -314,7 +318,7 @@ export function ConversationScreen() {
             <View style={styles.headerContent}>
               {request?.status === 'completed' && revieweeId && session?.userId ? (
                 <>
-                  {jobReviewQuery.isLoading ? (
+                  {isReviewInitialLoading ? (
                     <Card>
                       <Loader message="Cargando reseña..." size="small" variant="inline" />
                     </Card>

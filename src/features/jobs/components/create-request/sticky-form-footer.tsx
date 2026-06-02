@@ -10,8 +10,10 @@ type StickyFormFooterProps = {
   onPrimaryPress: () => void;
   primaryDisabled?: boolean;
   primaryLoading?: boolean;
+  primaryVariant?: 'dark' | 'gradient' | 'primary';
   showBack?: boolean;
   onBackPress?: () => void;
+  layout?: 'stacked' | 'split';
 };
 
 export function StickyFormFooter({
@@ -19,11 +21,49 @@ export function StickyFormFooter({
   onPrimaryPress,
   primaryDisabled,
   primaryLoading,
+  primaryVariant = 'dark',
   showBack,
   onBackPress,
+  layout = 'stacked',
 }: StickyFormFooterProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+
+  if (layout === 'split') {
+    return (
+      <View
+        style={[
+          styles.splitContainer,
+          {
+            backgroundColor: theme.background,
+            paddingBottom: Math.max(insets.bottom, Spacing.md),
+          },
+        ]}>
+        {showBack ? (
+          <View style={styles.splitButton}>
+            <Button
+              disabled={primaryLoading}
+              fullWidth
+              label="Atrás"
+              onPress={onBackPress}
+              size="md"
+              variant="secondary"
+            />
+          </View>
+        ) : null}
+        <View style={styles.splitButton}>
+          <Button
+            disabled={primaryDisabled || primaryLoading}
+            fullWidth
+            label={primaryLabel}
+            onPress={onPrimaryPress}
+            size="md"
+            variant={primaryVariant}
+          />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View
@@ -46,7 +86,7 @@ export function StickyFormFooter({
         disabled={primaryDisabled || primaryLoading}
         label={primaryLabel}
         onPress={onPrimaryPress}
-        variant="dark"
+        variant={primaryVariant}
       />
     </View>
   );
@@ -57,5 +97,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.screenPaddingHorizontal,
     paddingTop: Spacing.sm,
     gap: Spacing.xs,
+  },
+  splitContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingHorizontal: Layout.screenPaddingHorizontal,
+    paddingTop: Spacing.md,
+  },
+  splitButton: {
+    flex: 1,
   },
 });

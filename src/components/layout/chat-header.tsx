@@ -6,7 +6,6 @@ import { ProfileAvatarLink } from '@/components/ui/profile-avatar-link';
 import { AppText } from '@/components/ui/text';
 import { Layout, Radius, Spacing } from '@/constants/theme';
 import { Routes } from '@/constants/routes';
-import { SERVICE_REQUEST_STATUS_LABELS } from '@/features/jobs/constants/service-request-labels';
 import type { ServiceRequestStatus } from '@/features/jobs/types/service-request.types';
 import type { ConversationParticipant } from '@/features/messages/types/message.types';
 import { useTheme } from '@/hooks/use-theme';
@@ -96,28 +95,6 @@ export function ChatHeader({
   );
 }
 
-export function ChatStatusBanner({
-  status,
-  message,
-}: {
-  status: ServiceRequestStatus;
-  message: string | null;
-}) {
-  const theme = useTheme();
-
-  if (!message) {
-    return null;
-  }
-
-  return (
-    <View style={[styles.banner, { backgroundColor: theme.primary }]}>
-      <AppText color="primaryForeground" variant="caption">
-        {SERVICE_REQUEST_STATUS_LABELS[status]} · {message}
-      </AppText>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     minHeight: Layout.minTouchTarget,
@@ -152,9 +129,5 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
-  },
-  banner: {
-    paddingHorizontal: Layout.screenPaddingHorizontal,
-    paddingVertical: Spacing.md,
   },
 });

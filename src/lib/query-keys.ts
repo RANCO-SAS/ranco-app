@@ -35,4 +35,7 @@ export const queryKeys = {
     all: ['featured-professionals'] as const,
     list: (subcategoryKey: string) => ['featured-professionals', subcategoryKey] as const,
   },
+  location: {
+    geocode: (label: string) => ['location', 'geocode', label] as const,
+  },
 } as const;

@@ -1,16 +1,27 @@
 import { StyleSheet, View } from 'react-native';
 
-import { AppIcon } from '@/components/ui/app-icon';
+import { LocationMapPreview } from '@/components/location/location-map-preview';
 import { AppText } from '@/components/ui/text';
-import { Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Spacing } from '@/constants/theme';
+import { useGeocodedLocation } from '@/hooks/use-geocoded-location';
+import { resolveStoredLocationPoint } from '@/shared/location/resolve-stored-location-point';
 
 type OpportunityLocationSectionProps = {
   locationLabel: string;
+  locationLat?: number | null;
+  locationLng?: number | null;
 };
 
-export function OpportunityLocationSection({ locationLabel }: OpportunityLocationSectionProps) {
-  const theme = useTheme();
+export function OpportunityLocationSection({
+  locationLabel,
+  locationLat,
+  locationLng,
+}: OpportunityLocationSectionProps) {
+  const storedPoint = resolveStoredLocationPoint(locationLat, locationLng);
+  const geocodeQuery = useGeocodedLocation(locationLabel, {
+    enabled: !storedPoint,
+  });
+  const mapPoint = storedPoint ?? geocodeQuery.data ?? null;
 
   return (
     <View style={styles.wrapper}>
@@ -18,13 +29,10 @@ export function OpportunityLocationSection({ locationLabel }: OpportunityLocatio
         {locationLabel}
       </AppText>
 
-      <View style={[styles.mapPreview, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-        <View style={[styles.mapGridLine, styles.mapGridHorizontal, { backgroundColor: theme.border }]} />
-        <View style={[styles.mapGridLine, styles.mapGridVertical, { backgroundColor: theme.border }]} />
-        <View style={[styles.pin, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-          <AppIcon color={theme.primary} name="location" size={18} />
-        </View>
-      </View>
+      <LocationMapPreview
+        isLoading={!storedPoint && geocodeQuery.isLoading}
+        point={mapPoint}
+      />
     </View>
   );
 }
@@ -32,35 +40,5 @@ export function OpportunityLocationSection({ locationLabel }: OpportunityLocatio
 const styles = StyleSheet.create({
   wrapper: {
     gap: Spacing.md,
-  },
-  mapPreview: {
-    height: 140,
-    borderRadius: Radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  mapGridLine: {
-    position: 'absolute',
-    opacity: 0.45,
-  },
-  mapGridHorizontal: {
-    width: '100%',
-    height: StyleSheet.hairlineWidth,
-    top: '50%',
-  },
-  mapGridVertical: {
-    height: '100%',
-    width: StyleSheet.hairlineWidth,
-    left: '50%',
-  },
-  pin: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

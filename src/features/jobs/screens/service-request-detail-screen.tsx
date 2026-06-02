@@ -187,7 +187,11 @@ export function ServiceRequestDetailScreen() {
             <Spacer size="xl" />
             <StaggeredFadeIn index={4}>
               <DetailSection icon="location-outline" title="Ubicación">
-                <OpportunityLocationSection locationLabel={request.locationLabel} />
+                <OpportunityLocationSection
+                  locationLabel={request.locationLabel}
+                  locationLat={request.locationLat}
+                  locationLng={request.locationLng}
+                />
               </DetailSection>
             </StaggeredFadeIn>
           </>
@@ -228,7 +232,7 @@ export function ServiceRequestDetailScreen() {
           <>
             <Spacer size="xl" />
             <StaggeredFadeIn index={7}>
-              {jobReviewQuery.isLoading ? (
+              {jobReviewQuery.isLoading && jobReviewQuery.data === undefined ? (
                 <Card>
                   <Loader message="Cargando reseña..." size="small" variant="inline" />
                 </Card>

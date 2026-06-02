@@ -1,5 +1,6 @@
 import {
   computeAverageRating,
+  computeStoredReviewRating,
   filterReviewsByRole,
   getReviewTraitsForReviewee,
   type ReviewTraitDefinition,
@@ -32,6 +33,7 @@ function mapReviewRow(row: ReviewRow): Review {
     serviceRequestId: row.service_request_id,
     reviewerId: row.reviewer_id,
     revieweeId: row.reviewee_id,
+    revieweeRole: row.reviewee_role,
     rating: row.rating,
     traits,
     comment: row.comment,
@@ -74,7 +76,8 @@ async function createReview(input: CreateReviewInput): Promise<Review> {
       service_request_id: input.serviceRequestId,
       reviewer_id: input.reviewerId,
       reviewee_id: input.revieweeId,
-      rating: input.rating,
+      reviewee_role: input.revieweeRole,
+      rating: computeStoredReviewRating(input.traits),
       traits: input.traits,
       comment: input.comment?.trim() || null,
       evidence_urls: [],
@@ -251,7 +254,10 @@ async function getRatedJobs(userId: string, role?: RevieweeRole): Promise<RatedJ
       return true;
     }
 
-    return filterReviewsByRole([{ traits: row.traits ?? {} }], role).length > 0;
+    return filterReviewsByRole(
+      [{ traits: row.traits ?? {}, revieweeRole: row.reviewee_role }],
+      role,
+    ).length > 0;
   });
 
   if (receivedReviews.length === 0) {

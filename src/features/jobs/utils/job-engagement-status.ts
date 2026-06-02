@@ -29,6 +29,14 @@ export function getJobEngagementStatusMessage(props: EngagementContext): string 
       return `Estás evaluando a ${props.professionalName}. Al aceptarlo, no podrás elegir otro profesional.`;
     }
 
+    if (props.status === 'in_progress' && props.assignedProfessionalId === props.professionalId) {
+      return 'El servicio está en curso.';
+    }
+
+    if (props.status === 'completed') {
+      return 'Puedes dejar una reseña sobre este trabajo.';
+    }
+
     return null;
   }
 

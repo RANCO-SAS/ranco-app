@@ -7,6 +7,7 @@ import { AuthLayout } from '@/components/layout/auth-layout';
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { StaggeredFadeIn } from '@/components/ui/staggered-fade-in';
 import { AppText } from '@/components/ui/text';
 import { AuthMessage } from '@/features/auth/components/auth-message';
 import { useSignUp } from '@/features/auth/hooks/use-sign-up';
@@ -44,113 +45,139 @@ export function RegisterScreen() {
 
   return (
     <ScreenLayout scrollable centered>
-      <AuthLayout title="Crear cuenta">
+      <AuthLayout
+        brand="Ranco"
+        subtitle="Regístrate para conectar con servicios y profesionales cerca de ti."
+        title="Crear cuenta">
         {signUp.error ? (
-          <AuthMessage message={mapAuthError(signUp.error)} variant="error" />
+          <StaggeredFadeIn index={0}>
+            <AuthMessage message={mapAuthError(signUp.error)} variant="error" />
+          </StaggeredFadeIn>
         ) : null}
 
         {signUp.isSuccess && !signUp.data ? (
-          <AuthMessage message="Revisa tu correo para confirmar la cuenta." variant="success" />
+          <StaggeredFadeIn index={0}>
+            <AuthMessage message="Revisa tu correo para confirmar la cuenta." variant="success" />
+          </StaggeredFadeIn>
         ) : null}
 
-        <Controller
-          control={control}
-          name="fullName"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              autoComplete="name"
-              editable={!signUp.isPending}
-              error={errors.fullName?.message}
-              label="Nombre completo"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              placeholder="Tu nombre"
-              textContentType="name"
-              value={value}
-            />
-          )}
-        />
+        <StaggeredFadeIn index={1}>
+          <Controller
+            control={control}
+            name="fullName"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                autoComplete="name"
+                editable={!signUp.isPending}
+                error={errors.fullName?.message}
+                label="Nombre completo"
+                leadingIcon="person-outline"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                placeholder="Tu nombre"
+                textContentType="name"
+                value={value}
+              />
+            )}
+          />
+        </StaggeredFadeIn>
 
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              autoCapitalize="none"
-              autoComplete="email"
-              editable={!signUp.isPending}
-              error={errors.email?.message}
-              keyboardType="email-address"
-              label="Correo"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              placeholder="tu@correo.com"
-              textContentType="emailAddress"
-              value={value}
-            />
-          )}
-        />
+        <StaggeredFadeIn index={2}>
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                autoCapitalize="none"
+                autoComplete="email"
+                editable={!signUp.isPending}
+                error={errors.email?.message}
+                keyboardType="email-address"
+                label="Correo"
+                leadingIcon="mail-outline"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                placeholder="tu@correo.com"
+                textContentType="emailAddress"
+                value={value}
+              />
+            )}
+          />
+        </StaggeredFadeIn>
 
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              autoComplete="new-password"
-              editable={!signUp.isPending}
-              error={errors.password?.message}
-              label="Contraseña"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              placeholder="Mínimo 6 caracteres"
-              secureTextEntry
-              textContentType="newPassword"
-              value={value}
-            />
-          )}
-        />
+        <StaggeredFadeIn index={3}>
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                autoComplete="new-password"
+                editable={!signUp.isPending}
+                error={errors.password?.message}
+                label="Contraseña"
+                leadingIcon="lock-closed-outline"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                placeholder="Mínimo 6 caracteres"
+                secureTextEntry
+                showPasswordToggle
+                textContentType="newPassword"
+                value={value}
+              />
+            )}
+          />
+        </StaggeredFadeIn>
 
-        <Controller
-          control={control}
-          name="confirmPassword"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              autoComplete="new-password"
-              editable={!signUp.isPending}
-              error={errors.confirmPassword?.message}
-              label="Confirmar contraseña"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              placeholder="Repite tu contraseña"
-              secureTextEntry
-              textContentType="newPassword"
-              value={value}
-            />
-          )}
-        />
+        <StaggeredFadeIn index={4}>
+          <Controller
+            control={control}
+            name="confirmPassword"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                autoComplete="new-password"
+                editable={!signUp.isPending}
+                error={errors.confirmPassword?.message}
+                label="Confirmar contraseña"
+                leadingIcon="lock-closed-outline"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                placeholder="Repite tu contraseña"
+                secureTextEntry
+                showPasswordToggle
+                textContentType="newPassword"
+                value={value}
+              />
+            )}
+          />
+        </StaggeredFadeIn>
 
-        <Button
-          disabled={signUp.isPending}
-          label={signUp.isPending ? 'Creando cuenta...' : 'Registrarme'}
-          onPress={() => {
-            void handleSubmit(onSubmit)();
-          }}
-        />
-
-        <View style={styles.footer}>
-          <AppText color="textSecondary" variant="body">
-            ¿Ya tienes cuenta?
-          </AppText>
-          <Pressable
-            accessibilityRole="button"
+        <StaggeredFadeIn index={5}>
+          <Button
+            disabled={signUp.isPending}
+            label={signUp.isPending ? 'Creando cuenta...' : 'Registrarme'}
             onPress={() => {
-              router.push(Routes.auth.login);
-            }}>
-            <AppText color="primary" variant="bodyMedium">
-              Iniciar sesión
+              void handleSubmit(onSubmit)();
+            }}
+            variant="gradient"
+          />
+        </StaggeredFadeIn>
+
+        <StaggeredFadeIn index={6}>
+          <View style={styles.footer}>
+            <AppText color="textSecondary" variant="body">
+              ¿Ya tienes cuenta?
             </AppText>
-          </Pressable>
-        </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                router.push(Routes.auth.login);
+              }}>
+              <AppText color="primary" variant="bodyMedium">
+                Iniciar sesión
+              </AppText>
+            </Pressable>
+          </View>
+        </StaggeredFadeIn>
       </AuthLayout>
     </ScreenLayout>
   );

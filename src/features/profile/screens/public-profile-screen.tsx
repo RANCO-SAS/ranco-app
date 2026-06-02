@@ -274,11 +274,10 @@ export function PublicProfileScreen() {
                         accessibilityRole="button"
                         onPress={() => router.push(Routes.app.reviewDetail(review.id))}
                         style={styles.reviewCard}>
-                        <Card>
+                        <Card style={styles.reviewCardSurface}>
                           <ReviewSummaryCard
                             review={review}
                             revieweeIsProfessional={isProfessionalReview(review)}
-                            showNavigateHint
                           />
                         </Card>
                       </Pressable>
@@ -293,6 +292,8 @@ export function PublicProfileScreen() {
             <StaggeredFadeIn index={0}>
               {reviewsQuery.isLoading ? (
                 <Loader message="Cargando reseñas..." size="small" variant="inline" />
+              ) : reviewsQuery.error ? (
+                <EmptyState title="No se pudieron cargar las reseñas" />
               ) : roleSummary && roleSummary.reviews.length > 0 ? (
                 <View style={styles.listContent}>
                   {roleSummary.reviews.map((review) => (
@@ -301,11 +302,10 @@ export function PublicProfileScreen() {
                       accessibilityRole="button"
                       onPress={() => router.push(Routes.app.reviewDetail(review.id))}
                       style={styles.reviewCard}>
-                      <Card>
+                      <Card style={styles.reviewCardSurface}>
                         <ReviewSummaryCard
                           review={review}
                           revieweeIsProfessional={isProfessionalReview(review)}
-                          showNavigateHint
                         />
                       </Card>
                     </Pressable>
@@ -501,6 +501,9 @@ const styles = StyleSheet.create({
   },
   reviewCard: {
     marginBottom: Spacing.sm,
+  },
+  reviewCardSurface: {
+    borderRadius: Radius.xl,
   },
   jobCard: {
     marginBottom: Spacing.sm,

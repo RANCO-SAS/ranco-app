@@ -9,12 +9,18 @@ import { useTheme } from '@/hooks/use-theme';
 
 type StackHeaderProps = {
   title: string;
+  subtitle?: string;
   showBack?: boolean;
   /** Adds top safe-area padding for edge-to-edge screens */
   applyTopInset?: boolean;
 };
 
-export function StackHeader({ title, showBack = true, applyTopInset = false }: StackHeaderProps) {
+export function StackHeader({
+  title,
+  subtitle,
+  showBack = true,
+  applyTopInset = false,
+}: StackHeaderProps) {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -40,9 +46,16 @@ export function StackHeader({ title, showBack = true, applyTopInset = false }: S
       ) : (
         <View style={styles.sideButton} />
       )}
-      <AppText numberOfLines={1} variant="bodyMedium" style={styles.title}>
-        {title}
-      </AppText>
+      <View style={styles.titleWrap}>
+        <AppText numberOfLines={1} style={styles.title} variant="bodyMedium">
+          {title}
+        </AppText>
+        {subtitle ? (
+          <AppText color="textMuted" numberOfLines={1} variant="small">
+            {subtitle}
+          </AppText>
+        ) : null}
+      </View>
       <View style={styles.sideButton} />
     </View>
   );
@@ -62,8 +75,12 @@ const styles = StyleSheet.create({
     minHeight: Layout.minTouchTarget,
     justifyContent: 'center',
   },
-  title: {
+  titleWrap: {
     flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  title: {
     textAlign: 'center',
   },
 });

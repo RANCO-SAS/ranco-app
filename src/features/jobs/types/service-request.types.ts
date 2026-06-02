@@ -14,6 +14,12 @@ export type ServiceRequestClientPreview = {
   avatarUrl: string | null;
 };
 
+export type ServiceRequestProfessionalPreview = {
+  id: string;
+  fullName: string;
+  avatarUrl: string | null;
+};
+
 export type ServiceRequest = {
   id: string;
   clientId: string;
@@ -23,10 +29,12 @@ export type ServiceRequest = {
   categoryId: string;
   subcategoryId: string;
   categoryName: string;
+  categorySlug: string;
   subcategoryName: string;
   urgency: ServiceRequestUrgency;
   status: ServiceRequestStatus;
   assignedProfessionalId: string | null;
+  assignedProfessional: ServiceRequestProfessionalPreview | null;
   locationLabel: string | null;
   locationLat: number | null;
   locationLng: number | null;

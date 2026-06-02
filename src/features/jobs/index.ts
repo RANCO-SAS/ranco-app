@@ -1,4 +1,5 @@
 export { ServiceRequestCard } from '@/features/jobs/components/service-request-card';
+export { ClientServiceRequestCard } from '@/features/jobs/components/client-service-request-card';
 export { useClientServiceRequests, usePublishedServiceRequests } from '@/features/jobs/hooks/use-service-requests';
 export { DiscoverScreen } from '@/features/jobs/screens/discover-screen';
 export { JobsScreen } from '@/features/jobs/screens/jobs-screen';

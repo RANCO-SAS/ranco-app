@@ -17,4 +17,5 @@ export type ServiceRequestRow = {
   category: { id: string; name: string; slug: string } | null;
   subcategory: { id: string; name: string; slug: string } | null;
   client: { id: string; full_name: string; avatar_url: string | null } | null;
+  assigned_professional: { id: string; full_name: string; avatar_url: string | null } | null;
 };

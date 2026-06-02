@@ -67,9 +67,6 @@ export function useCreateReview() {
         queryKey: queryKeys.reviews.profile(review.revieweeId),
       });
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.reviews.job(review.serviceRequestId, review.reviewerId),
-      });
-      void queryClient.invalidateQueries({
         queryKey: queryKeys.reviews.portfolio(review.reviewerId),
       });
       void queryClient.invalidateQueries({
@@ -86,9 +83,10 @@ export function useUpdateReviewEvidence() {
     mutationFn: (input: UpdateReviewEvidenceInput) => reviewService.updateReviewEvidence(input),
     onSuccess: (review) => {
       queryClient.setQueryData(queryKeys.reviews.detail(review.id), review);
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.reviews.job(review.serviceRequestId, review.reviewerId),
-      });
+      queryClient.setQueryData(
+        queryKeys.reviews.job(review.serviceRequestId, review.reviewerId),
+        review,
+      );
       void queryClient.invalidateQueries({
         queryKey: queryKeys.reviews.portfolio(review.reviewerId),
       });
