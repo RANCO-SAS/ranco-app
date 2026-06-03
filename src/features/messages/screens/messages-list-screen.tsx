@@ -1,74 +1,50 @@
-import { Pressable, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { RefreshControl, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
-import { ProfileAvatarLink } from '@/components/ui/profile-avatar-link';
 import { ScreenLayout } from '@/components/layout/screen-layout';
-import { Section } from '@/components/layout/section';
+import { AnimatedPressable } from '@/components/ui/animated-pressable';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { StaggeredFadeIn, fadeInDownEntrance } from '@/components/ui/staggered-fade-in';
+import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
-import { Routes } from '@/constants/routes';
-import { Spacing } from '@/constants/theme';
-import { SERVICE_REQUEST_STATUS_LABELS } from '@/features/jobs/constants/service-request-labels';
+import { UberSearchField } from '@/components/ui/uber-search-field';
+import { ConversationListItem } from '@/features/messages/components/conversation-list-item';
 import { useConversations } from '@/features/messages/hooks/use-conversations';
 import type { Conversation } from '@/features/messages/types/message.types';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
+import { Routes } from '@/constants/routes';
+import { Spacing } from '@/constants/theme';
+import { useRouter } from 'expo-router';
 
-function formatUpdatedAt(value: string): string {
-  const date = new Date(value);
-  return date.toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
+function filterConversations(conversations: Conversation[], query: string): Conversation[] {
+  const normalized = query.trim().toLowerCase();
+
+  if (!normalized) {
+    return conversations;
+  }
+
+  return conversations.filter((conversation) => {
+    const nameMatch =
+      conversation.client.fullName.toLowerCase().includes(normalized) ||
+      conversation.professional.fullName.toLowerCase().includes(normalized);
+    const titleMatch = conversation.serviceRequestTitle.toLowerCase().includes(normalized);
+
+    return nameMatch || titleMatch;
   });
-}
-
-type ConversationListItemProps = {
-  conversation: Conversation;
-  currentUserId: string;
-  onPress: () => void;
-};
-
-function ConversationListItem({ conversation, currentUserId, onPress }: ConversationListItemProps) {
-  const counterpart =
-    currentUserId === conversation.clientId ? conversation.professional : conversation.client;
-  const counterpartView =
-    currentUserId === conversation.clientId ? 'professional' : 'client';
-
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress}>
-      <Card>
-        <View style={styles.row}>
-          <ProfileAvatarLink
-            imageUrl={counterpart.avatarUrl}
-            name={counterpart.fullName}
-            size={48}
-            userId={counterpart.id}
-            view={counterpartView}
-          />
-          <View style={styles.meta}>
-            <AppText variant="bodyMedium">{counterpart.fullName}</AppText>
-            <AppText color="textSecondary" numberOfLines={1} variant="caption">
-              {conversation.serviceRequestTitle}
-            </AppText>
-            <AppText color="primary" variant="small">
-              {SERVICE_REQUEST_STATUS_LABELS[conversation.serviceRequestStatus]}
-            </AppText>
-          </View>
-        </View>
-        <AppText variant="small" color="textMuted">
-          {formatUpdatedAt(conversation.updatedAt)}
-        </AppText>
-      </Card>
-    </Pressable>
-  );
 }
 
 export function MessagesListScreen() {
   const router = useRouter();
   const { profile } = useCurrentProfile();
   const conversationsQuery = useConversations(profile?.id);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const conversations = useMemo(
+    () => filterConversations(conversationsQuery.data ?? [], searchQuery),
+    [conversationsQuery.data, searchQuery],
+  );
 
   if (conversationsQuery.isLoading) {
     return <ScreenLayout loading loadingMessage="Cargando mensajes..." safeArea="tab" />;
@@ -77,37 +53,69 @@ export function MessagesListScreen() {
   if (conversationsQuery.error) {
     return (
       <ScreenLayout safeArea="tab">
-        <Section title="Mensajes">
+        <StaggeredFadeIn index={0}>
+          <AppText variant="title">Mensajes</AppText>
+          <Spacer size="lg" />
           <Card>
-            <AppText variant="body" color="destructive">
+            <AppText color="destructive" variant="body">
               No pudimos cargar tus conversaciones.
             </AppText>
           </Card>
-        </Section>
+        </StaggeredFadeIn>
       </ScreenLayout>
     );
   }
 
-  const conversations = conversationsQuery.data ?? [];
-
   return (
-    <ScreenLayout safeArea="tab" scrollable>
-      <Section title="Mensajes">
-        {conversations.length === 0 ? (
-          <EmptyState title="Sin conversaciones" />
-        ) : (
-          <View style={styles.list}>
-            {conversations.map((item) => (
+    <ScreenLayout
+      safeArea="tab"
+      scrollable
+      scrollViewProps={{
+        refreshControl: (
+          <RefreshControl
+            onRefresh={() => {
+              void conversationsQuery.refetch();
+            }}
+            refreshing={conversationsQuery.isRefetching}
+          />
+        ),
+      }}>
+      <Animated.View entering={fadeInDownEntrance()}>
+        <AppText variant="title">Mensajes</AppText>
+      </Animated.View>
+
+      <Spacer size="lg" />
+
+      <StaggeredFadeIn index={1}>
+        <UberSearchField
+          onChangeText={setSearchQuery}
+          placeholder="Buscar mensajes..."
+          showSearchIcon
+          value={searchQuery}
+        />
+      </StaggeredFadeIn>
+
+      <Spacer size="lg" />
+
+      {conversations.length === 0 ? (
+        <StaggeredFadeIn index={2}>
+          <EmptyState
+            title={searchQuery.trim() ? 'Sin resultados' : 'Sin conversaciones'}
+          />
+        </StaggeredFadeIn>
+      ) : (
+        <View style={styles.list}>
+          {conversations.map((item, index) => (
+            <StaggeredFadeIn index={index + 2} key={item.id}>
               <ConversationListItem
-                key={item.id}
                 conversation={item}
                 currentUserId={profile?.id ?? ''}
                 onPress={() => router.push(Routes.app.conversation(item.id))}
               />
-            ))}
-          </View>
-        )}
-      </Section>
+            </StaggeredFadeIn>
+          ))}
+        </View>
+      )}
     </ScreenLayout>
   );
 }
@@ -115,15 +123,5 @@ export function MessagesListScreen() {
 const styles = StyleSheet.create({
   list: {
     gap: Spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  meta: {
-    flex: 1,
-    gap: 2,
   },
 });

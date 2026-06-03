@@ -6,9 +6,7 @@ import { useEffect } from 'react';
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { StackHeader } from '@/components/layout/stack-header';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Spacer } from '@/components/ui/spacer';
-import { AppText } from '@/components/ui/text';
 import { AuthMessage } from '@/features/auth/components/auth-message';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { ProfessionalAreasPicker } from '@/features/profile/components/professional-areas-picker';
@@ -23,9 +21,7 @@ import { mapProfileError } from '@/features/profile/utils/map-profile-error';
 import { isHybridUser } from '@/features/profile/utils/user-mode';
 import { PROFESSIONAL_SERVICE_SELECTION } from '@/constants/profile';
 import { Routes } from '@/constants/routes';
-import { Spacing } from '@/constants/theme';
 import { useAppStore } from '@/stores/app-store';
-import { StyleSheet, View } from 'react-native';
 
 export function ActivateProfessionalScreen() {
   const router = useRouter();
@@ -104,25 +100,6 @@ export function ActivateProfessionalScreen() {
 
       <Spacer size="lg" />
 
-      <View style={styles.hero}>
-        <AppText variant="subtitle">
-          {isEditingExisting ? 'Mis servicios' : 'Servicios'}
-        </AppText>
-      </View>
-
-      <Spacer size="lg" />
-
-      <Card>
-        <View style={styles.counterRow}>
-          <AppText variant="bodyMedium">Seleccionados</AppText>
-          <AppText color={canSubmit ? 'success' : 'textMuted'} variant="bodyMedium">
-            {selectedCount}/{PROFESSIONAL_SERVICE_SELECTION.max}
-          </AppText>
-        </View>
-      </Card>
-
-      <Spacer size="lg" />
-
       {activateProfessional.error ? (
         <>
           <AuthMessage message={mapProfileError(activateProfessional.error)} variant="error" />
@@ -157,21 +134,9 @@ export function ActivateProfessionalScreen() {
               : 'Activar perfil profesional'
         }
         onPress={handleSubmit(onSubmit)}
-        variant="dark"
       />
 
       <Spacer size="lg" />
     </ScreenLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  hero: {
-    gap: Spacing.sm,
-  },
-  counterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-});

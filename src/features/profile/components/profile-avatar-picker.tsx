@@ -1,11 +1,13 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AppIcon } from '@/components/ui/app-icon';
 import { Avatar } from '@/components/ui/avatar';
+import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { AppText } from '@/components/ui/text';
+import { Radius, Spacing } from '@/constants/theme';
 import { devError, devLog } from '@/lib/dev-logger';
-import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ProfileAvatarPickerProps = {
@@ -15,6 +17,8 @@ type ProfileAvatarPickerProps = {
   onChange: (avatarUrl: string) => void;
   onError?: (message: string) => void;
   onUpload: (uri: string) => Promise<string>;
+  size?: number;
+  variant?: 'default' | 'onboarding';
 };
 
 export function ProfileAvatarPicker({
@@ -24,11 +28,15 @@ export function ProfileAvatarPicker({
   onChange,
   onError,
   onUpload,
+  size = 88,
+  variant = 'default',
 }: ProfileAvatarPickerProps) {
   const theme = useTheme();
   const [isUploading, setIsUploading] = useState(false);
   const [localPreviewUri, setLocalPreviewUri] = useState<string | null>(null);
   const displayImageUrl = localPreviewUri ?? value;
+  const isOnboarding = variant === 'onboarding';
+  const avatarSize = isOnboarding ? 112 : size;
 
   const handlePickImage = async () => {
     if (disabled || isUploading) {
@@ -90,22 +98,55 @@ export function ProfileAvatarPicker({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel="Elegir foto de perfil"
       disabled={disabled || isUploading}
       onPress={() => {
         void handlePickImage();
       }}
-      style={styles.wrapper}>
+      style={[styles.wrapper, isOnboarding && styles.wrapperOnboarding]}>
       <View style={styles.avatarWrapper}>
-        <Avatar imageUrl={displayImageUrl} name={name} size={88} />
+        {displayImageUrl ? (
+          <Avatar imageUrl={displayImageUrl} name={name} size={avatarSize} />
+        ) : (
+          <View
+            style={[
+              styles.placeholder,
+              {
+                width: avatarSize,
+                height: avatarSize,
+                borderRadius: avatarSize / 2,
+                backgroundColor: theme.backgroundElement,
+              },
+            ]}>
+            <AppIcon color={theme.textMuted} name="person-outline" size={isOnboarding ? 40 : 32} />
+          </View>
+        )}
+
         {isUploading ? (
-          <View style={[styles.overlay, { backgroundColor: `${theme.text}55` }]}>
-            <ActivityIndicator color={theme.background} />
+          <View style={[styles.overlay, { backgroundColor: `${theme.text}55`, borderRadius: avatarSize / 2 }]}>
+            <LoadingAnimation size={32} />
+          </View>
+        ) : null}
+
+        {isOnboarding ? (
+          <View
+            style={[
+              styles.addButton,
+              {
+                backgroundColor: theme.primary,
+                borderColor: theme.background,
+              },
+            ]}>
+            <AppIcon color={theme.primaryForeground} name="add" size={18} />
           </View>
         ) : null}
       </View>
-      <AppText color="primary" variant="caption">
-        {isUploading ? 'Subiendo...' : 'Elegir foto'}
-      </AppText>
+
+      {!isOnboarding ? (
+        <AppText color="primary" variant="caption">
+          {isUploading ? 'Subiendo...' : 'Elegir foto'}
+        </AppText>
+      ) : null}
     </Pressable>
   );
 }
@@ -115,13 +156,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
+  wrapperOnboarding: {
+    alignSelf: 'center',
+    marginVertical: Spacing.sm,
+  },
   avatarWrapper: {
     position: 'relative',
   },
-  overlay: {
-    ...StyleSheet.absoluteFill,
+  placeholder: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 999,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButton: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
   },
 });

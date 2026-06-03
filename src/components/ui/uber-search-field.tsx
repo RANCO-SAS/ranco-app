@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
+import { AppIcon } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
 import { Layout, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -32,9 +33,7 @@ export function UberSearchField({
         },
       ]}>
       {showSearchIcon ? (
-        <AppText color="textMuted" style={styles.searchIcon} variant="body">
-          ⌕
-        </AppText>
+        <AppIcon color={theme.textMuted} name="search-outline" size={20} />
       ) : null}
       {editable ? (
         <TextInput
@@ -82,10 +81,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-  },
-  searchIcon: {
-    fontSize: 22,
-    lineHeight: 24,
   },
   input: {
     flex: 1,

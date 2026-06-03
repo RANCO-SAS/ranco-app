@@ -1,15 +1,18 @@
 import { StyleSheet, View } from 'react-native';
 
+import { Avatar } from '@/components/ui/avatar';
+import { AppIcon } from '@/components/ui/app-icon';
 import { ProfileAvatarLink } from '@/components/ui/profile-avatar-link';
-import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { ServiceRequestPhotoGallery } from '@/features/jobs/components/service-request-photo-gallery';
 import {
   getReviewTraitsForReviewee,
   type ReviewTraits,
 } from '@/features/reviews/constants/review-traits';
+import { ReviewTraitScoreRow } from '@/features/reviews/components/review-trait-score-row';
 import type { Review } from '@/features/reviews/types/review.types';
+import { useTheme } from '@/hooks/use-theme';
 
 type ReviewDetailCardProps = {
   review: Review;
@@ -35,15 +38,14 @@ function renderTraitRows(traits: ReviewTraits, revieweeIsProfessional: boolean) 
       return null;
     }
 
-    return (
-      <View key={definition.key} style={styles.traitRow}>
-        <AppText color="textSecondary" variant="body">
-          {definition.label}
-        </AppText>
-        <AppText variant="bodyMedium">{value.toFixed(1)}★</AppText>
-      </View>
-    );
+    return <ReviewTraitScoreRow definition={definition} key={definition.key} value={value} />;
   });
+}
+
+function SectionDivider() {
+  const theme = useTheme();
+
+  return <View style={[styles.divider, { backgroundColor: theme.border }]} />;
 }
 
 export function ReviewDetailCard({
@@ -51,6 +53,8 @@ export function ReviewDetailCard({
   revieweeIsProfessional,
   showReviewerLink = true,
 }: ReviewDetailCardProps) {
+  const theme = useTheme();
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -58,13 +62,18 @@ export function ReviewDetailCard({
           <ProfileAvatarLink
             imageUrl={review.reviewerAvatarUrl}
             name={review.reviewerName}
-            size={48}
+            size={52}
             userId={review.reviewerId}
           />
-        ) : null}
+        ) : (
+          <Avatar imageUrl={review.reviewerAvatarUrl} name={review.reviewerName} size={52} />
+        )}
 
         <View style={styles.headerMeta}>
-          <AppText variant="title">{review.rating.toFixed(1)}★</AppText>
+          <View style={styles.ratingRow}>
+            <AppText variant="title">{review.rating.toFixed(1)}</AppText>
+            <AppIcon color={theme.warning} name="star" size={18} />
+          </View>
           <AppText variant="bodyMedium">{review.reviewerName}</AppText>
           <AppText color="textMuted" variant="caption">
             {formatReviewDate(review.createdAt)}
@@ -74,35 +83,42 @@ export function ReviewDetailCard({
 
       {review.serviceRequestTitle ? (
         <>
-          <Spacer size="md" />
-          <AppText color="textSecondary" variant="body">
-            Trabajo: {review.serviceRequestTitle}
-          </AppText>
+          <SectionDivider />
+          <View style={styles.section}>
+            <AppText variant="bodyMedium">Trabajo:</AppText>
+            <AppText color="textSecondary" variant="body">
+              {review.serviceRequestTitle}
+            </AppText>
+          </View>
         </>
       ) : null}
 
-      <Spacer size="md" />
+      <SectionDivider />
 
-      <AppText variant="bodyMedium">Valoración por categoría</AppText>
-      <View style={styles.traits}>{renderTraitRows(review.traits, revieweeIsProfessional)}</View>
+      <View style={styles.section}>
+        <AppText variant="bodyMedium">Valoración por categoría</AppText>
+        <View style={styles.traits}>{renderTraitRows(review.traits, revieweeIsProfessional)}</View>
+      </View>
 
       {review.comment ? (
         <>
-          <Spacer size="md" />
-          <AppText variant="bodyMedium">Comentario</AppText>
-          <Spacer size="xs" />
-          <AppText color="textSecondary" variant="body">
-            {review.comment}
-          </AppText>
+          <SectionDivider />
+          <View style={styles.section}>
+            <AppText variant="bodyMedium">Comentario</AppText>
+            <AppText color="textSecondary" variant="body">
+              {review.comment}
+            </AppText>
+          </View>
         </>
       ) : null}
 
       {review.evidenceUrls.length > 0 ? (
         <>
-          <Spacer size="md" />
-          <AppText variant="bodyMedium">Evidencia</AppText>
-          <Spacer size="sm" />
-          <ServiceRequestPhotoGallery photoUrls={review.evidenceUrls} />
+          <SectionDivider />
+          <View style={styles.section}>
+            <AppText variant="bodyMedium">Evidencia</AppText>
+            <ServiceRequestPhotoGallery photoUrls={review.evidenceUrls} />
+          </View>
         </>
       ) : null}
     </View>
@@ -111,7 +127,7 @@ export function ReviewDetailCard({
 
 const styles = StyleSheet.create({
   container: {
-    gap: Spacing.xs,
+    gap: Spacing.lg,
   },
   header: {
     flexDirection: 'row',
@@ -120,16 +136,21 @@ const styles = StyleSheet.create({
   },
   headerMeta: {
     flex: 1,
-    gap: Spacing.xs,
+    gap: 2,
   },
-  traits: {
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  traitRow: {
+  ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: Spacing.xs,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    borderRadius: Radius.full,
+  },
+  section: {
     gap: Spacing.md,
+  },
+  traits: {
+    gap: Spacing.lg,
   },
 });

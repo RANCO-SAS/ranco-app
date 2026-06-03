@@ -1,23 +1,24 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { ScreenLayout } from '@/components/layout/screen-layout';
-import { Section } from '@/components/layout/section';
+import { TabScreenHeader } from '@/components/layout/tab-screen-header';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { StaggeredFadeIn, fadeInDownEntrance } from '@/components/ui/staggered-fade-in';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
 import { JobOpportunityCard } from '@/features/jobs/components/discover/job-opportunity-card';
 import { usePublishedServiceRequests } from '@/features/jobs/hooks/use-service-requests';
-import type { ServiceRequest } from '@/features/jobs/types/service-request.types';
-import { useStartConversation } from '@/features/messages/hooks/use-conversations';
 import { ModeGateEmptyState } from '@/features/profile/components/mode-gate-empty-state';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
+import { useStartConversation } from '@/features/messages/hooks/use-conversations';
 
 export function DiscoverScreen() {
   const router = useRouter();
@@ -69,21 +70,21 @@ export function DiscoverScreen() {
   };
 
   if (publishedRequests.isLoading) {
-    return (
-      <ScreenLayout loading loadingMessage="Cargando..." safeArea="tab" />
-    );
+    return <ScreenLayout loading loadingMessage="Cargando oportunidades..." safeArea="tab" />;
   }
 
   if (publishedRequests.error) {
     return (
       <ScreenLayout safeArea="tab">
-        <Section title="Oportunidades">
+        <Animated.View entering={fadeInDownEntrance()}>
+          <AppText variant="title">Oportunidades</AppText>
+          <Spacer size="lg" />
           <Card>
             <AppText color="destructive" variant="body">
               No se pudieron cargar las oportunidades.
             </AppText>
           </Card>
-        </Section>
+        </Animated.View>
       </ScreenLayout>
     );
   }
@@ -91,9 +92,11 @@ export function DiscoverScreen() {
   if (!profile?.isProfessional) {
     return (
       <ScreenLayout safeArea="tab">
-        <Section title="Oportunidades">
+        <StaggeredFadeIn index={0}>
+          <AppText variant="title">Oportunidades</AppText>
+          <Spacer size="lg" />
           <EmptyState title="Rol profesional inactivo" />
-        </Section>
+        </StaggeredFadeIn>
       </ScreenLayout>
     );
   }
@@ -101,7 +104,9 @@ export function DiscoverScreen() {
   if (!isProfessionalMode) {
     return (
       <ScreenLayout safeArea="tab">
-        <ModeGateEmptyState requiredMode="professional" />
+        <StaggeredFadeIn index={0}>
+          <ModeGateEmptyState requiredMode="professional" />
+        </StaggeredFadeIn>
       </ScreenLayout>
     );
   }
@@ -109,7 +114,9 @@ export function DiscoverScreen() {
   if (professionalAreas.length === 0) {
     return (
       <ScreenLayout safeArea="tab">
-        <Section title="Oportunidades">
+        <StaggeredFadeIn index={0}>
+          <AppText variant="title">Oportunidades</AppText>
+          <Spacer size="lg" />
           <EmptyState title="Sin servicios configurados" />
           <Spacer size="md" />
           <Button
@@ -117,51 +124,63 @@ export function DiscoverScreen() {
             onPress={() => router.push(Routes.app.activateProfessional)}
             variant="dark"
           />
-        </Section>
+        </StaggeredFadeIn>
       </ScreenLayout>
     );
   }
 
   return (
-    <ScreenLayout safeArea="tab" scrollable>
-      <Section title="Oportunidades">
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => {
-            void publishedRequests.refetch();
-          }}
-          style={styles.refreshButton}>
-          <AppText variant="small">↻ Actualizar</AppText>
-        </Pressable>
+    <ScreenLayout
+      safeArea="tab"
+      scrollable
+      scrollViewProps={{
+        refreshControl: (
+          <RefreshControl
+            onRefresh={() => {
+              void publishedRequests.refetch();
+            }}
+            refreshing={publishedRequests.isRefetching}
+          />
+        ),
+      }}>
+      <Animated.View entering={fadeInDownEntrance()}>
+        <TabScreenHeader
+          subtitle="Explora solicitudes publicadas en tus áreas de servicio"
+          title="Oportunidades"
+          badge={
+            opportunities.length > 0
+              ? `${opportunities.length} ${opportunities.length === 1 ? 'DISPONIBLE' : 'DISPONIBLES'}`
+              : undefined
+          }
+        />
+      </Animated.View>
 
-        <Spacer size="lg" />
+      <Spacer size="sm" />
 
-        {opportunities.length === 0 ? (
-          <EmptyState title="Sin oportunidades" />
-        ) : (
-          <View style={styles.listContent}>
-            {opportunities.map((item) => (
+      {opportunities.length === 0 ? (
+        <StaggeredFadeIn index={0}>
+          <EmptyState title="Sin oportunidades por ahora" />
+        </StaggeredFadeIn>
+      ) : (
+        <View style={styles.listContent}>
+          {opportunities.map((item, index) => (
+            <StaggeredFadeIn index={index + 1} key={item.id}>
               <JobOpportunityCard
-                key={item.id}
                 isContactLoading={startConversation.isPending}
                 onContactPress={() => handleContact(item.id, item.clientId)}
                 onDetailsPress={() => router.push(Routes.app.jobDetail(item.id))}
                 request={item}
               />
-            ))}
-          </View>
-        )}
-      </Section>
+            </StaggeredFadeIn>
+          ))}
+        </View>
+      )}
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  refreshButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: Spacing.xs,
-  },
   listContent: {
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
 });

@@ -4,13 +4,13 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    textSecondary: '#687076',
-    textMuted: '#9BA1A6',
-    background: '#FFFFFF',
-    backgroundSecondary: '#F4F6F8',
-    backgroundElement: '#EEF1F4',
-    border: '#E2E8F0',
+    text: '#0F172A',
+    textSecondary: '#475569',
+    textMuted: '#64748B',
+    background: '#F1F5F9',
+    backgroundSecondary: '#FFFFFF',
+    backgroundElement: '#E2E8F0',
+    border: '#CBD5E1',
     primary: '#2563EB',
     primaryForeground: '#FFFFFF',
     destructive: '#DC2626',
@@ -18,18 +18,39 @@ export const Colors = {
     warning: '#D97706',
   },
   dark: {
-    text: '#ECEDEE',
-    textSecondary: '#9BA1A6',
-    textMuted: '#687076',
-    background: '#0A0A0B',
-    backgroundSecondary: '#151718',
-    backgroundElement: '#1E2022',
-    border: '#2A2D31',
-    primary: '#3B82F6',
+    text: '#FFFFFF',
+    textSecondary: '#AEAEB2',
+    textMuted: '#8E8E93',
+    background: '#000000',
+    backgroundSecondary: '#1C1C1E',
+    backgroundElement: '#2C2C2E',
+    border: '#38383A',
+    primary: '#0A84FF',
     primaryForeground: '#FFFFFF',
-    destructive: '#EF4444',
-    success: '#22C55E',
-    warning: '#F59E0B',
+    destructive: '#FF453A',
+    success: '#30D158',
+    warning: '#FF9F0A',
+  },
+} as const;
+
+export const BrandGradients = {
+  light: ['#2563EB', '#4F46E5', '#7C3AED'] as const,
+  dark: ['#0A84FF', '#5E5CE6', '#BF5AF2'] as const,
+} as const;
+
+export const ButtonGradients = {
+  light: ['#2563EB', '#2B6AE8', '#3270E3'] as const,
+  dark: ['#0A84FF', '#158AF6', '#1E90ED'] as const,
+} as const;
+
+export const CardGradients = {
+  light: {
+    surface: ['#FFFFFF', '#F4F7FF', '#E6EEFF'] as const,
+    glow: ['rgba(37, 99, 235, 0.11)', 'rgba(37, 99, 235, 0.04)', 'transparent'] as const,
+  },
+  dark: {
+    surface: ['#303036', '#1C1C1E', '#111113'] as const,
+    glow: ['rgba(10, 132, 255, 0.18)', 'rgba(10, 132, 255, 0.06)', 'transparent'] as const,
   },
 } as const;
 
@@ -71,6 +92,7 @@ export const Radius = {
   sm: 8,
   md: 12,
   lg: 16,
+  xl: 20,
   full: 999,
 } as const;
 

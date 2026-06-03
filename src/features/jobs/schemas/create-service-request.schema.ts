@@ -20,6 +20,8 @@ export const createServiceRequestSchema = z.object({
     .max(120, 'La ubicación no puede superar 120 caracteres')
     .optional()
     .or(z.literal('')),
+  locationLat: z.number().min(-90).max(90).nullable().optional(),
+  locationLng: z.number().min(-180).max(180).nullable().optional(),
 });
 
 export type CreateServiceRequestFormData = z.infer<typeof createServiceRequestSchema>;

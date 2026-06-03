@@ -1,21 +1,17 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
 
+import { AnimatedPressable } from '@/components/ui/animated-pressable';
+import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { AppText } from '@/components/ui/text';
-import { Radius, Spacing } from '@/constants/theme';
+import { CardGradients, Radius, Spacing } from '@/constants/theme';
 import { ServiceRequestAuthorHeader } from '@/features/jobs/components/service-request-author-header';
 import { ServiceRequestPhotoGallery } from '@/features/jobs/components/service-request-photo-gallery';
+import { UrgencyBadge } from '@/features/jobs/components/urgency-badge';
 import type { ServiceRequest } from '@/features/jobs/types/service-request.types';
-import { getCategoryIcon } from '@/features/jobs/utils/category-icons';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
-
-const URGENCY_LABELS: Record<ServiceRequest['urgency'], string> = {
-  low: 'Flexible',
-  normal: 'Normal',
-  high: 'Pronto',
-  urgent: 'Urgente',
-};
 
 type JobOpportunityCardProps = {
   request: ServiceRequest;
@@ -33,88 +29,159 @@ export function JobOpportunityCard({
   onDetailsPress,
 }: JobOpportunityCardProps) {
   const theme = useTheme();
+  const colorScheme = useColorScheme() ?? 'light';
+  const gradients = CardGradients[colorScheme];
+  const headline = request.title.trim() || request.subcategoryName;
+  const description = request.description.trim();
+  const showDescription = description.length > 0 && description !== headline;
 
-  return (
-    <Pressable onPress={onPress}>
-      <Card
-        style={[
-          styles.card,
-          {
-            borderColor: theme.border,
-            backgroundColor: theme.background,
-          },
-        ]}>
+  const cardContent = (
+    <LinearGradient
+      colors={[...gradients.surface]}
+      end={{ x: 1, y: 1 }}
+      start={{ x: 0, y: 0 }}
+      style={styles.cardGradient}>
+      <LinearGradient
+        colors={[...gradients.glow]}
+        end={{ x: 1, y: 0.8 }}
+        pointerEvents="none"
+        start={{ x: 0, y: 0 }}
+        style={styles.glowOverlay}
+      />
+
+      <View style={styles.content}>
         <ServiceRequestAuthorHeader
+          categoryLabel={request.categoryName}
           client={request.client}
           createdAt={request.createdAt}
-          subtitle={`${request.categoryName} · ${URGENCY_LABELS[request.urgency]}`}
+          trailing={<UrgencyBadge uppercase urgency={request.urgency} />}
         />
 
-        <View style={styles.header}>
-          <AppText style={styles.icon}>{getCategoryIcon('other')}</AppText>
-          <View style={styles.headerText}>
-            <AppText numberOfLines={2} variant="subtitle">
-              {request.title}
-            </AppText>
-            {request.locationLabel ? (
-              <AppText color="textMuted" numberOfLines={1} variant="small">
-                {request.locationLabel}
-              </AppText>
-            ) : null}
-          </View>
-        </View>
-
-        <AppText color="textSecondary" numberOfLines={3} variant="body">
-          {request.description}
+        <AppText numberOfLines={2} style={styles.headline} variant="subtitle">
+          {headline}
         </AppText>
+
+        {showDescription ? (
+          <AppText color="textSecondary" numberOfLines={3} variant="body">
+            {description}
+          </AppText>
+        ) : null}
+
+        {request.locationLabel ? (
+          <View style={styles.locationRow}>
+            <AppIcon color={theme.primary} name="location-outline" size={16} />
+            <AppText color="primary" numberOfLines={1} style={styles.locationText} variant="caption">
+              {request.locationLabel}
+            </AppText>
+          </View>
+        ) : null}
 
         {request.photoUrls.length > 0 ? (
           <ServiceRequestPhotoGallery photoUrls={request.photoUrls} />
         ) : null}
 
-        <View style={styles.actions}>
-          <Button
-            fullWidth={false}
-            label="Ver detalle"
-            onPress={onDetailsPress}
-            size="md"
-            variant="secondary"
-          />
-          <Button
-            disabled={isContactLoading}
-            fullWidth={false}
-            label={isContactLoading ? 'Abriendo...' : 'Contactar'}
-            onPress={onContactPress}
-            size="md"
-            variant="dark"
-          />
+        <View
+          style={[
+            styles.actions,
+            {
+              borderTopColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.08)' : theme.border,
+            },
+          ]}>
+          <View style={styles.actionButton}>
+            <Button
+              fullWidth
+              label="Ver detalle"
+              onPress={onDetailsPress}
+              size="md"
+              variant="secondary"
+            />
+          </View>
+          <View style={styles.actionButton}>
+            <Button
+              disabled={isContactLoading}
+              fullWidth
+              label={isContactLoading ? 'Abriendo...' : 'Contactar'}
+              onPress={onContactPress}
+              size="md"
+              variant="gradient"
+            />
+          </View>
         </View>
-      </Card>
-    </Pressable>
+      </View>
+    </LinearGradient>
   );
+
+  const cardShellStyle: ViewStyle[] = [
+    styles.cardOuter,
+    getCardElevation(colorScheme),
+    {
+      borderColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.1)' : theme.border,
+    },
+  ];
+
+  if (onPress) {
+    return (
+      <AnimatedPressable accessibilityRole="button" onPress={onPress} style={cardShellStyle}>
+        {cardContent}
+      </AnimatedPressable>
+    );
+  }
+
+  return <View style={cardShellStyle}>{cardContent}</View>;
+}
+
+function getCardElevation(colorScheme: 'light' | 'dark'): ViewStyle {
+  const shadowColor = colorScheme === 'dark' ? '#0A84FF' : '#2563EB';
+
+  return Platform.select({
+    ios: {
+      shadowColor,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: colorScheme === 'dark' ? 0.15 : 0.1,
+      shadowRadius: 14,
+    },
+    android: {
+      elevation: 4,
+    },
+    default: {},
+  }) ?? {};
 }
 
 const styles = StyleSheet.create({
-  card: {
+  cardOuter: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
+    overflow: 'hidden',
+  },
+  cardGradient: {
+    position: 'relative',
+  },
+  glowOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  content: {
     gap: Spacing.md,
+    padding: Spacing.lg,
   },
-  header: {
+  headline: {
+    letterSpacing: -0.2,
+  },
+  locationRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-  },
-  icon: {
-    fontSize: 24,
-    lineHeight: 28,
-  },
-  headerText: {
-    flex: 1,
+    alignItems: 'center',
     gap: Spacing.xs,
+  },
+  locationText: {
+    flex: 1,
   },
   actions: {
     flexDirection: 'row',
     gap: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: Spacing.xs,
+    paddingTop: Spacing.md,
+  },
+  actionButton: {
+    flex: 1,
   },
 });

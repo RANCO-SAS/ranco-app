@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AppIcon, type AppIconName } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -20,19 +21,22 @@ type RoleSelectorProps = {
 type RoleOption = {
   key: 'client' | 'professional';
   title: string;
-  emoji: string;
+  description: string;
+  icon: AppIconName;
 };
 
 const ROLE_OPTIONS: RoleOption[] = [
   {
     key: 'client',
-    emoji: '🏠',
+    icon: 'search-outline',
     title: 'Busco servicios',
+    description: 'Quiero encontrar y contratar profesionales de confianza para mis necesidades.',
   },
   {
     key: 'professional',
-    emoji: '🛠️',
+    icon: 'storefront-outline',
     title: 'Ofrezco servicios',
+    description: 'Soy un profesional y quiero ofrecer mis servicios a la comunidad Ranco.',
   },
 ];
 
@@ -67,8 +71,6 @@ export function RoleSelector({
 
   return (
     <View style={styles.wrapper}>
-      <AppText variant="subtitle">¿Cómo quieres usar Ranco?</AppText>
-
       <View style={styles.options}>
         {ROLE_OPTIONS.map((option) => {
           const selected = isSelected(selection, option.key);
@@ -91,30 +93,30 @@ export function RoleSelector({
               style={({ pressed }) => [
                 styles.option,
                 {
-                  backgroundColor: selected ? `${theme.primary}12` : theme.background,
+                  backgroundColor: theme.backgroundSecondary,
                   borderColor: selected ? theme.primary : theme.border,
                   opacity: disabled ? 0.6 : pressed ? 0.92 : 1,
                 },
               ]}>
-              <View style={styles.optionHeader}>
-                <View style={styles.titleRow}>
-                  <AppText style={styles.emoji}>{option.emoji}</AppText>
-                  <AppText variant="bodyMedium">{option.title}</AppText>
-                </View>
-                <View
-                  style={[
-                    styles.checkbox,
-                    {
-                      borderColor: selected ? theme.primary : theme.border,
-                      backgroundColor: selected ? theme.primary : theme.background,
-                    },
-                  ]}>
-                  {selected ? (
-                    <AppText color="background" variant="small">
-                      ✓
-                    </AppText>
-                  ) : null}
-                </View>
+              <View style={[styles.iconWrap, { backgroundColor: theme.backgroundElement }]}>
+                <AppIcon color={theme.text} name={option.icon} size={22} />
+              </View>
+
+              <View style={styles.copy}>
+                <AppText variant="bodyMedium">{option.title}</AppText>
+                <AppText color="textSecondary" variant="caption">
+                  {option.description}
+                </AppText>
+              </View>
+
+              <View
+                style={[
+                  styles.radio,
+                  {
+                    borderColor: selected ? theme.primary : theme.border,
+                  },
+                ]}>
+                {selected ? <View style={[styles.radioFill, { backgroundColor: theme.primary }]} /> : null}
               </View>
             </Pressable>
           );
@@ -132,38 +134,44 @@ export function RoleSelector({
 
 const styles = StyleSheet.create({
   wrapper: {
-    gap: Spacing.lg,
+    gap: Spacing.md,
   },
   options: {
     gap: Spacing.md,
   },
   option: {
-    borderWidth: 2,
-    borderRadius: Radius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.xl,
     padding: Spacing.lg,
   },
-  optionHeader: {
-    flexDirection: 'row',
+  iconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.full,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
+  copy: {
     flex: 1,
+    gap: Spacing.xs,
+    minWidth: 0,
   },
-  emoji: {
-    fontSize: 22,
-    lineHeight: 26,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
+  radio: {
+    width: 22,
+    height: 22,
     borderRadius: Radius.full,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+  },
+  radioFill: {
+    width: 12,
+    height: 12,
+    borderRadius: Radius.full,
   },
 });

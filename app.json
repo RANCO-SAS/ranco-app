@@ -7,8 +7,14 @@
     "icon": "./assets/images/ranco-icon.png",
     "scheme": "ranco",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#F1F5F9",
+    "ios": {
+      "bundleIdentifier": "com.ranco.app",
+      "supportsTablet": true
+    },
     "android": {
       "package": "com.ranco.app",
+      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#208AEF",
         "foregroundImage": "./assets/images/ranco-icon.png"
@@ -32,10 +38,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "android": {
-            "image": "./assets/images/ranco-icon.png",
-            "imageWidth": 120
+          "backgroundColor": "#F1F5F9",
+          "dark": {
+            "backgroundColor": "#000000"
           }
         }
       ]

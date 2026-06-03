@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/ui/text';
 import { Layout, Radius, Spacing } from '@/constants/theme';
 import type { ServiceCategory } from '@/features/jobs/types/service-category.types';
-import { getCategoryIcon } from '@/features/jobs/utils/category-icons';
+import { CategoryIcon } from '@/components/ui/category-icon';
 import { useTheme } from '@/hooks/use-theme';
 
 type CategoryGridPickerProps = {
@@ -50,7 +50,7 @@ export function CategoryGridPicker({
                   borderColor: selected ? theme.primary : theme.border,
                 },
               ]}>
-              <AppText style={styles.icon}>{getCategoryIcon(category.slug)}</AppText>
+              <CategoryIcon slug={category.slug} />
               <AppText align="center" variant="bodyMedium">
                 {category.name}
               </AppText>

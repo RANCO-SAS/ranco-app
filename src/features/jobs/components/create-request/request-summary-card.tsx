@@ -9,7 +9,7 @@ import type { CreateServiceRequestFormData } from '@/features/jobs/schemas/creat
 import type { ServiceCategory } from '@/features/jobs/types/service-category.types';
 import type { ServiceRequestPhotoItem } from '@/features/jobs/types/service-request-photo.types';
 import type { ServiceRequestUrgency } from '@/features/jobs/types/service-request.types';
-import { getCategoryIcon } from '@/features/jobs/utils/category-icons';
+import { CategoryIcon } from '@/components/ui/category-icon';
 import { useTheme } from '@/hooks/use-theme';
 
 const URGENCY_LABELS: Record<ServiceRequestUrgency, string> = {
@@ -33,7 +33,7 @@ export function RequestSummaryCard({ values, categories, photos = [] }: RequestS
   return (
     <Card>
       <View style={styles.header}>
-        <AppText style={styles.icon}>{getCategoryIcon(category?.slug ?? 'other')}</AppText>
+        <CategoryIcon slug={category?.slug ?? 'other'} />
         <View style={styles.headerText}>
           <AppText variant="caption" color="primary">
             {category?.name ?? 'Categoría'} · {subcategory?.name ?? 'Subcategoría'}

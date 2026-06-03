@@ -1,16 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { useEffect, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppIcon } from '@/components/ui/app-icon';
 import { Input } from '@/components/ui/input';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
-import { UberPlanTimeline } from '@/components/ui/uber-plan-timeline';
 import { AuthMessage } from '@/features/auth/components/auth-message';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { StickyFormFooter } from '@/features/jobs/components/create-request/sticky-form-footer';
+import { OnboardingProgressBar } from '@/features/profile/components/onboarding-progress-bar';
+import { OnboardingStepHeader } from '@/features/profile/components/onboarding-step-header';
 import { RoleSelector } from '@/features/profile/components/role-selector';
 import { ProfessionalAreasPicker } from '@/features/profile/components/professional-areas-picker';
 import { ProfileAvatarPicker } from '@/features/profile/components/profile-avatar-picker';
@@ -26,12 +28,10 @@ import {
 } from '@/features/profile/schemas/onboarding.schema';
 import { mapProfileError } from '@/features/profile/utils/map-profile-error';
 import { PROFESSIONAL_SERVICE_SELECTION } from '@/constants/profile';
-import { Layout, Spacing } from '@/constants/theme';
+import { Layout, Radius, Spacing } from '@/constants/theme';
 import { useKeyboardLayout } from '@/hooks/use-keyboard-layout';
 import { useTheme } from '@/hooks/use-theme';
 import { storageService } from '@/services/storage/storage.service';
-
-const STEP_TITLES = ['Tu perfil', 'Tu uso', 'Tus servicios'] as const;
 
 function getFirstName(fullName: string): string {
   const trimmed = fullName.trim();
@@ -41,6 +41,38 @@ function getFirstName(fullName: string): string {
   }
 
   return trimmed.split(/\s+/)[0] ?? trimmed;
+}
+
+function getStepHeader(
+  stepIndex: number,
+  isProfessional: boolean,
+  hasPrefilledName: boolean,
+  fullName: string,
+  prefilledName: string,
+): { title: string; subtitle?: string } {
+  if (stepIndex === 0) {
+    return {
+      title: hasPrefilledName ? `Hola, ${getFirstName(fullName || prefilledName)}` : 'Crea tu perfil',
+      subtitle: 'Configuremos los datos básicos de tu cuenta.',
+    };
+  }
+
+  if (stepIndex === 1) {
+    return {
+      title: '¿Cómo quieres usar Ranco?',
+      subtitle:
+        'Selecciona tu perfil principal. Podrás ajustarlo más adelante en la configuración.',
+    };
+  }
+
+  if (stepIndex === 2 && isProfessional) {
+    return {
+      title: 'Tus servicios',
+      subtitle: 'Elige las categorías en las que ofreces servicios.',
+    };
+  }
+
+  return { title: 'Configuración' };
 }
 
 export function OnboardingScreen() {
@@ -98,18 +130,19 @@ export function OnboardingScreen() {
     }
   }, [currentStep, isProfessional]);
 
-  const visibleSteps = useMemo(() => {
-    return isProfessional ? STEP_TITLES : STEP_TITLES.slice(0, 2);
-  }, [isProfessional]);
+  const totalSteps = isProfessional ? 3 : 2;
+  const isLastStep = currentStep === totalSteps - 1;
+  const stepHeader = getStepHeader(
+    currentStep,
+    isProfessional,
+    hasPrefilledName,
+    fullName,
+    prefilledName,
+  );
 
-  const isLastStep = currentStep === visibleSteps.length - 1;
-
-  const timelineSteps = visibleSteps.map((label, index) => ({
-    label: `Paso ${index + 1}`,
-    value: label,
-    completed: index < currentStep,
-    active: index === currentStep,
-  }));
+  const canContinueRoleStep = isClient || isProfessional;
+  const primaryDisabled =
+    completeOnboarding.isPending || (currentStep === 1 && !canContinueRoleStep);
 
   const onSubmit = (data: OnboardingFormData) => {
     if (!session?.userId) {
@@ -155,13 +188,38 @@ export function OnboardingScreen() {
         behavior={keyboardBehavior}
         keyboardVerticalOffset={keyboardVerticalOffset}
         style={styles.flex}>
+        <View style={styles.topBar}>
+          {currentStep > 0 ? (
+            <Pressable
+              accessibilityLabel="Volver"
+              accessibilityRole="button"
+              hitSlop={Spacing.sm}
+              onPress={handleBackPress}
+              style={[styles.backButton, { backgroundColor: theme.backgroundElement }]}>
+              <AppIcon color={theme.text} name="chevron-back" size={22} />
+            </Pressable>
+          ) : (
+            <View style={styles.backPlaceholder} />
+          )}
+
+          <AppText color="primary" variant="bodyMedium">
+            Ranco
+          </AppText>
+
+          <View style={styles.backPlaceholder} />
+        </View>
+
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          <UberPlanTimeline steps={timelineSteps} />
+          <OnboardingProgressBar currentStep={currentStep} totalSteps={totalSteps} />
 
           <Spacer size="xl" />
+
+          <OnboardingStepHeader subtitle={stepHeader.subtitle} title={stepHeader.title} />
+
+          <Spacer size="lg" />
 
           {completeOnboarding.error ? (
             <>
@@ -172,30 +230,6 @@ export function OnboardingScreen() {
 
           {currentStep === 0 ? (
             <View style={styles.stepContent}>
-              {hasPrefilledName ? (
-                <AppText variant="title">Hola, {getFirstName(fullName || prefilledName)}</AppText>
-              ) : null}
-
-              {!hasPrefilledName ? (
-                <Controller
-                  control={control}
-                  name="fullName"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      autoComplete="name"
-                      editable={!completeOnboarding.isPending}
-                      error={errors.fullName?.message}
-                      label="Nombre completo"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      placeholder="Tu nombre"
-                      textContentType="name"
-                      value={value}
-                    />
-                  )}
-                />
-              ) : null}
-
               <ProfileAvatarPicker
                 disabled={completeOnboarding.isPending}
                 name={fullName || prefilledName || 'Usuario'}
@@ -212,8 +246,30 @@ export function OnboardingScreen() {
                   return storageService.uploadAvatar(session.userId, uri, profile?.avatarUrl);
                 }}
                 value={avatarUrl}
+                variant="onboarding"
               />
               {avatarError ? <AuthMessage message={avatarError} variant="error" /> : null}
+
+              {!hasPrefilledName ? (
+                <Controller
+                  control={control}
+                  name="fullName"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      autoComplete="name"
+                      editable={!completeOnboarding.isPending}
+                      error={errors.fullName?.message}
+                      label="Nombre completo"
+                      leadingIcon="person-outline"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      placeholder="Tu nombre"
+                      textContentType="name"
+                      value={value}
+                    />
+                  )}
+                />
+              ) : null}
 
               <Controller
                 control={control}
@@ -225,6 +281,7 @@ export function OnboardingScreen() {
                     error={errors.phone?.message}
                     keyboardType="phone-pad"
                     label="Teléfono"
+                    leadingIcon="call-outline"
                     onBlur={onBlur}
                     onChangeText={onChange}
                     placeholder="+57 300 000 0000"
@@ -241,6 +298,7 @@ export function OnboardingScreen() {
                     editable={!completeOnboarding.isPending}
                     error={errors.locationLabel?.message}
                     label="Ciudad o zona"
+                    leadingIcon="location-outline"
                     onBlur={onBlur}
                     onChangeText={onChange}
                     placeholder="Ej. Chapinero, Bogotá"
@@ -272,8 +330,6 @@ export function OnboardingScreen() {
 
           {currentStep === 2 && isProfessional ? (
             <View style={styles.stepContent}>
-              <AppText variant="subtitle">Servicios</AppText>
-
               <Controller
                 control={control}
                 name="professionalSubcategoryIds"
@@ -288,26 +344,24 @@ export function OnboardingScreen() {
                   />
                 )}
               />
-
             </View>
           ) : null}
         </ScrollView>
 
         <StickyFormFooter
-          onBackPress={currentStep > 0 ? handleBackPress : undefined}
           onPrimaryPress={() => {
             void handlePrimaryPress();
           }}
-          primaryDisabled={completeOnboarding.isPending}
+          primaryDisabled={primaryDisabled}
           primaryLabel={
             completeOnboarding.isPending
               ? 'Guardando...'
               : isLastStep
                 ? 'Empezar en Ranco'
-                : 'Siguiente'
+                : 'Continuar'
           }
           primaryLoading={completeOnboarding.isPending}
-          showBack={currentStep > 0}
+          primaryVariant="gradient"
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -321,10 +375,31 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Layout.screenPaddingHorizontal,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.md,
+    maxWidth: Layout.maxContentWidth,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backPlaceholder: {
+    width: 40,
+    height: 40,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Layout.screenPaddingHorizontal,
-    paddingTop: Spacing.lg,
     paddingBottom: Spacing.xl,
     maxWidth: Layout.maxContentWidth,
     width: '100%',

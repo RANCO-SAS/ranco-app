@@ -1,14 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
+import { FormSection } from '@/components/layout/form-section';
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { StackHeader } from '@/components/layout/stack-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spacer } from '@/components/ui/spacer';
-import { AppText } from '@/components/ui/text';
 import { AuthMessage } from '@/features/auth/components/auth-message';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { ProfileRolesSection } from '@/features/profile/components/profile-roles-section';
@@ -21,9 +21,6 @@ import {
 } from '@/features/profile/schemas/update-profile.schema';
 import { mapProfileError } from '@/features/profile/utils/map-profile-error';
 import { storageService } from '@/services/storage/storage.service';
-import { Spacing } from '@/constants/theme';
-import { StyleSheet, View } from 'react-native';
-import { useState } from 'react';
 
 export function EditProfileScreen() {
   const router = useRouter();
@@ -108,10 +105,7 @@ export function EditProfileScreen() {
 
       <Spacer size="xl" />
 
-      <View style={styles.section}>
-        <AppText variant="subtitle">Datos personales</AppText>
-        <Spacer size="md" />
-
+      <FormSection title="Información personal">
         <ProfileAvatarPicker
           disabled={updateProfile.isPending}
           name={fullName || profile?.fullName || 'Usuario'}
@@ -130,14 +124,7 @@ export function EditProfileScreen() {
           value={avatarUrl}
         />
 
-        {avatarError ? (
-          <>
-            <Spacer size="sm" />
-            <AuthMessage message={avatarError} variant="error" />
-          </>
-        ) : null}
-
-        <Spacer size="lg" />
+        {avatarError ? <AuthMessage message={avatarError} variant="error" /> : null}
 
         <Controller
           control={control}
@@ -148,6 +135,7 @@ export function EditProfileScreen() {
               editable={!updateProfile.isPending}
               error={errors.fullName?.message}
               label="Nombre completo"
+              leadingIcon="person-outline"
               onBlur={onBlur}
               onChangeText={onChange}
               placeholder="Tu nombre"
@@ -155,8 +143,6 @@ export function EditProfileScreen() {
             />
           )}
         />
-
-        <Spacer size="md" />
 
         <Controller
           control={control}
@@ -168,6 +154,7 @@ export function EditProfileScreen() {
               error={errors.phone?.message}
               keyboardType="phone-pad"
               label="Teléfono"
+              leadingIcon="call-outline"
               onBlur={onBlur}
               onChangeText={onChange}
               placeholder="+57 300 000 0000"
@@ -175,8 +162,6 @@ export function EditProfileScreen() {
             />
           )}
         />
-
-        <Spacer size="md" />
 
         <Controller
           control={control}
@@ -186,15 +171,16 @@ export function EditProfileScreen() {
               editable={!updateProfile.isPending}
               error={errors.locationLabel?.message}
               label="Ubicación"
+              leadingIcon="location-outline"
               onBlur={onBlur}
               onChangeText={onChange}
               placeholder="Ciudad o barrio"
+              trailingIcon="locate-outline"
               value={value}
             />
           )}
         />
-
-      </View>
+      </FormSection>
 
       <Spacer size="xl" />
 
@@ -202,16 +188,10 @@ export function EditProfileScreen() {
         disabled={updateProfile.isPending}
         label={updateProfile.isPending ? 'Guardando cambios...' : 'Guardar cambios'}
         onPress={handleSubmit(onSubmit)}
-        variant="dark"
+        variant="gradient"
       />
 
       <Spacer size="lg" />
     </ScreenLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    gap: Spacing.sm,
-  },
-});

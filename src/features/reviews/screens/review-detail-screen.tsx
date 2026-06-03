@@ -1,13 +1,15 @@
 import { useLocalSearchParams } from 'expo-router';
+import { StyleSheet } from 'react-native';
 
 import { StackHeader } from '@/components/layout/stack-header';
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Spacer } from '@/components/ui/spacer';
+import { StaggeredFadeIn } from '@/components/ui/staggered-fade-in';
 import { ReviewDetailCard } from '@/features/reviews/components/review-detail-card';
 import { isProfessionalReview } from '@/features/reviews/constants/review-traits';
 import { useReview } from '@/features/reviews/hooks/use-reviews';
+import { Layout, Radius, Spacing } from '@/constants/theme';
 
 export function ReviewDetailScreen() {
   const { reviewId } = useLocalSearchParams<{ reviewId: string }>();
@@ -31,14 +33,24 @@ export function ReviewDetailScreen() {
     <ScreenLayout scrollable>
       <StackHeader title="Reseña" />
 
-      <Spacer size="md" />
-
-      <Card>
-        <ReviewDetailCard
-          review={review}
-          revieweeIsProfessional={isProfessionalReview(review)}
-        />
-      </Card>
+      <StaggeredFadeIn index={0}>
+        <Card style={styles.card}>
+          <ReviewDetailCard
+            review={review}
+            revieweeIsProfessional={isProfessionalReview(review)}
+          />
+        </Card>
+      </StaggeredFadeIn>
     </ScreenLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    marginTop: Spacing.lg,
+    borderRadius: Radius.xl,
+    maxWidth: Layout.maxContentWidth,
+    width: '100%',
+    alignSelf: 'center',
+  },
+});

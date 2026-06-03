@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
-import { Spacing } from '@/constants/theme';
+import { Spacing, Layout } from '@/constants/theme';
 import { SERVICE_REQUEST_STATUS_LABELS } from '@/features/jobs/constants/service-request-labels';
 import { useUpdateServiceRequestStatus } from '@/features/jobs/hooks/use-update-service-request-status';
 import type { ServiceRequestStatus } from '@/features/jobs/types/service-request.types';
+import { getJobEngagementStatusMessage } from '@/features/jobs/utils/job-engagement-status';
 
 type JobEngagementPanelProps = {
   requestId: string;
@@ -19,6 +20,7 @@ type JobEngagementPanelProps = {
   status: ServiceRequestStatus;
   assignedProfessionalId: string | null;
   isClient: boolean;
+  variant?: 'card' | 'actions';
 };
 
 type StatusAction = {
@@ -79,54 +81,13 @@ function getAvailableActions(props: JobEngagementPanelProps): StatusAction[] {
 }
 
 function getStatusMessage(props: JobEngagementPanelProps): string | null {
-  if (props.isClient) {
-    if (
-      props.assignedProfessionalId &&
-      props.assignedProfessionalId !== props.professionalId &&
-      props.status !== 'cancelled'
-    ) {
-      return 'Ya seleccionaste a otro profesional para esta solicitud.';
-    }
-
-    if (props.status === 'accepted' && props.assignedProfessionalId === props.professionalId) {
-      return `${props.professionalName} fue aceptado. Puedes iniciar el trabajo cuando estén listos.`;
-    }
-
-    if (props.status === 'in_negotiation') {
-      return `Estás evaluando a ${props.professionalName}. Al aceptarlo, no podrás elegir otro profesional.`;
-    }
-
-    return null;
-  }
-
-  if (
-    props.assignedProfessionalId &&
-    props.assignedProfessionalId !== props.professionalId &&
-    props.status !== 'cancelled'
-  ) {
-    return 'El cliente seleccionó a otro profesional para este trabajo.';
-  }
-
-  if (props.status === 'in_negotiation') {
-    return 'El cliente aún no te ha seleccionado para este trabajo.';
-  }
-
-  if (props.status === 'accepted' && props.userId === props.assignedProfessionalId) {
-    return 'Fuiste aceptado. Inicia el trabajo cuando estés listo.';
-  }
-
-  if (props.status === 'in_progress' && props.userId === props.assignedProfessionalId) {
-    return 'Trabajo en curso.';
-  }
-
-  if (props.status === 'completed') {
-    return 'Trabajo completado.';
-  }
-
-  return null;
+  return getJobEngagementStatusMessage(props);
 }
 
-export function JobEngagementPanel(props: JobEngagementPanelProps) {
+export function JobEngagementPanel({
+  variant = 'card',
+  ...props
+}: JobEngagementPanelProps) {
   const updateStatus = useUpdateServiceRequestStatus();
   const [pendingAction, setPendingAction] = useState<StatusAction | null>(null);
   const actions = getAvailableActions(props);
@@ -154,6 +115,69 @@ export function JobEngagementPanel(props: JobEngagementPanelProps) {
     );
   };
 
+  if (actions.length === 0 && !updateStatus.error && variant === 'actions') {
+    return null;
+  }
+
+  const actionsContent =
+    actions.length > 0 ? (
+      <View style={styles.actions}>
+        {actions.map((action) => {
+          const isConfirming = pendingAction?.nextStatus === action.nextStatus;
+
+          return (
+            <View key={action.nextStatus} style={styles.actionBlock}>
+              {isConfirming ? (
+                <>
+                  <AppText color="textSecondary" variant="caption">
+                    ¿Confirmas a {props.professionalName} para este trabajo?
+                  </AppText>
+                  <Spacer size="sm" />
+                  <Button
+                    disabled={updateStatus.isPending}
+                    label={updateStatus.isPending ? 'Aceptando...' : 'Confirmar'}
+                    onPress={() => handleAction(action)}
+                    variant="dark"
+                  />
+                  <Spacer size="xs" />
+                  <Button
+                    disabled={updateStatus.isPending}
+                    label="Cancelar"
+                    onPress={() => setPendingAction(null)}
+                    variant="ghost"
+                  />
+                </>
+              ) : (
+                <Button
+                  disabled={updateStatus.isPending}
+                  label={
+                    updateStatus.isPending && action.nextStatus !== 'accepted'
+                      ? 'Actualizando...'
+                      : action.label
+                  }
+                  onPress={() => handleAction(action)}
+                  variant={action.variant ?? 'secondary'}
+                />
+              )}
+            </View>
+          );
+        })}
+      </View>
+    ) : null;
+
+  if (variant === 'actions') {
+    return (
+      <View style={styles.actionsOnly}>
+        {actionsContent}
+        {updateStatus.error ? (
+          <AppText color="destructive" variant="caption">
+            {updateStatus.error.message}
+          </AppText>
+        ) : null}
+      </View>
+    );
+  }
+
   return (
     <Card>
       <AppText variant="bodyMedium">{SERVICE_REQUEST_STATUS_LABELS[props.status]}</AppText>
@@ -166,50 +190,7 @@ export function JobEngagementPanel(props: JobEngagementPanelProps) {
         </>
       ) : null}
 
-      {actions.length > 0 ? (
-        <View style={styles.actions}>
-          {actions.map((action) => {
-            const isConfirming = pendingAction?.nextStatus === action.nextStatus;
-
-            return (
-              <View key={action.nextStatus} style={styles.actionBlock}>
-                {isConfirming ? (
-                  <>
-                    <AppText variant="caption" color="textSecondary">
-                      ¿Confirmas a {props.professionalName} para este trabajo?
-                    </AppText>
-                    <Spacer size="sm" />
-                    <Button
-                      disabled={updateStatus.isPending}
-                      label={updateStatus.isPending ? 'Aceptando...' : 'Confirmar'}
-                      onPress={() => handleAction(action)}
-                      variant="dark"
-                    />
-                    <Spacer size="xs" />
-                    <Button
-                      disabled={updateStatus.isPending}
-                      label="Cancelar"
-                      onPress={() => setPendingAction(null)}
-                      variant="ghost"
-                    />
-                  </>
-                ) : (
-                  <Button
-                    disabled={updateStatus.isPending}
-                    label={
-                      updateStatus.isPending && action.nextStatus !== 'accepted'
-                        ? 'Actualizando...'
-                        : action.label
-                    }
-                    onPress={() => handleAction(action)}
-                    variant={action.variant ?? 'secondary'}
-                  />
-                )}
-              </View>
-            );
-          })}
-        </View>
-      ) : null}
+      {actionsContent}
 
       {updateStatus.error ? (
         <>
@@ -224,6 +205,11 @@ export function JobEngagementPanel(props: JobEngagementPanelProps) {
 }
 
 const styles = StyleSheet.create({
+  actionsOnly: {
+    gap: Spacing.sm,
+    paddingHorizontal: Layout.screenPaddingHorizontal,
+    paddingBottom: Spacing.md,
+  },
   actions: {
     gap: Spacing.sm,
     marginTop: Spacing.md,

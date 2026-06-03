@@ -1,55 +1,25 @@
+import { useMemo } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
+import { StackHeader } from '@/components/layout/stack-header';
+import { ScreenLayout } from '@/components/layout/screen-layout';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Loader } from '@/components/ui/loader';
+import { StaggeredFadeIn, fadeInDownEntrance } from '@/components/ui/staggered-fade-in';
 import { AppText } from '@/components/ui/text';
-import { Card } from '@/components/ui/card';
-import { Routes } from '@/constants/routes';
-import { Spacing } from '@/constants/theme';
+import { NotificationListItem } from '@/features/notifications/components/notification-list-item';
 import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useNotifications,
 } from '@/features/notifications/hooks/use-notifications';
 import type { AppNotification } from '@/features/notifications/types/notification.types';
+import { groupNotificationsByTime } from '@/features/notifications/utils/group-notifications';
 import { resolveNotificationRoute } from '@/features/notifications/utils/notification-route';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
-import { ScreenLayout } from '@/components/layout/screen-layout';
-import { Section } from '@/components/layout/section';
-import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
-
-function formatCreatedAt(value: string): string {
-  return new Date(value).toLocaleString('es-ES', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-type NotificationItemProps = {
-  notification: AppNotification;
-  onPress: () => void;
-};
-
-function NotificationItem({ notification, onPress }: NotificationItemProps) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress}>
-      <Card>
-        <View style={styles.itemHeader}>
-          <AppText variant="bodyMedium">{notification.title}</AppText>
-          {!notification.readAt ? <View style={styles.unreadDot} /> : null}
-        </View>
-        <AppText color="textSecondary" variant="body">
-          {notification.body}
-        </AppText>
-        <AppText color="textMuted" variant="small">
-          {formatCreatedAt(notification.createdAt)}
-        </AppText>
-      </Card>
-    </Pressable>
-  );
-}
+import { Layout, Spacing } from '@/constants/theme';
 
 export function NotificationsScreen() {
   const router = useRouter();
@@ -57,6 +27,13 @@ export function NotificationsScreen() {
   const notificationsQuery = useNotifications(profile?.id);
   const markRead = useMarkNotificationRead(profile?.id);
   const markAllRead = useMarkAllNotificationsRead(profile?.id);
+
+  const notifications = notificationsQuery.data ?? [];
+  const unreadCount = notifications.filter((item) => !item.readAt).length;
+  const groupedNotifications = useMemo(
+    () => groupNotificationsByTime(notifications),
+    [notifications],
+  );
 
   const handlePress = (notification: AppNotification) => {
     if (!notification.readAt) {
@@ -70,56 +47,96 @@ export function NotificationsScreen() {
     }
   };
 
-  const notifications = notificationsQuery.data ?? [];
-  const unreadCount = notifications.filter((item) => !item.readAt).length;
-
   return (
-    <ScreenLayout scrollable>
-      <Section title="Notificaciones">
+    <ScreenLayout flush scrollable={false}>
+      <View style={styles.header}>
+        <StackHeader applyTopInset title="Notificaciones" />
         {unreadCount > 0 ? (
-          <>
-            <Button
-              label="Marcar todas como leídas"
-              onPress={() => markAllRead.mutate()}
-              variant="secondary"
-            />
-          </>
+          <Pressable
+            accessibilityRole="button"
+            disabled={markAllRead.isPending}
+            onPress={() => markAllRead.mutate()}
+            style={styles.markAllButton}>
+            <AppText color="primary" variant="caption">
+              Marcar todas como leídas
+            </AppText>
+          </Pressable>
         ) : null}
+      </View>
 
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        style={styles.scroll}>
         {notificationsQuery.isLoading ? (
-          <AppText color="textSecondary">Cargando...</AppText>
+          <StaggeredFadeIn index={0}>
+            <Loader message="Cargando..." size="small" variant="inline" />
+          </StaggeredFadeIn>
         ) : notifications.length === 0 ? (
-          <EmptyState title="Sin notificaciones" />
+          <StaggeredFadeIn index={0}>
+            <EmptyState title="Sin notificaciones" />
+          </StaggeredFadeIn>
         ) : (
           <View style={styles.list}>
-            {notifications.map((item) => (
-              <NotificationItem
-                key={item.id}
-                notification={item}
-                onPress={() => handlePress(item)}
-              />
+            {groupedNotifications.map((group, groupIndex) => (
+              <View key={group.key} style={styles.group}>
+                <Animated.View entering={fadeInDownEntrance(groupIndex)}>
+                  <AppText color="textMuted" style={styles.groupLabel} variant="small">
+                    {group.label.toUpperCase()}
+                  </AppText>
+                </Animated.View>
+
+                <View style={styles.groupItems}>
+                  {group.items.map((item, itemIndex) => (
+                    <StaggeredFadeIn index={groupIndex * 3 + itemIndex + 1} key={item.id}>
+                      <NotificationListItem
+                        notification={item}
+                        onPress={() => handlePress(item)}
+                      />
+                    </StaggeredFadeIn>
+                  ))}
+                </View>
+              </View>
             ))}
           </View>
         )}
-      </Section>
+      </ScrollView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  header: {
+    gap: Spacing.xs,
+  },
+  markAllButton: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: Layout.screenPaddingHorizontal,
+    paddingBottom: Spacing.xs,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: Layout.screenPaddingHorizontal,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xxxl,
+    maxWidth: Layout.maxContentWidth,
+    width: '100%',
+    alignSelf: 'center',
+  },
   list: {
+    gap: Spacing.xl,
+  },
+  group: {
     gap: Spacing.md,
   },
-  itemHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xs,
+  groupLabel: {
+    letterSpacing: 0.8,
+    fontWeight: '600',
   },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: '#208AEF',
+  groupItems: {
+    gap: Spacing.md,
   },
 });

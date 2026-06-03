@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AppIcon } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
 import type { ReviewTraitDefinition } from '@/features/reviews/constants/review-traits';
@@ -24,25 +25,28 @@ export function TraitRatingRow({
 
   return (
     <View style={styles.container}>
-      <AppText variant="bodyMedium">{definition.label}</AppText>
-      <View style={styles.options}>
+      <AppText numberOfLines={2} style={styles.label} variant="body">
+        {definition.label}
+      </AppText>
+
+      <View style={styles.stars}>
         {RATING_OPTIONS.map((option) => {
-          const isSelected = value === option;
+          const isFilled = option <= value;
 
           return (
             <Pressable
               key={option}
               accessibilityRole="button"
-              accessibilityState={{ selected: isSelected, disabled }}
+              accessibilityState={{ selected: isFilled, disabled }}
               disabled={disabled}
+              hitSlop={4}
               onPress={() => onChange(option)}
-              style={[
-                styles.option,
-                isSelected && { backgroundColor: theme.text },
-              ]}>
-              <AppText align="center" color={isSelected ? 'background' : 'text'} variant="small">
-                {option}★
-              </AppText>
+              style={styles.starButton}>
+              <AppIcon
+                color={isFilled ? theme.primary : theme.border}
+                name="star"
+                size={22}
+              />
             </Pressable>
           );
         })}
@@ -53,17 +57,20 @@ export function TraitRatingRow({
 
 const styles = StyleSheet.create({
   container: {
-    gap: Spacing.sm,
-  },
-  options: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
   },
-  option: {
-    minWidth: 44,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: 999,
+  label: {
+    flex: 1,
+  },
+  stars: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  starButton: {
+    padding: 2,
   },
 });

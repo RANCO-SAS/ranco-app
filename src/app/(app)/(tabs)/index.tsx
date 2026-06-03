@@ -1,111 +1,68 @@
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { ScreenLayout } from '@/components/layout/screen-layout';
-import { NotificationBell } from '@/features/notifications/components/notification-bell';
-import { UberActionCard } from '@/components/ui/uber-action-card';
-import { UberSearchField } from '@/components/ui/uber-search-field';
 import { Button } from '@/components/ui/button';
+import { StaggeredFadeIn } from '@/components/ui/staggered-fade-in';
 import { AppText } from '@/components/ui/text';
-import { Spacer } from '@/components/ui/spacer';
+import { ClientDashboard } from '@/features/home/components/client-dashboard';
+import { ProfessionalDashboard } from '@/features/home/components/professional-dashboard';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
-import { useServiceCategories } from '@/features/jobs/hooks/use-service-categories';
-import { getPopularServiceSuggestions } from '@/features/jobs/utils/service-search';
-import { getCategoryIcon } from '@/features/jobs/utils/category-icons';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
+import { formatPersonalGreeting } from '@/shared/utils/format-greeting';
+
+const rancoBrandIcon = require('@/assets/images/ranco-icon.png');
 
 export default function HomeScreen() {
   const router = useRouter();
   const { profile } = useCurrentProfile();
   const { activeMode } = useActiveMode();
-  const categoriesQuery = useServiceCategories();
 
   const isClientHome = activeMode === 'client';
-  const firstName = profile?.fullName?.split(' ')[0];
-
-  const shortcuts = useMemo(
-    () => getPopularServiceSuggestions(categoriesQuery.data ?? [], 4),
-    [categoriesQuery.data],
-  );
+  const hasProfessionalServices = (profile?.professionalSubcategoryIds.length ?? 0) > 0;
+  const personalGreeting = formatPersonalGreeting(profile?.fullName);
 
   return (
     <ScreenLayout safeArea="tab" scrollable>
-      <View style={styles.headerRow}>
-        <AppText variant="title">{firstName ? `Hola, ${firstName}` : 'Hola'}</AppText>
-        <NotificationBell />
-      </View>
-
-      <Spacer size="lg" />
-
       {isClientHome ? (
         profile?.isClient ? (
-          <>
-            <UberSearchField
-              editable={false}
-              onPress={() => router.push(Routes.app.createJob)}
-              placeholder="¿Qué necesitas?"
-              showSearchIcon
-              value=""
-            />
-
-            <Spacer size="lg" />
-
-            {shortcuts.length > 0 ? (
-              <>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <View style={styles.shortcuts}>
-                    {shortcuts.map((item) => (
-                      <View key={item.subcategoryId} style={styles.shortcutCard}>
-                        <UberActionCard
-                          leading={
-                            <AppText style={styles.shortcutIcon}>
-                              {getCategoryIcon(item.categorySlug)}
-                            </AppText>
-                          }
-                          onPress={() => router.push(Routes.app.createJob)}
-                          title={item.subcategoryName}
-                        />
-                      </View>
-                    ))}
-                  </View>
-                </ScrollView>
-                <Spacer size="lg" />
-              </>
-            ) : null}
-
-            <UberActionCard
-              onPress={() => router.push(Routes.app.jobs)}
-              title="Mis solicitudes"
-            />
-          </>
+          <ClientDashboard />
         ) : (
-          <Button
-            label="Activar rol cliente"
-            onPress={() => router.push(Routes.app.editProfile)}
-            variant="dark"
-          />
+          <StaggeredFadeIn index={1}>
+            <Button
+              label="Activar rol cliente"
+              onPress={() => router.push(Routes.app.editProfile)}
+              variant="dark"
+            />
+          </StaggeredFadeIn>
         )
-      ) : profile?.isProfessional && (profile.professionalSubcategoryIds.length ?? 0) > 0 ? (
+      ) : profile?.isProfessional && hasProfessionalServices ? (
         <>
-          <UberActionCard
-            onPress={() => router.push(Routes.app.discover)}
-            title="Oportunidades"
-          />
-          <Spacer size="md" />
-          <UberActionCard
-            onPress={() => router.push(Routes.app.activateProfessional)}
-            title="Mis servicios"
-          />
+          <StaggeredFadeIn index={0}>
+            <View style={styles.headerRow}>
+              <View style={styles.headerText}>
+                <View style={styles.titleRow}>
+                  <Image accessibilityIgnoresInvertColors source={rancoBrandIcon} style={styles.brandMark} />
+                  <AppText variant="title">Panel profesional</AppText>
+                </View>
+                <AppText color="textSecondary" variant="body">
+                  {personalGreeting}
+                </AppText>
+              </View>
+            </View>
+          </StaggeredFadeIn>
+          <ProfessionalDashboard />
         </>
       ) : (
-        <Button
-          label="Configurar servicios"
-          onPress={() => router.push(Routes.app.activateProfessional)}
-          variant="dark"
-        />
+        <StaggeredFadeIn index={1}>
+          <Button
+            label="Configurar servicios"
+            onPress={() => router.push(Routes.app.activateProfessional)}
+            variant="dark"
+          />
+        </StaggeredFadeIn>
       )}
     </ScreenLayout>
   );
@@ -113,20 +70,19 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   headerRow: {
+    marginBottom: Spacing.md,
+  },
+  headerText: {
+    gap: Spacing.xs,
+  },
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: Spacing.sm,
   },
-  shortcuts: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    paddingRight: Spacing.lg,
-  },
-  shortcutIcon: {
-    fontSize: 24,
-    lineHeight: 28,
-  },
-  shortcutCard: {
-    width: 240,
+  brandMark: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
 });

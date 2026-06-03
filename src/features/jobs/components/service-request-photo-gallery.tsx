@@ -37,8 +37,8 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   image: {
-    width: 112,
-    height: 112,
-    borderRadius: Radius.md,
+    width: 120,
+    height: 120,
+    borderRadius: Radius.lg,
   },
 });

@@ -1,15 +1,3 @@
-const CATEGORY_ICONS: Record<string, string> = {
-  home: '🏠',
-  repairs: '🔧',
-  services: '🛎️',
-  care: '💙',
-  other: '✨',
-  transport: '🚚',
-  beauty: '💇',
-  education: '📚',
-  events: '🎉',
-};
-
 const SUBCATEGORY_HINTS: Record<string, string> = {
   plumbing: 'Ej. Reparar fuga en el baño',
   electrical: 'Ej. Instalar tomas o arreglar cortocircuito',
@@ -60,10 +48,6 @@ const SUBCATEGORY_HINTS: Record<string, string> = {
   entertainment: 'Ej. DJ o animación para evento',
   other: 'Ej. Describe brevemente lo que necesitas',
 };
-
-export function getCategoryIcon(slug: string): string {
-  return CATEGORY_ICONS[slug] ?? '📋';
-}
 
 export function getSubcategoryTitleHint(slug: string): string {
   return SUBCATEGORY_HINTS[slug] ?? 'Ej. Describe en pocas palabras lo que necesitas';

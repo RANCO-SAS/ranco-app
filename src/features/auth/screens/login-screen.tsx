@@ -7,6 +7,7 @@ import { AuthLayout } from '@/components/layout/auth-layout';
 import { ScreenLayout } from '@/components/layout/screen-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { StaggeredFadeIn } from '@/components/ui/staggered-fade-in';
 import { AppText } from '@/components/ui/text';
 import { AuthMessage } from '@/features/auth/components/auth-message';
 import { useSignIn } from '@/features/auth/hooks/use-sign-in';
@@ -38,88 +39,109 @@ export function LoginScreen() {
 
   return (
     <ScreenLayout scrollable centered>
-      <AuthLayout title="Ranco">
+      <AuthLayout brand="Ranco" subtitle="Accede a tu cuenta para continuar." title="Iniciar sesión">
         {signIn.error ? (
-          <AuthMessage message={mapAuthError(signIn.error)} variant="error" />
+          <StaggeredFadeIn index={0}>
+            <AuthMessage message={mapAuthError(signIn.error)} variant="error" />
+          </StaggeredFadeIn>
         ) : null}
 
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              autoCapitalize="none"
-              autoComplete="email"
-              editable={!signIn.isPending}
-              error={errors.email?.message}
-              keyboardType="email-address"
-              label="Correo"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              placeholder="tu@correo.com"
-              textContentType="emailAddress"
-              value={value}
-            />
-          )}
-        />
+        <StaggeredFadeIn index={1}>
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                autoCapitalize="none"
+                autoComplete="email"
+                editable={!signIn.isPending}
+                error={errors.email?.message}
+                keyboardType="email-address"
+                label="Correo"
+                leadingIcon="mail-outline"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                placeholder="ejemplo@correo.com"
+                textContentType="emailAddress"
+                value={value}
+              />
+            )}
+          />
+        </StaggeredFadeIn>
 
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              autoComplete="password"
-              editable={!signIn.isPending}
-              error={errors.password?.message}
-              label="Contraseña"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              placeholder="••••••••"
-              secureTextEntry
-              textContentType="password"
-              value={value}
-            />
-          )}
-        />
+        <StaggeredFadeIn index={2}>
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                autoComplete="password"
+                editable={!signIn.isPending}
+                error={errors.password?.message}
+                label="Contraseña"
+                leadingIcon="lock-closed-outline"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                placeholder="••••••••"
+                secureTextEntry
+                showPasswordToggle
+                textContentType="password"
+                value={value}
+              />
+            )}
+          />
+        </StaggeredFadeIn>
 
-        <Button
-          disabled={signIn.isPending}
-          label={signIn.isPending ? 'Entrando...' : 'Iniciar sesión'}
-          onPress={() => {
-            void handleSubmit(onSubmit)();
-          }}
-        />
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => {
-            router.push(Routes.auth.forgotPassword);
-          }}>
-          <AppText color="primary" variant="body">
-            ¿Olvidaste tu contraseña?
-          </AppText>
-        </Pressable>
-
-        <View style={styles.footer}>
-          <AppText color="textSecondary" variant="body">
-            ¿No tienes cuenta?
-          </AppText>
+        <StaggeredFadeIn index={3}>
           <Pressable
             accessibilityRole="button"
             onPress={() => {
-              router.push(Routes.auth.register);
-            }}>
-            <AppText color="primary" variant="bodyMedium">
-              Crear cuenta
+              router.push(Routes.auth.forgotPassword);
+            }}
+            style={styles.forgotPassword}>
+            <AppText align="center" color="textSecondary" variant="body">
+              ¿Olvidaste tu contraseña?
             </AppText>
           </Pressable>
-        </View>
+        </StaggeredFadeIn>
+
+        <StaggeredFadeIn index={4}>
+          <Button
+            disabled={signIn.isPending}
+            label={signIn.isPending ? 'Entrando...' : 'Iniciar sesión'}
+            onPress={() => {
+              void handleSubmit(onSubmit)();
+            }}
+            variant="gradient"
+          />
+        </StaggeredFadeIn>
+
+        <StaggeredFadeIn index={5}>
+          <View style={styles.footer}>
+            <AppText color="textSecondary" variant="body">
+              ¿No tienes cuenta?
+            </AppText>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                router.push(Routes.auth.register);
+              }}>
+              <AppText color="text" variant="bodyMedium">
+                Registrarse
+              </AppText>
+            </Pressable>
+          </View>
+        </StaggeredFadeIn>
       </AuthLayout>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  forgotPassword: {
+    alignSelf: 'center',
+    paddingVertical: Spacing.xs,
+  },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',

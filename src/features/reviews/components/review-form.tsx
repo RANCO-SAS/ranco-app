@@ -1,26 +1,33 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { Button } from '@/components/ui/button';
+import { AnimatedPressable } from '@/components/ui/animated-pressable';
+import { AppIcon } from '@/components/ui/app-icon';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
-import { Spacing } from '@/constants/theme';
-import { ReviewEvidenceUploader } from '@/features/reviews/components/review-evidence-uploader';
-import { ReviewDetailCard } from '@/features/reviews/components/review-detail-card';
+import { Layout, Radius, Spacing } from '@/constants/theme';
+import { ReviewEvidencePicker } from '@/features/reviews/components/review-evidence-picker';
+import { ReviewFormSectionLabel } from '@/features/reviews/components/review-form-section-label';
+import { ReviewSubmittedSummaryCard } from '@/features/reviews/components/review-submitted-summary-card';
 import { TraitRatingRow } from '@/features/reviews/components/trait-rating-row';
 import {
   buildDefaultTraits,
-  computeAverageRating,
+  computeStoredReviewRating,
   getReviewTraitsForReviewee,
   validateTraits,
   type ReviewTraits,
 } from '@/features/reviews/constants/review-traits';
-import { useCreateReview } from '@/features/reviews/hooks/use-reviews';
+import { useCreateReview, useUpdateReviewEvidence } from '@/features/reviews/hooks/use-reviews';
+import { reviewService } from '@/features/reviews/services/review.service';
 import type { Review } from '@/features/reviews/types/review.types';
+import { getReviewSubmitErrorMessage } from '@/features/reviews/utils/get-review-submit-error-message';
+import { type ServiceRequestPhotoItem } from '@/features/jobs/types/service-request-photo.types';
+import { useTheme } from '@/hooks/use-theme';
+import { queryKeys } from '@/lib/query-keys';
+import { storageService } from '@/services/storage/storage.service';
 
 type ReviewFormProps = {
   serviceRequestId: string;
@@ -31,6 +38,37 @@ type ReviewFormProps = {
   existingReview?: Review | null;
 };
 
+async function uploadDraftEvidence(
+  review: Review,
+  reviewerId: string,
+  photos: ServiceRequestPhotoItem[],
+  updateEvidence: ReturnType<typeof useUpdateReviewEvidence>,
+): Promise<Review> {
+  const localPhotos = photos.filter((photo) => !photo.isRemote);
+
+  if (localPhotos.length === 0) {
+    return review;
+  }
+
+  const uploadedUrls: string[] = [];
+
+  for (let index = 0; index < localPhotos.length; index += 1) {
+    const uploadedUrl = await storageService.uploadReviewEvidence(
+      reviewerId,
+      review.id,
+      localPhotos[index].uri,
+      index,
+    );
+    uploadedUrls.push(uploadedUrl);
+  }
+
+  return updateEvidence.mutateAsync({
+    reviewId: review.id,
+    reviewerId,
+    evidenceUrls: uploadedUrls,
+  });
+}
+
 export function ReviewForm({
   serviceRequestId,
   reviewerId,
@@ -39,91 +77,85 @@ export function ReviewForm({
   revieweeIsProfessional,
   existingReview,
 }: ReviewFormProps) {
+  const theme = useTheme();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const createReview = useCreateReview();
+  const updateEvidence = useUpdateReviewEvidence();
   const traitDefinitions = getReviewTraitsForReviewee(revieweeIsProfessional);
   const [traits, setTraits] = useState<ReviewTraits>(
     existingReview?.traits ?? buildDefaultTraits(traitDefinitions),
   );
   const [comment, setComment] = useState('');
+  const [evidencePhotos, setEvidencePhotos] = useState<ServiceRequestPhotoItem[]>([]);
   const [submittedReview, setSubmittedReview] = useState<Review | null>(existingReview ?? null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isUploadingEvidence, setIsUploadingEvidence] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const activeReview = submittedReview ?? existingReview ?? null;
+  const activeReview =
+    submittedReview ??
+    existingReview ??
+    (createReview.isSuccess ? createReview.data : null);
+  const isSubmitting = createReview.isPending || isUploadingEvidence;
 
   useEffect(() => {
     if (!existingReview) {
       return;
     }
 
-    setSubmittedReview(existingReview);
+    setSubmittedReview((current) => current ?? existingReview);
     setIsExpanded(false);
   }, [existingReview]);
 
+  const handleSubmitSuccess = (review: Review) => {
+    setSubmitError(null);
+    setSubmittedReview(review);
+
+    if (evidencePhotos.length === 0) {
+      setIsExpanded(false);
+      return;
+    }
+
+    setIsUploadingEvidence(true);
+    void uploadDraftEvidence(review, reviewerId, evidencePhotos, updateEvidence)
+      .then((nextReview) => {
+        setSubmittedReview(nextReview);
+        setIsExpanded(false);
+      })
+      .catch(() => {
+        setIsExpanded(false);
+      })
+      .finally(() => {
+        setIsUploadingEvidence(false);
+      });
+  };
+
   if (activeReview) {
     return (
-      <Card style={styles.compactCard}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setIsExpanded((value) => !value)}
-          style={styles.compactHeader}>
-          <View style={styles.compactMeta}>
-            <AppText variant="bodyMedium">Tu reseña · {activeReview.rating.toFixed(1)}★</AppText>
-            {!isExpanded && activeReview.comment ? (
-              <AppText color="textSecondary" numberOfLines={1} variant="caption">
-                {activeReview.comment}
-              </AppText>
-            ) : null}
-          </View>
-          <AppText color="textMuted" variant="body">
-            {isExpanded ? '▲' : '▼'}
-          </AppText>
-        </Pressable>
-
-        {isExpanded ? (
-          <>
-            <Spacer size="md" />
-            <ReviewDetailCard
-              review={activeReview}
-              revieweeIsProfessional={revieweeIsProfessional}
-              showReviewerLink={false}
-            />
-            <ReviewEvidenceUploader
-              initialUrls={activeReview.evidenceUrls}
-              reviewId={activeReview.id}
-              reviewerId={reviewerId}
-            />
-          </>
-        ) : (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push(Routes.app.reviewDetail(activeReview.id))}
-            style={styles.detailLink}>
-            <AppText color="primary" variant="caption">
-              Ver detalle completo ›
-            </AppText>
-          </Pressable>
-        )}
-      </Card>
+      <ReviewSubmittedSummaryCard
+        isExpanded={isExpanded}
+        onToggleExpand={() => setIsExpanded((value) => !value)}
+        onViewDetail={() => router.push(Routes.app.reviewDetail(activeReview.id))}
+        review={activeReview}
+        revieweeIsProfessional={revieweeIsProfessional}
+        reviewerId={reviewerId}
+      />
     );
   }
 
-  const averageRating = computeAverageRating(traits);
   const canSubmit = validateTraits(traits, traitDefinitions);
 
   return (
-    <Card>
+    <Card style={styles.formCard}>
       <AppText variant="bodyMedium">Valorar a {revieweeName}</AppText>
-      <AppText color="textSecondary" variant="caption">
-        Promedio: {averageRating.toFixed(1)}★
-      </AppText>
 
-      <View style={styles.traits}>
+      <View style={[styles.traitsCard, { backgroundColor: theme.backgroundElement }]}>
         {traitDefinitions.map((definition) => (
           <TraitRatingRow
-            key={definition.key}
             definition={definition}
-            disabled={createReview.isPending}
+            disabled={isSubmitting}
+            key={definition.key}
             onChange={(value) => {
               setTraits((current) => ({
                 ...current,
@@ -135,66 +167,134 @@ export function ReviewForm({
         ))}
       </View>
 
-      <Input
-        editable={!createReview.isPending}
-        label="Comentario (opcional)"
-        multiline
-        numberOfLines={3}
-        onChangeText={setComment}
-        placeholder="Cuéntanos cómo fue la experiencia"
-        value={comment}
+      <View style={styles.commentSection}>
+        <ReviewFormSectionLabel>Comentarios adicionales</ReviewFormSectionLabel>
+        <TextInput
+          editable={!isSubmitting}
+          multiline
+          numberOfLines={4}
+          onChangeText={setComment}
+          placeholder="Cuéntanos cómo fue la experiencia..."
+          placeholderTextColor={theme.textMuted}
+          style={[
+            styles.commentInput,
+            {
+              backgroundColor: theme.backgroundElement,
+              borderColor: theme.border,
+              color: theme.text,
+            },
+          ]}
+          textAlignVertical="top"
+          value={comment}
+        />
+      </View>
+
+      <ReviewEvidencePicker
+        disabled={isSubmitting}
+        onChange={setEvidencePhotos}
+        photos={evidencePhotos}
       />
 
-      <Button
-        disabled={createReview.isPending || !canSubmit}
-        label={createReview.isPending ? 'Enviando reseña...' : 'Publicar reseña'}
+      {submitError ? (
+        <AppText color="destructive" variant="caption">
+          {submitError}
+        </AppText>
+      ) : null}
+
+      <AnimatedPressable
+        accessibilityRole="button"
+        disabled={isSubmitting || !canSubmit}
         onPress={() => {
           if (!validateTraits(traits, traitDefinitions)) {
             return;
           }
 
+          setSubmitError(null);
           createReview.mutate(
             {
               serviceRequestId,
               reviewerId,
               revieweeId,
-              rating: computeAverageRating(traits),
+              revieweeRole: revieweeIsProfessional ? 'professional' : 'client',
+              rating: computeStoredReviewRating(traits),
               traits,
-              comment,
+              comment: comment.trim() || undefined,
             },
             {
-              onSuccess: (review) => {
-                setSubmittedReview(review);
-                setIsExpanded(false);
+              onSuccess: handleSubmitSuccess,
+              onError: (error) => {
+                const message = getReviewSubmitErrorMessage(error);
+                setSubmitError(message);
+
+                if (
+                  error instanceof Error &&
+                  (error.message.toLowerCase().includes('duplicate') ||
+                    error.message.toLowerCase().includes('unique'))
+                ) {
+                  void reviewService
+                    .getReviewForJobByReviewer(serviceRequestId, reviewerId)
+                    .then((review) => {
+                      if (!review) {
+                        return;
+                      }
+
+                      queryClient.setQueryData(
+                        queryKeys.reviews.job(serviceRequestId, reviewerId),
+                        review,
+                      );
+                      setSubmittedReview(review);
+                      setSubmitError(null);
+                    });
+                }
               },
             },
           );
         }}
-        variant="dark"
-      />
+        style={[
+          styles.submitButton,
+          {
+            backgroundColor: theme.primary,
+            opacity: isSubmitting || !canSubmit ? 0.5 : 1,
+          },
+        ]}>
+        <AppText color="primaryForeground" variant="bodyMedium">
+          {isSubmitting ? 'Publicando reseña...' : 'Publicar reseña'}
+        </AppText>
+        <AppIcon color={theme.primaryForeground} name="send-outline" size={18} />
+      </AnimatedPressable>
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  compactCard: {
-    paddingVertical: Spacing.md,
+  formCard: {
+    gap: Spacing.lg,
+    borderRadius: Radius.xl,
   },
-  compactHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  traitsCard: {
+    gap: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+  },
+  commentSection: {
     gap: Spacing.sm,
   },
-  compactMeta: {
-    flex: 1,
-    gap: 2,
+  commentInput: {
+    minHeight: 112,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    fontSize: 16,
+    lineHeight: 22,
   },
-  detailLink: {
-    marginTop: Spacing.sm,
-  },
-  traits: {
-    gap: Spacing.md,
-    marginVertical: Spacing.md,
+  submitButton: {
+    minHeight: Layout.minTouchTarget + 4,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
   },
 });

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProfileAvatarLink } from '@/components/ui/profile-avatar-link';
@@ -6,44 +7,22 @@ import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
 import type { ServiceRequestClientPreview } from '@/features/jobs/types/service-request.types';
+import { formatPostedAt } from '@/shared/utils/format-posted-at';
 
 type ServiceRequestAuthorHeaderProps = {
   client: ServiceRequestClientPreview;
   createdAt: string;
+  categoryLabel?: string;
   subtitle?: string;
+  trailing?: ReactNode;
 };
-
-function formatPostedAt(value: string): string {
-  const date = new Date(value);
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.max(1, Math.floor(diffMs / (1000 * 60)));
-
-  if (diffMinutes < 60) {
-    return `hace ${diffMinutes} min`;
-  }
-
-  const diffHours = Math.floor(diffMinutes / 60);
-
-  if (diffHours < 24) {
-    return `hace ${diffHours} h`;
-  }
-
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffDays < 7) {
-    return `hace ${diffDays} d`;
-  }
-
-  return date.toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'short',
-  });
-}
 
 export function ServiceRequestAuthorHeader({
   client,
   createdAt,
+  categoryLabel,
   subtitle,
+  trailing,
 }: ServiceRequestAuthorHeaderProps) {
   const router = useRouter();
   const displayName = client.fullName.trim() || 'Cliente';
@@ -63,11 +42,20 @@ export function ServiceRequestAuthorHeader({
         onPress={() => router.push(Routes.app.userProfile(client.id, 'client'))}
         style={styles.meta}>
         <AppText variant="bodyMedium">{displayName}</AppText>
-        <AppText color="textMuted" numberOfLines={1} variant="small">
-          {formatPostedAt(createdAt)}
-          {subtitle ? ` · ${subtitle}` : ''}
-        </AppText>
+        {categoryLabel ? (
+          <AppText numberOfLines={1} variant="small">
+            <AppText color="primary">{categoryLabel}</AppText>
+            <AppText color="textMuted"> · </AppText>
+            <AppText color="textMuted">{formatPostedAt(createdAt)}</AppText>
+          </AppText>
+        ) : (
+          <AppText color="textMuted" numberOfLines={1} variant="small">
+            {subtitle ?? formatPostedAt(createdAt)}
+          </AppText>
+        )}
       </Pressable>
+
+      {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
     </View>
   );
 }
@@ -81,5 +69,9 @@ const styles = StyleSheet.create({
   meta: {
     flex: 1,
     gap: 2,
+    minWidth: 0,
+  },
+  trailing: {
+    alignSelf: 'flex-start',
   },
 });
