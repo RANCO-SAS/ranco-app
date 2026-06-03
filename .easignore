@@ -1,0 +1,8 @@
+# EAS uploads from git; ignore local native folders (prebuild runs on EAS)
+android/
+ios/
+
+# Local secrets and caches
+.env
+.env*.local
+google-services.json

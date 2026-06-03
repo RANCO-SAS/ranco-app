@@ -8,6 +8,10 @@
     "scheme": "ranco",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#F1F5F9",
+    "ios": {
+      "bundleIdentifier": "com.ranco.app",
+      "supportsTablet": true
+    },
     "android": {
       "package": "com.ranco.app",
       "edgeToEdgeEnabled": true,

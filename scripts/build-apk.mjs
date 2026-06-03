@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -66,6 +66,7 @@ function ensureLocalProperties(androidDir) {
 }
 
 const isDebugBuild = process.argv.includes('--debug');
+const shouldClean = process.argv.includes('--clean');
 const projectRoot = process.cwd();
 const envPath = join(projectRoot, '.env');
 
@@ -78,15 +79,21 @@ const assembleTask = isDebugBuild ? 'assembleDebug' : 'assembleRelease';
 
 ensureLocalProperties(androidDir);
 
-const cleanResult = spawnSync(gradleCommand, ['clean'], {
-  cwd: androidDir,
-  env: process.env,
-  stdio: 'inherit',
-  shell: true,
-});
+if (shouldClean) {
+  // gradlew clean breaks RN New Architecture on Windows (missing codegen/jni during
+  // externalNativeBuildClean). Remove build outputs manually instead.
+  const pathsToRemove = [
+    join(androidDir, 'app', '.cxx'),
+    join(androidDir, 'app', 'build'),
+    join(androidDir, 'build'),
+  ];
 
-if (cleanResult.status !== 0) {
-  process.exit(cleanResult.status ?? 1);
+  for (const path of pathsToRemove) {
+    if (existsSync(path)) {
+      rmSync(path, { recursive: true, force: true });
+      console.log(`Removed ${path}`);
+    }
+  }
 }
 
 const result = spawnSync(gradleCommand, [assembleTask], {
