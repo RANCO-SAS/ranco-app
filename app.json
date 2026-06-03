@@ -34,10 +34,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "android": {
-            "image": "./assets/images/ranco-icon.png",
-            "imageWidth": 120
+          "backgroundColor": "#F1F5F9",
+          "dark": {
+            "backgroundColor": "#000000"
           }
         }
       ]
