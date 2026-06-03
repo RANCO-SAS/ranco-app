@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 import { AppIcon } from '@/components/ui/app-icon';
@@ -6,6 +6,7 @@ import { Loader } from '@/components/ui/loader';
 import { AppText } from '@/components/ui/text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { isGoogleMapsConfigured, shouldUseGoogleMapsProvider } from '@/lib/maps-config';
 import { pointToMapRegion } from '@/shared/location/default-map-region';
 import type { LocationPoint } from '@/shared/location/location.types';
 
@@ -23,6 +24,8 @@ export function LocationMapPreview({
   emptyMessage = 'No se pudo ubicar en el mapa',
 }: LocationMapPreviewProps) {
   const theme = useTheme();
+  const canRenderMap = isGoogleMapsConfigured() && point;
+  const mapProvider = shouldUseGoogleMapsProvider() ? PROVIDER_GOOGLE : undefined;
 
   return (
     <View
@@ -36,7 +39,7 @@ export function LocationMapPreview({
       ]}>
       {isLoading ? (
         <Loader message="Ubicando en el mapa..." size="small" variant="inline" />
-      ) : point ? (
+      ) : canRenderMap && point ? (
         <MapView
           key={`${point.lat}-${point.lng}`}
           initialRegion={pointToMapRegion(point, {
@@ -44,7 +47,7 @@ export function LocationMapPreview({
             longitudeDelta: 0.01,
           })}
           pointerEvents="none"
-          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+          provider={mapProvider}
           scrollEnabled={false}
           style={styles.map}
           zoomEnabled={false}

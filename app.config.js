@@ -2,6 +2,9 @@ const appJson = require('./app.json');
 const fs = require('fs');
 const path = require('path');
 
+const SPLASH_BACKGROUND_LIGHT = '#F1F5F9';
+const SPLASH_BACKGROUND_DARK = '#000000';
+
 const googleServicesPath = path.join(__dirname, 'google-services.json');
 const easGoogleServicesPath = process.env.GOOGLE_SERVICES_JSON;
 const resolvedGoogleServicesFile =
@@ -10,6 +13,17 @@ const resolvedGoogleServicesFile =
     : fs.existsSync(googleServicesPath)
       ? './google-services.json'
       : undefined;
+
+const basePlugins = (appJson.expo.plugins ?? []).filter((plugin) => {
+  if (Array.isArray(plugin) && plugin[0] === 'expo-splash-screen') {
+    return false;
+  }
+
+  return plugin !== 'expo-splash-screen';
+});
+
+const googleMapsApiKeyAndroid = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID ?? '';
+const googleMapsApiKeyIos = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS ?? '';
 
 /** @type {import('expo/config').ExpoConfig} */
 module.exports = {
@@ -36,7 +50,16 @@ module.exports = {
       },
     },
     plugins: [
-      ...(appJson.expo.plugins ?? []),
+      ...basePlugins,
+      [
+        'expo-splash-screen',
+        {
+          backgroundColor: SPLASH_BACKGROUND_LIGHT,
+          dark: {
+            backgroundColor: SPLASH_BACKGROUND_DARK,
+          },
+        },
+      ],
       'expo-system-ui',
       [
         'expo-notifications',
@@ -55,8 +78,8 @@ module.exports = {
       [
         'react-native-maps',
         {
-          androidGoogleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID ?? '',
-          iosGoogleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS ?? '',
+          androidGoogleMapsApiKey: googleMapsApiKeyAndroid,
+          iosGoogleMapsApiKey: googleMapsApiKeyIos,
         },
       ],
     ],
@@ -66,6 +89,8 @@ module.exports = {
       },
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+      googleMapsApiKeyAndroid,
+      googleMapsApiKeyIos,
     },
   },
 };

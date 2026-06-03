@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 import { AppIcon } from '@/components/ui/app-icon';
@@ -7,6 +7,11 @@ import { AppText } from '@/components/ui/text';
 import { Layout, Radius, Spacing } from '@/constants/theme';
 import { LocationMapPickerModal } from '@/features/jobs/components/create-request/location-map-picker-modal';
 import { useTheme } from '@/hooks/use-theme';
+import {
+  getMapsNotConfiguredMessage,
+  isGoogleMapsConfigured,
+  shouldUseGoogleMapsProvider,
+} from '@/lib/maps-config';
 import { pointToMapRegion } from '@/shared/location/default-map-region';
 import type { LocationPoint } from '@/shared/location/location.types';
 
@@ -55,8 +60,16 @@ export function RequestLocationField({
       return;
     }
 
+    if (!isGoogleMapsConfigured()) {
+      Alert.alert('Mapa no disponible', getMapsNotConfiguredMessage());
+      return;
+    }
+
     setIsMapPickerVisible(true);
   };
+
+  const canRenderMapPreview = isGoogleMapsConfigured() && hasCoordinates && coordinates;
+  const mapProvider = shouldUseGoogleMapsProvider() ? PROVIDER_GOOGLE : undefined;
 
   const handleBlur = () => {
     setIsEditing(false);
@@ -119,7 +132,7 @@ export function RequestLocationField({
         disabled={disabled}
         onPress={openMapPicker}
         style={[styles.mapPreview, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-        {hasCoordinates && coordinates ? (
+        {canRenderMapPreview && coordinates ? (
           <MapView
             key={`${coordinates.lat}-${coordinates.lng}`}
             initialRegion={pointToMapRegion(coordinates, {
@@ -127,7 +140,7 @@ export function RequestLocationField({
               longitudeDelta: 0.01,
             })}
             pointerEvents="none"
-            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+            provider={mapProvider}
             scrollEnabled={false}
             style={styles.mapPreviewMap}
             zoomEnabled={false}
