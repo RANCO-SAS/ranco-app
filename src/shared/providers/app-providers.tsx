@@ -1,5 +1,6 @@
 import '@/global.css';
 
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
@@ -50,7 +51,7 @@ export function AppProviders({ children }: AppProvidersProps) {
           <AuthProvider>
             <ProfileProvider>
               <ThemeProvider value={isDark ? DarkNavigationTheme : LightNavigationTheme}>
-                {children}
+                <BottomSheetModalProvider>{children}</BottomSheetModalProvider>
               </ThemeProvider>
             </ProfileProvider>
           </AuthProvider>

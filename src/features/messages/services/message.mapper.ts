@@ -29,6 +29,8 @@ export function mapConversationRow(
     serviceRequestStatus: row.service_request?.status ?? 'published',
     client: mapParticipant(participants.client, row.client_id),
     professional: mapParticipant(participants.professional, row.professional_id),
+    closedAt: row.closed_at ?? null,
+    closedReason: row.closed_reason ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

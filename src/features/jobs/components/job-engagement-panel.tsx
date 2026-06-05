@@ -43,15 +43,7 @@ function getAvailableActions(props: JobEngagementPanelProps): StatusAction[] {
 
   if (props.isClient) {
     if (props.status === 'in_negotiation') {
-      return [
-        {
-          label: `Aceptar a ${props.professionalName}`,
-          nextStatus: 'accepted',
-          variant: 'dark',
-          requiresConfirmation: true,
-        },
-        { label: 'Cancelar solicitud', nextStatus: 'cancelled', variant: 'ghost' },
-      ];
+      return [{ label: 'Cancelar solicitud', nextStatus: 'cancelled', variant: 'ghost' }];
     }
 
     if (props.status === 'accepted' && props.assignedProfessionalId === props.professionalId) {

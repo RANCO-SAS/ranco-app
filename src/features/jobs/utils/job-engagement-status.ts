@@ -18,7 +18,7 @@ export function getJobEngagementStatusMessage(props: EngagementContext): string 
       props.assignedProfessionalId !== props.professionalId &&
       props.status !== 'cancelled'
     ) {
-      return 'Ya seleccionaste a otro profesional para esta solicitud.';
+      return 'Esta solicitud fue asignada a otro profesional. Ya no puedes enviar mensajes.';
     }
 
     if (props.status === 'accepted' && props.assignedProfessionalId === props.professionalId) {
@@ -26,7 +26,7 @@ export function getJobEngagementStatusMessage(props: EngagementContext): string 
     }
 
     if (props.status === 'in_negotiation') {
-      return `Estás evaluando a ${props.professionalName}. Al aceptarlo, no podrás elegir otro profesional.`;
+      return 'Negocia el precio desde el banner de negociación.';
     }
 
     if (props.status === 'in_progress' && props.assignedProfessionalId === props.professionalId) {
@@ -45,11 +45,11 @@ export function getJobEngagementStatusMessage(props: EngagementContext): string 
     props.assignedProfessionalId !== props.professionalId &&
     props.status !== 'cancelled'
   ) {
-    return 'El cliente seleccionó a otro profesional para este trabajo.';
+    return 'Esta solicitud fue asignada a otro profesional. Ya no puedes enviar mensajes.';
   }
 
   if (props.status === 'in_negotiation') {
-    return 'El cliente aún no te ha seleccionado para este trabajo.';
+    return 'Propón un precio o espera la respuesta del cliente.';
   }
 
   if (props.status === 'accepted' && props.userId === props.assignedProfessionalId) {

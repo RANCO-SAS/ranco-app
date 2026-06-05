@@ -6,6 +6,8 @@ export type ConversationParticipant = {
   avatarUrl: string | null;
 };
 
+export type ConversationClosedReason = 'assigned_elsewhere' | 'request_cancelled';
+
 export type Conversation = {
   id: string;
   serviceRequestId: string;
@@ -15,11 +17,13 @@ export type Conversation = {
   serviceRequestStatus: ServiceRequestStatus;
   client: ConversationParticipant;
   professional: ConversationParticipant;
+  closedAt: string | null;
+  closedReason: ConversationClosedReason | null;
   createdAt: string;
   updatedAt: string;
 };
 
-export type MessageType = 'text' | 'image';
+export type MessageType = 'text' | 'image' | 'offer';
 
 export type MessageDeliveryStatus = 'sent' | 'delivered' | 'read';
 

@@ -74,7 +74,11 @@ export function ConversationListItem({
               </View>
 
               <AppText color="textSecondary" numberOfLines={1} variant="caption">
-                {conversation.serviceRequestTitle}
+                {conversation.closedReason === 'assigned_elsewhere'
+                  ? 'Asignada a otro profesional'
+                  : conversation.closedReason === 'request_cancelled'
+                    ? 'Solicitud cancelada'
+                    : conversation.serviceRequestTitle}
               </AppText>
             </View>
           </View>

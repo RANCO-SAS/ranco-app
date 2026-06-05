@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 
+import { AnimatedPressable } from '@/components/ui/animated-pressable';
 import { AppIcon, type AppIconName } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
 import { Layout, Radius, Spacing } from '@/constants/theme';
@@ -11,6 +12,8 @@ import { useTheme } from '@/hooks/use-theme';
 type ChatJobStatusBannerProps = {
   status: ServiceRequestStatus;
   message?: string | null;
+  onPress?: () => void;
+  pressable?: boolean;
 };
 
 type BannerTone = 'negotiation' | 'accepted' | 'progress' | 'completed' | 'cancelled';
@@ -163,7 +166,12 @@ function getBannerPalette(
       };
 }
 
-export function ChatJobStatusBanner({ status, message }: ChatJobStatusBannerProps) {
+export function ChatJobStatusBanner({
+  status,
+  message,
+  onPress,
+  pressable = false,
+}: ChatJobStatusBannerProps) {
   const theme = useTheme();
   const colorScheme = useColorScheme();
   const scheme = colorScheme === 'dark' ? 'dark' : 'light';
@@ -183,31 +191,46 @@ export function ChatJobStatusBanner({ status, message }: ChatJobStatusBannerProp
   const subtitle =
     trimmedMessage ??
     (content.tone === 'completed' ? null : content.fallbackMessage);
+  const isInteractive = pressable && Boolean(onPress);
+
+  const bannerBody = (
+    <View style={[styles.container, { borderColor: palette.borderColor }]}>
+      <LinearGradient
+        colors={[...palette.background]}
+        end={{ x: 1, y: 1 }}
+        start={{ x: 0, y: 0 }}
+        style={styles.gradient}>
+        <View style={[styles.iconWrap, { backgroundColor: palette.iconBackgroundColor }]}>
+          <AppIcon color={palette.accentColor} name={content.icon} size={20} />
+        </View>
+
+        <View style={styles.copy}>
+          <AppText style={{ color: palette.accentColor }} variant="bodyMedium">
+            {content.title}
+          </AppText>
+          {subtitle ? (
+            <AppText color="textSecondary" numberOfLines={2} variant="caption">
+              {subtitle}
+            </AppText>
+          ) : null}
+        </View>
+
+        {isInteractive ? (
+          <AppIcon color={palette.accentColor} name="chevron-forward" size={18} />
+        ) : null}
+      </LinearGradient>
+    </View>
+  );
 
   return (
     <View style={styles.wrapper}>
-      <View style={[styles.container, { borderColor: palette.borderColor }]}>
-        <LinearGradient
-          colors={[...palette.background]}
-          end={{ x: 1, y: 1 }}
-          start={{ x: 0, y: 0 }}
-          style={styles.gradient}>
-          <View style={[styles.iconWrap, { backgroundColor: palette.iconBackgroundColor }]}>
-            <AppIcon color={palette.accentColor} name={content.icon} size={20} />
-          </View>
-
-          <View style={styles.copy}>
-            <AppText style={{ color: palette.accentColor }} variant="bodyMedium">
-              {content.title}
-            </AppText>
-            {subtitle ? (
-              <AppText color="textSecondary" numberOfLines={2} variant="caption">
-                {subtitle}
-              </AppText>
-            ) : null}
-          </View>
-        </LinearGradient>
-      </View>
+      {isInteractive ? (
+        <AnimatedPressable accessibilityRole="button" onPress={onPress}>
+          {bannerBody}
+        </AnimatedPressable>
+      ) : (
+        bannerBody
+      )}
     </View>
   );
 }

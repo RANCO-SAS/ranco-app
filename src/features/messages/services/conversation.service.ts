@@ -155,6 +155,10 @@ async function sendTextMessage(input: SendTextMessageInput): Promise<Message> {
     .single();
 
   if (error) {
+    if (error.code === '42501' || error.message.includes('row-level security')) {
+      throw new Error('Ya no puedes enviar mensajes en esta conversación.');
+    }
+
     throw error;
   }
 
@@ -196,6 +200,11 @@ async function sendImageMessage(input: SendImageMessageInput): Promise<Message> 
     devError('storage', 'sendImageMessage:insert-failed', error, {
       conversationId: input.conversationId,
     });
+
+    if (error.code === '42501' || error.message.includes('row-level security')) {
+      throw new Error('Ya no puedes enviar mensajes en esta conversación.');
+    }
+
     throw error;
   }
 

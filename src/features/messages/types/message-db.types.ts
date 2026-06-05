@@ -5,6 +5,8 @@ export type ConversationRow = {
   service_request_id: string;
   client_id: string;
   professional_id: string;
+  closed_at: string | null;
+  closed_reason: 'assigned_elsewhere' | 'request_cancelled' | null;
   created_at: string;
   updated_at: string;
   service_request: {
@@ -21,7 +23,7 @@ export type MessageRow = {
   conversation_id: string;
   sender_id: string;
   content: string;
-  message_type: 'text' | 'image';
+  message_type: 'text' | 'image' | 'offer';
   media_url: string | null;
   delivered_at: string | null;
   read_at: string | null;

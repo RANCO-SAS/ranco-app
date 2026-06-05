@@ -38,4 +38,9 @@ export const queryKeys = {
   location: {
     geocode: (label: string) => ['location', 'geocode', label] as const,
   },
+  offers: {
+    all: ['offers'] as const,
+    byConversation: (conversationId: string) => ['offers', conversationId] as const,
+    pending: (conversationId: string) => ['offers', conversationId, 'pending'] as const,
+  },
 } as const;

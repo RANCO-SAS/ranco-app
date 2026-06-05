@@ -18,6 +18,12 @@ import { ChatJobStatusBanner } from '@/features/jobs/components/chat-job-status-
 import { JobEngagementPanel } from '@/features/jobs/components/job-engagement-panel';
 import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
 import { getJobEngagementStatusMessage } from '@/features/jobs/utils/job-engagement-status';
+import { NegotiationBottomSheet } from '@/features/offers/components/negotiation-bottom-sheet';
+import { OfferChatCard } from '@/features/offers/components/offer-chat-card';
+import { usePendingOffer } from '@/features/offers/hooks/use-offer-mutations';
+import { useOffersRealtime } from '@/features/offers/hooks/use-offers-realtime';
+import { formatOfferAmount } from '@/features/offers/utils/format-offer-amount';
+import { parseOfferMessageContent } from '@/features/offers/utils/parse-offer-message';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import {
   useConversation,
@@ -36,6 +42,7 @@ import {
   formatMessageTime,
   getMessageDeliveryStatus,
 } from '@/features/messages/utils/message-status';
+import { getComposerLockState } from '@/features/messages/utils/composer-lock';
 import { ReviewForm } from '@/features/reviews/components/review-form';
 import { useJobReview } from '@/features/reviews/hooks/use-reviews';
 import { useKeyboardLayout } from '@/hooks/use-keyboard-layout';
@@ -51,6 +58,14 @@ function MessageBubble({ message, isOwn }: MessageBubbleProps) {
   const theme = useTheme();
   const deliveryStatus = getMessageDeliveryStatus(message);
   const timeLabel = formatMessageTime(message.createdAt);
+
+  if (message.type === 'offer') {
+    const payload = parseOfferMessageContent(message.content);
+
+    if (payload) {
+      return <OfferChatCard isOwn={isOwn} payload={payload} timeLabel={timeLabel} />;
+    }
+  }
 
   if (message.type === 'image' && message.mediaUrl) {
     return (
@@ -112,8 +127,10 @@ export function ConversationScreen() {
   const { session } = useAuth();
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
   const [draft, setDraft] = useState('');
+  const [isNegotiationOpen, setIsNegotiationOpen] = useState(false);
   const conversationQuery = useConversation(conversationId);
   const messagesQuery = useMessages(conversationId);
+  const pendingOfferQuery = usePendingOffer(conversationId);
   const sendTextMessage = useSendTextMessage();
   const sendImageMessage = useSendImageMessage();
   const { insets, keyboardBehavior, keyboardVerticalOffset } = useKeyboardLayout();
@@ -136,6 +153,19 @@ export function ConversationScreen() {
   const isReviewInitialLoading = jobReviewQuery.isLoading && jobReviewQuery.data === undefined;
 
   const messages = messagesQuery.data ?? [];
+  const serviceRequestStatus = request?.status ?? conversation?.serviceRequestStatus ?? 'published';
+  const composerLock = useMemo(
+    () =>
+      conversation && session?.userId
+        ? getComposerLockState({
+            conversation,
+            requestStatus: serviceRequestStatus,
+            assignedProfessionalId: request?.assignedProfessionalId ?? null,
+            userId: session.userId,
+          })
+        : { locked: false, message: null },
+    [conversation, request?.assignedProfessionalId, serviceRequestStatus, session?.userId],
+  );
   const canSend = useMemo(() => draft.trim().length > 0, [draft]);
   const isPending = sendTextMessage.isPending || sendImageMessage.isPending;
 
@@ -143,6 +173,11 @@ export function ConversationScreen() {
     conversationId,
     enabled: Boolean(conversation),
     userId: session?.userId,
+  });
+
+  useOffersRealtime({
+    conversationId,
+    enabled: Boolean(conversation),
   });
 
   useServiceRequestRealtime({
@@ -168,7 +203,7 @@ export function ConversationScreen() {
   });
 
   const handleSend = () => {
-    if (!session?.userId || !conversationId || !canSend) {
+    if (!session?.userId || !conversationId || !canSend || composerLock.locked) {
       return;
     }
 
@@ -187,7 +222,7 @@ export function ConversationScreen() {
   };
 
   const handlePickImage = async () => {
-    if (!session?.userId || !conversationId || isPending) {
+    if (!session?.userId || !conversationId || isPending || composerLock.locked) {
       return;
     }
 
@@ -260,7 +295,15 @@ export function ConversationScreen() {
     );
   }
 
-  const serviceRequestStatus = request?.status ?? conversation.serviceRequestStatus;
+  const serviceRequestStatusResolved = request?.status ?? conversation.serviceRequestStatus;
+  const isNegotiationPressable =
+    serviceRequestStatusResolved === 'in_negotiation' &&
+    !conversation.closedAt &&
+    !composerLock.locked;
+  const pendingOffer = pendingOfferQuery.data;
+  const negotiationSubtitle = pendingOffer
+    ? `Oferta pendiente: ${formatOfferAmount(pendingOffer.amountCents, pendingOffer.currency)}`
+    : 'Propón un precio';
   const engagementMessage =
     request && session?.userId
       ? getJobEngagementStatusMessage({
@@ -274,6 +317,10 @@ export function ConversationScreen() {
           isClient,
         })
       : null;
+  const bannerMessage =
+    serviceRequestStatusResolved === 'in_negotiation' && isNegotiationPressable
+      ? negotiationSubtitle
+      : composerLock.message ?? engagementMessage;
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -281,11 +328,16 @@ export function ConversationScreen() {
         participant={counterpart}
         participantView={isClient ? 'professional' : 'client'}
         serviceRequestId={conversation.serviceRequestId}
-        serviceRequestStatus={serviceRequestStatus}
+        serviceRequestStatus={serviceRequestStatusResolved}
         title={conversation.serviceRequestTitle}
       />
 
-      <ChatJobStatusBanner message={engagementMessage} status={serviceRequestStatus} />
+      <ChatJobStatusBanner
+        message={bannerMessage}
+        onPress={isNegotiationPressable ? () => setIsNegotiationOpen(true) : undefined}
+        pressable={isNegotiationPressable}
+        status={serviceRequestStatusResolved}
+      />
 
       {request && session?.userId ? (
         <JobEngagementPanel
@@ -359,44 +411,66 @@ export function ConversationScreen() {
               paddingBottom: Math.max(insets.bottom, Spacing.md),
             },
           ]}>
-          <View style={[styles.inputShell, { backgroundColor: theme.backgroundSecondary }]}>
-            <TextInput
-              editable={!isPending}
-              onChangeText={setDraft}
-              placeholder="Escribe un mensaje..."
-              placeholderTextColor={theme.textMuted}
-              style={[styles.composerInput, { color: theme.text }]}
-              value={draft}
-            />
-            <Pressable
-              accessibilityRole="button"
-              disabled={isPending}
-              onPress={() => {
-                void handlePickImage();
-              }}
-              style={styles.iconButton}>
-              <AppIcon color={theme.textMuted} name="camera-outline" size={22} />
-            </Pressable>
-          </View>
+          {composerLock.locked && composerLock.message ? (
+            <View style={styles.composerLocked}>
+              <AppText color="textMuted" variant="caption">
+                {composerLock.message}
+              </AppText>
+            </View>
+          ) : (
+            <>
+              <View style={[styles.inputShell, { backgroundColor: theme.backgroundSecondary }]}>
+                <TextInput
+                  editable={!isPending}
+                  onChangeText={setDraft}
+                  placeholder="Escribe un mensaje..."
+                  placeholderTextColor={theme.textMuted}
+                  style={[styles.composerInput, { color: theme.text }]}
+                  value={draft}
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={isPending}
+                  onPress={() => {
+                    void handlePickImage();
+                  }}
+                  style={styles.iconButton}>
+                  <AppIcon color={theme.textMuted} name="camera-outline" size={22} />
+                </Pressable>
+              </View>
 
-          <Pressable
-            accessibilityRole="button"
-            disabled={!canSend || isPending}
-            onPress={handleSend}
-            style={[
-              styles.sendButton,
-              {
-                backgroundColor: canSend && !isPending ? theme.primary : theme.backgroundElement,
-              },
-            ]}>
-            <AppText
-              color={canSend && !isPending ? 'primaryForeground' : 'textMuted'}
-              variant="bodyMedium">
-              {isPending ? '...' : 'Enviar'}
-            </AppText>
-          </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                disabled={!canSend || isPending}
+                onPress={handleSend}
+                style={[
+                  styles.sendButton,
+                  {
+                    backgroundColor: canSend && !isPending ? theme.primary : theme.backgroundElement,
+                  },
+                ]}>
+                <AppText
+                  color={canSend && !isPending ? 'primaryForeground' : 'textMuted'}
+                  variant="bodyMedium">
+                  {isPending ? '...' : 'Enviar'}
+                </AppText>
+              </Pressable>
+            </>
+          )}
         </View>
       </KeyboardAvoidingView>
+
+      {session?.userId ? (
+        <NegotiationBottomSheet
+          conversationId={conversation.id}
+          isConversationClosed={Boolean(conversation.closedAt)}
+          onClose={() => setIsNegotiationOpen(false)}
+          pendingOffer={pendingOffer}
+          serviceRequestTitle={conversation.serviceRequestTitle}
+          userId={session.userId}
+          visible={isNegotiationOpen}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -476,6 +550,10 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Layout.screenPaddingHorizontal,
     paddingTop: Spacing.md,
+  },
+  composerLocked: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
   },
   inputShell: {
     flex: 1,
