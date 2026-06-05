@@ -5,4 +5,3 @@ ios/
 # Local secrets and caches
 .env
 .env*.local
-google-services.json

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StackHeader } from '@/components/layout/stack-header';
 import { AnimatedPressable } from '@/components/ui/animated-pressable';
-import { AppIcon, type AppIconName } from '@/components/ui/app-icon';
+import { AppIcon } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
 import {
   CardGradients,

@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/ui/avatar';
 import { AppIcon } from '@/components/ui/app-icon';
 import { AppText } from '@/components/ui/text';
+import { ProBadge } from '@/features/subscriptions/components/pro-badge';
+import type { SubscriptionTargetRole } from '@/features/subscriptions/types/subscription';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -10,6 +12,8 @@ type ProfileIdentitySectionProps = {
   fullName: string;
   avatarUrl?: string | null;
   locationLabel?: string | null;
+  isPro?: boolean;
+  proVariant?: SubscriptionTargetRole;
   onEditPhotoPress: () => void;
 };
 
@@ -17,6 +21,8 @@ export function ProfileIdentitySection({
   fullName,
   avatarUrl,
   locationLabel,
+  isPro = false,
+  proVariant = 'client',
   onEditPhotoPress,
 }: ProfileIdentitySectionProps) {
   const theme = useTheme();
@@ -51,6 +57,8 @@ export function ProfileIdentitySection({
       <AppText align="center" variant="title">
         {displayName}
       </AppText>
+
+      {isPro ? <ProBadge size="sm" variant={proVariant} /> : null}
 
       {locationLabel ? (
         <View style={styles.locationRow}>

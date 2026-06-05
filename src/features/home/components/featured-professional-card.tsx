@@ -8,6 +8,7 @@ import { AppText } from '@/components/ui/text';
 import { CardGradients, Radius, Spacing } from '@/constants/theme';
 import { isTopFeaturedProfessional } from '@/features/home/hooks/use-featured-professionals';
 import type { FeaturedProfessional } from '@/features/home/types/featured-professional.types';
+import { ProBadge } from '@/features/subscriptions/components/pro-badge';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -63,13 +64,16 @@ export function FeaturedProfessionalCard({
               </View>
             </View>
 
-            {showTopBadge ? (
-              <View style={[styles.topBadge, { backgroundColor: `${theme.primary}22` }]}>
-                <AppText color="primary" variant="small">
-                  Top
-                </AppText>
-              </View>
-            ) : null}
+            <View style={styles.badgeRow}>
+              {professional.isPro ? <ProBadge size="sm" variant="professional" /> : null}
+              {showTopBadge ? (
+                <View style={[styles.topBadge, { backgroundColor: `${theme.primary}22` }]}>
+                  <AppText color="primary" variant="small">
+                    Top
+                  </AppText>
+                </View>
+              ) : null}
+            </View>
           </View>
 
           <View style={styles.ratingRow}>
@@ -144,6 +148,11 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
     minWidth: 0,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
   },
   topBadge: {
     borderRadius: Radius.full,

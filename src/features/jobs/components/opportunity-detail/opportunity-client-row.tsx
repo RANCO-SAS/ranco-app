@@ -6,6 +6,7 @@ import { ProfileAvatarLink } from '@/components/ui/profile-avatar-link';
 import { AppText } from '@/components/ui/text';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
+import { ProBadge } from '@/features/subscriptions/components/pro-badge';
 import type { ServiceRequestClientPreview } from '@/features/jobs/types/service-request.types';
 import { formatPostedAt } from '@/shared/utils/format-posted-at';
 import { useTheme } from '@/hooks/use-theme';
@@ -44,6 +45,7 @@ export function OpportunityClientRow({
         <AppText variant="bodyMedium">{displayName}</AppText>
 
         <View style={styles.metaRow}>
+          {client.isPro ? <ProBadge size="sm" variant="client" /> : null}
           {rating !== undefined && rating > 0 ? (
             <View style={styles.ratingRow}>
               <AppIcon color={theme.warning} name="star" size={14} />

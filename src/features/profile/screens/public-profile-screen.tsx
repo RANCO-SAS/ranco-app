@@ -33,6 +33,7 @@ import {
   selectRoleReviewSummary,
 } from '@/features/reviews/hooks/use-reviews';
 import { useProfileReviewsRealtime } from '@/features/reviews/hooks/use-profile-reviews-realtime';
+import { useIsUserPro } from '@/features/subscriptions/hooks/use-is-user-pro';
 import { useScreenSurfaceColor } from '@/hooks/use-screen-surface-color';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -80,6 +81,8 @@ export function PublicProfileScreen() {
   const primaryRole = profile
     ? resolvePrimaryRole(view, profile.isClient, profile.isProfessional)
     : 'client';
+  const proStatusQuery = useIsUserPro(userId, primaryRole, Boolean(userId));
+  const isPro = proStatusQuery.data ?? false;
   const reviewsQuery = useProfileReviews(userId);
   useProfileReviewsRealtime({
     enabled: Boolean(userId),
@@ -147,6 +150,7 @@ export function PublicProfileScreen() {
         activeTab={activeTab}
         avatarUrl={profile.avatarUrl}
         fullName={profile.fullName}
+        isPro={isPro}
         locationLabel={profile.locationLabel}
         onTabChange={setActiveTab}
         primaryRole={primaryRole}

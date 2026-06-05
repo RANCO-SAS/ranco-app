@@ -17,6 +17,7 @@ function mapFeaturedProfessionalRow(row: FeaturedProfessionalRow): FeaturedProfe
     categorySlug: row.category_slug,
     averageRating: Number(row.average_rating),
     reviewCount: Number(row.review_count),
+    isPro: Boolean(row.is_pro),
   };
 }
 

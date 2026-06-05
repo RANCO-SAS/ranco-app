@@ -20,6 +20,8 @@ import { ProfileIdentitySection } from '@/features/profile/components/profile-id
 import { ProfileMenuList, type ProfileMenuItem } from '@/features/profile/components/profile-menu-list';
 import { ProfileModeSection } from '@/features/profile/components/profile-mode-section';
 import { ProfileStatCard } from '@/features/profile/components/profile-stat-card';
+import { ProBadge } from '@/features/subscriptions/components/pro-badge';
+import { useIsUserPro } from '@/features/subscriptions/hooks/use-is-user-pro';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
 import { useCurrentProfile } from '@/features/profile/hooks/use-current-profile';
 import { useUserJobHistory } from '@/features/profile/hooks/use-user-job-history';
@@ -32,6 +34,9 @@ export function ProfileScreen() {
   const theme = useTheme();
   const { profile } = useCurrentProfile();
   const { activeMode } = useActiveMode();
+  const activeRole = activeMode === 'professional' ? 'professional' : 'client';
+  const proStatusQuery = useIsUserPro(profile?.id, activeRole, Boolean(profile));
+  const isPro = proStatusQuery.data ?? false;
   const logout = useLogout();
   const jobHistoryQuery = useUserJobHistory(profile?.id);
   const reviewsQuery = useProfileReviews(profile?.id);
@@ -41,7 +46,6 @@ export function ProfileScreen() {
     userId: profile?.id,
   });
 
-  const activeRole = activeMode === 'professional' ? 'professional' : 'client';
   const roleSummary = selectRoleReviewSummary(reviewsQuery.data, activeRole);
   const completedJobs = (jobHistoryQuery.data ?? []).filter((job) => job.role === activeRole);
 
@@ -85,6 +89,12 @@ export function ProfileScreen() {
         icon: 'document-text-outline',
         label: 'Términos de pagos',
         onPress: () => router.push(Routes.app.paymentTerms),
+      },
+      {
+        key: 'subscription-plans',
+        icon: 'diamond-outline',
+        label: 'Planes Pro',
+        onPress: () => router.push(Routes.app.subscriptionPlans),
       },
     ];
 
@@ -139,8 +149,10 @@ export function ProfileScreen() {
             <ProfileIdentitySection
               avatarUrl={profile.avatarUrl}
               fullName={profile.fullName}
+              isPro={isPro}
               locationLabel={profile.locationLabel}
               onEditPhotoPress={() => router.push(Routes.app.editProfile)}
+              proVariant={activeRole}
             />
           </StaggeredFadeIn>
 

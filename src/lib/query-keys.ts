@@ -47,4 +47,12 @@ export const queryKeys = {
     all: ['payments'] as const,
     byRequest: (serviceRequestId: string) => ['payments', 'request', serviceRequestId] as const,
   },
+  subscriptions: {
+    all: ['subscriptions'] as const,
+    plans: (role: 'client' | 'professional') => ['subscriptions', 'plans', role] as const,
+    byUser: (userId: string, role: 'client' | 'professional') =>
+      ['subscriptions', 'user', userId, role] as const,
+    proStatus: (userId: string, role: 'client' | 'professional') =>
+      ['subscriptions', 'pro-status', userId, role] as const,
+  },
 } as const;

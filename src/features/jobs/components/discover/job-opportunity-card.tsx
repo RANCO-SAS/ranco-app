@@ -6,6 +6,7 @@ import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
 import { AppText } from '@/components/ui/text';
 import { CardGradients, Radius, Spacing } from '@/constants/theme';
+import { ProBadge } from '@/features/subscriptions/components/pro-badge';
 import { ServiceRequestAuthorHeader } from '@/features/jobs/components/service-request-author-header';
 import { ServiceRequestPhotoGallery } from '@/features/jobs/components/service-request-photo-gallery';
 import { UrgencyBadge } from '@/features/jobs/components/urgency-badge';
@@ -34,6 +35,7 @@ export function JobOpportunityCard({
   const headline = request.title.trim() || request.subcategoryName;
   const description = request.description.trim();
   const showDescription = description.length > 0 && description !== headline;
+  const isProClient = request.client.isPro;
 
   const cardContent = (
     <LinearGradient
@@ -54,7 +56,12 @@ export function JobOpportunityCard({
           categoryLabel={request.categoryName}
           client={request.client}
           createdAt={request.createdAt}
-          trailing={<UrgencyBadge uppercase urgency={request.urgency} />}
+          trailing={
+            <View style={styles.trailingBadges}>
+              {isProClient ? <ProBadge size="sm" variant="client" /> : null}
+              <UrgencyBadge uppercase urgency={request.urgency} />
+            </View>
+          }
         />
 
         <AppText numberOfLines={2} style={styles.headline} variant="subtitle">
@@ -113,9 +120,14 @@ export function JobOpportunityCard({
 
   const cardShellStyle: ViewStyle[] = [
     styles.cardOuter,
-    getCardElevation(colorScheme),
+    getCardElevation(colorScheme, isProClient),
     {
-      borderColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.1)' : theme.border,
+      borderColor: isProClient
+        ? theme.primary
+        : colorScheme === 'dark'
+          ? 'rgba(255,255,255,0.1)'
+          : theme.border,
+      borderWidth: isProClient ? 1 : StyleSheet.hairlineWidth,
     },
   ];
 
@@ -130,15 +142,15 @@ export function JobOpportunityCard({
   return <View style={cardShellStyle}>{cardContent}</View>;
 }
 
-function getCardElevation(colorScheme: 'light' | 'dark'): ViewStyle {
+function getCardElevation(colorScheme: 'light' | 'dark', isProClient = false): ViewStyle {
   const shadowColor = colorScheme === 'dark' ? '#0A84FF' : '#2563EB';
 
   return Platform.select({
     ios: {
       shadowColor,
       shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: colorScheme === 'dark' ? 0.15 : 0.1,
-      shadowRadius: 14,
+      shadowOpacity: isProClient ? 0.22 : colorScheme === 'dark' ? 0.15 : 0.1,
+      shadowRadius: isProClient ? 18 : 14,
     },
     android: {
       elevation: 4,
@@ -183,5 +195,9 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+  },
+  trailingBadges: {
+    alignItems: 'flex-end',
+    gap: Spacing.xs,
   },
 });

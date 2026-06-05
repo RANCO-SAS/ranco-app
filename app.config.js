@@ -25,10 +25,18 @@ const basePlugins = (appJson.expo.plugins ?? []).filter((plugin) => {
 const googleMapsApiKeyAndroid = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID ?? '';
 const googleMapsApiKeyIos = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS ?? '';
 
+const easProjectId = 'e2e47456-4bb1-43cf-8d29-fe2e229368d2';
+
 /** @type {import('expo/config').ExpoConfig} */
 module.exports = {
   expo: {
     ...appJson.expo,
+    runtimeVersion: {
+      policy: 'appVersion',
+    },
+    updates: {
+      url: `https://u.expo.dev/${easProjectId}`,
+    },
     android: {
       ...appJson.expo.android,
       edgeToEdgeEnabled: true,
@@ -84,8 +92,9 @@ module.exports = {
       ],
     ],
     extra: {
+      router: {},
       eas: {
-        projectId: '2e52e0f6-2310-4603-b5d9-8e1ce72440f3',
+        projectId: 'e2e47456-4bb1-43cf-8d29-fe2e229368d2',
       },
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',

@@ -13,6 +13,7 @@ export function mapServiceRequestRow(row: ServiceRequestRow): ServiceRequest {
       id: row.client?.id ?? row.client_id,
       fullName: row.client?.full_name?.trim() || 'Cliente',
       avatarUrl: row.client?.avatar_url ?? null,
+      isPro: false,
     },
     title: row.title,
     description: row.description,

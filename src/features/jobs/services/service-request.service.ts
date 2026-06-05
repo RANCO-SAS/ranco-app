@@ -7,6 +7,7 @@ import type {
 } from '@/features/jobs/types/service-request.types';
 import type { UserJobHistoryItem } from '@/features/profile/types/profile.types';
 import { mapServiceRequestRow } from '@/features/jobs/services/service-request.mapper';
+import { subscriptionService } from '@/features/subscriptions/services/subscription.service';
 import {
   canUserUpdateStatus,
   requiresAssignedProfessional,
@@ -24,6 +25,26 @@ const SERVICE_REQUEST_SELECT = `
   client:user_profiles!client_id ( id, full_name, avatar_url ),
   assigned_professional:user_profiles!assigned_professional_id ( id, full_name, avatar_url )
 `;
+
+async function enrichRequestsWithClientProStatus(
+  requests: ServiceRequest[],
+): Promise<ServiceRequest[]> {
+  const clientIds = [...new Set(requests.map((request) => request.clientId))];
+
+  if (clientIds.length === 0) {
+    return requests;
+  }
+
+  const proStatusMap = await subscriptionService.getProStatusForUsers(clientIds, 'client');
+
+  return requests.map((request) => ({
+    ...request,
+    client: {
+      ...request.client,
+      isPro: proStatusMap.get(request.clientId) ?? false,
+    },
+  }));
+}
 
 async function getClientRequests(clientId: string): Promise<ServiceRequest[]> {
   const supabase = getSupabaseClient();
@@ -53,7 +74,8 @@ async function getPublishedRequests(): Promise<ServiceRequest[]> {
     throw error;
   }
 
-  return (data as ServiceRequestRow[]).map(mapServiceRequestRow);
+  const requests = (data as ServiceRequestRow[]).map(mapServiceRequestRow);
+  return enrichRequestsWithClientProStatus(requests);
 }
 
 async function getServiceRequestById(requestId: string): Promise<ServiceRequest | null> {
@@ -72,7 +94,11 @@ async function getServiceRequestById(requestId: string): Promise<ServiceRequest 
     return null;
   }
 
-  return mapServiceRequestRow(data as ServiceRequestRow);
+  const [request] = await enrichRequestsWithClientProStatus([
+    mapServiceRequestRow(data as ServiceRequestRow),
+  ]);
+
+  return request;
 }
 
 async function uploadRequestPhotos(

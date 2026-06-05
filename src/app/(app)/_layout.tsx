@@ -64,6 +64,7 @@ export default function AppLayout() {
         <Stack.Screen name="users/[userId]" />
         <Stack.Screen name="reviews/[reviewId]" />
         <Stack.Screen name="legal/payment-terms" />
+        <Stack.Screen name="subscription/plans" />
       </Stack>
     </RealtimeNotificationsProvider>
   );

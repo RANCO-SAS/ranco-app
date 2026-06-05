@@ -51,5 +51,6 @@ export const Routes = {
     editProfile: '/(app)/edit-profile',
     activateProfessional: '/(app)/activate-professional',
     paymentTerms: '/(app)/legal/payment-terms' as Href,
+    subscriptionPlans: '/(app)/subscription/plans' as Href,
   },
 } as const;

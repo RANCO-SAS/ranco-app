@@ -12,6 +12,7 @@ export type ServiceRequestClientPreview = {
   id: string;
   fullName: string;
   avatarUrl: string | null;
+  isPro: boolean;
 };
 
 export type ServiceRequestProfessionalPreview = {

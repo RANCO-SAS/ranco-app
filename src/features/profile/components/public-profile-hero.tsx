@@ -6,6 +6,7 @@ import { AppIcon } from '@/components/ui/app-icon';
 import { Avatar } from '@/components/ui/avatar';
 import { AppText } from '@/components/ui/text';
 import { Layout, Radius, Spacing } from '@/constants/theme';
+import { ProBadge } from '@/features/subscriptions/components/pro-badge';
 import { ProfileSegmentTabs } from '@/features/profile/components/profile-segment-tabs';
 import type { PublicProfileTab } from '@/features/profile/types/profile.types';
 import type { RoleReviewSummary } from '@/features/reviews/types/review.types';
@@ -19,6 +20,7 @@ type PublicProfileHeroProps = {
   primaryRole: 'client' | 'professional';
   professionLabel?: string;
   roleSummary: RoleReviewSummary | null;
+  isPro?: boolean;
   activeTab: PublicProfileTab;
   onTabChange: (tab: PublicProfileTab) => void;
 };
@@ -33,6 +35,7 @@ export function PublicProfileHero({
   primaryRole,
   professionLabel,
   roleSummary,
+  isPro = false,
   activeTab,
   onTabChange,
 }: PublicProfileHeroProps) {
@@ -116,6 +119,7 @@ export function PublicProfileHero({
             <AppText color="primary" numberOfLines={1} style={styles.roleText} variant="bodyMedium">
               {roleText}
             </AppText>
+            {isPro ? <ProBadge size="sm" variant={primaryRole} /> : null}
             {showVerifiedBadge ? (
               <View style={[styles.verifiedBadge, { backgroundColor: theme.primary }]}>
                 <AppIcon color={theme.primaryForeground} name="checkmark" size={12} />

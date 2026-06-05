@@ -7,6 +7,7 @@ export type FeaturedProfessional = {
   categorySlug: string;
   averageRating: number;
   reviewCount: number;
+  isPro: boolean;
 };
 
 export type FeaturedProfessionalRow = {
@@ -18,6 +19,7 @@ export type FeaturedProfessionalRow = {
   category_slug: string;
   average_rating: number;
   review_count: number;
+  is_pro: boolean;
 };
 
 export type GetFeaturedProfessionalsInput = {
