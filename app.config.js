@@ -63,8 +63,12 @@ module.exports = {
         'expo-splash-screen',
         {
           backgroundColor: SPLASH_BACKGROUND_LIGHT,
+          // Android requires splashscreen_logo drawables; transparent image keeps color-only UX.
+          image: './assets/images/splash-transparent.png',
+          imageWidth: 1,
           dark: {
             backgroundColor: SPLASH_BACKGROUND_DARK,
+            image: './assets/images/splash-transparent.png',
           },
         },
       ],
