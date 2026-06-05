@@ -7,6 +7,7 @@ import { StaggeredFadeIn } from '@/components/ui/staggered-fade-in';
 import { AppText } from '@/components/ui/text';
 import { ClientDashboard } from '@/features/home/components/client-dashboard';
 import { ProfessionalDashboard } from '@/features/home/components/professional-dashboard';
+import { NotificationBell } from '@/features/notifications/components/notification-bell';
 import { Routes } from '@/constants/routes';
 import { Spacing } from '@/constants/theme';
 import { useActiveMode } from '@/features/profile/hooks/use-active-mode';
@@ -51,6 +52,7 @@ export default function HomeScreen() {
                   {personalGreeting}
                 </AppText>
               </View>
+              <NotificationBell />
             </View>
           </StaggeredFadeIn>
           <ProfessionalDashboard />
@@ -70,10 +72,16 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
     marginBottom: Spacing.md,
   },
   headerText: {
+    flex: 1,
     gap: Spacing.xs,
+    minWidth: 0,
   },
   titleRow: {
     flexDirection: 'row',

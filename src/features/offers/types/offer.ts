@@ -1,4 +1,4 @@
-export type OfferStatus = 'pending' | 'accepted' | 'withdrawn' | 'superseded';
+export type OfferStatus = 'pending' | 'accepted' | 'withdrawn' | 'superseded' | 'declined';
 
 export const DEFAULT_OFFER_CURRENCY = 'COP' as const;
 

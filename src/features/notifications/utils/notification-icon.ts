@@ -40,7 +40,27 @@ export function getNotificationIconConfig(
       background: theme.backgroundElement,
       color: theme.primary,
     },
+    new_offer: {
+      name: 'cash-outline',
+      background: theme.backgroundElement,
+      color: theme.warning,
+    },
+    offer_accepted: {
+      name: 'checkmark-circle-outline',
+      background: theme.backgroundElement,
+      color: theme.success,
+    },
+    payment_pending_claim: {
+      name: 'wallet-outline',
+      background: theme.backgroundElement,
+      color: theme.warning,
+    },
+    payment_completed: {
+      name: 'cash-outline',
+      background: theme.backgroundElement,
+      color: theme.success,
+    },
   };
 
-  return configs[type];
+  return configs[type] ?? configs.job_status;
 }

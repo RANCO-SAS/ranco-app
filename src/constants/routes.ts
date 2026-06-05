@@ -25,6 +25,14 @@ export const Routes = {
       pathname: '/(app)/jobs/[id]/edit',
       params: { id: jobId },
     }),
+    payJob: (jobId: string): Href => ({
+      pathname: '/(app)/jobs/[id]/pay',
+      params: { id: jobId },
+    }),
+    claimPayout: (jobId: string): Href => ({
+      pathname: '/(app)/jobs/[id]/payout',
+      params: { id: jobId },
+    }),
     messages: '/(app)/(tabs)/messages',
     conversation: (conversationId: string): Href => ({
       pathname: '/(app)/messages/[conversationId]',
@@ -42,5 +50,6 @@ export const Routes = {
     notifications: '/(app)/notifications',
     editProfile: '/(app)/edit-profile',
     activateProfessional: '/(app)/activate-professional',
+    paymentTerms: '/(app)/legal/payment-terms' as Href,
   },
 } as const;

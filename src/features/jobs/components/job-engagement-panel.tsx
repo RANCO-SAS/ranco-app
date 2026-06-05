@@ -1,15 +1,20 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
+import { Routes } from '@/constants/routes';
 import { Spacing, Layout } from '@/constants/theme';
 import { SERVICE_REQUEST_STATUS_LABELS } from '@/features/jobs/constants/service-request-labels';
 import { useUpdateServiceRequestStatus } from '@/features/jobs/hooks/use-update-service-request-status';
 import type { ServiceRequestStatus } from '@/features/jobs/types/service-request.types';
 import { getJobEngagementStatusMessage } from '@/features/jobs/utils/job-engagement-status';
+import { markPaymentScreenOpened } from '@/features/payments/payment-prompt-session';
+import { queryKeys } from '@/lib/query-keys';
 
 type JobEngagementPanelProps = {
   requestId: string;
@@ -36,16 +41,10 @@ function getAvailableActions(props: JobEngagementPanelProps): StatusAction[] {
     props.assignedProfessionalId !== props.professionalId &&
     props.status !== 'cancelled'
   ) {
-    return props.isClient && props.status === 'in_negotiation'
-      ? [{ label: 'Cancelar solicitud', nextStatus: 'cancelled', variant: 'ghost' }]
-      : [];
+    return [];
   }
 
   if (props.isClient) {
-    if (props.status === 'in_negotiation') {
-      return [{ label: 'Cancelar solicitud', nextStatus: 'cancelled', variant: 'ghost' }];
-    }
-
     if (props.status === 'accepted' && props.assignedProfessionalId === props.professionalId) {
       return [{ label: 'Iniciar trabajo', nextStatus: 'in_progress', variant: 'dark' }];
     }
@@ -80,6 +79,8 @@ export function JobEngagementPanel({
   variant = 'card',
   ...props
 }: JobEngagementPanelProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const updateStatus = useUpdateServiceRequestStatus();
   const [pendingAction, setPendingAction] = useState<StatusAction | null>(null);
   const actions = getAvailableActions(props);
@@ -100,6 +101,18 @@ export function JobEngagementPanel({
           action.nextStatus === 'accepted' ? props.professionalId : undefined,
       },
       {
+        onSuccess: () => {
+          if (action.nextStatus === 'completed') {
+            void queryClient.invalidateQueries({
+              queryKey: queryKeys.payments.byRequest(props.requestId),
+            });
+
+            if (props.isClient) {
+              markPaymentScreenOpened(props.requestId);
+              router.push(Routes.app.payJob(props.requestId));
+            }
+          }
+        },
         onSettled: () => {
           setPendingAction(null);
         },

@@ -26,9 +26,9 @@ export function SplashGate({ children }: SplashGateProps) {
     handleAnimationFinish,
     handleRootLayout,
     isAppVisible,
-    lottieRef,
     overlayOpacity,
     phase,
+    showLottie,
     showOverlay,
   } = useSplashController();
 
@@ -51,15 +51,16 @@ export function SplashGate({ children }: SplashGateProps) {
             { backgroundColor, zIndex: SPLASH_OVERLAY_Z_INDEX },
             { opacity: overlayOpacity },
           ]}>
-          <LottieView
-            ref={lottieRef}
-            autoPlay={false}
-            loop={false}
-            source={welcomeSource}
-            speed={SPLASH_SPEED}
-            onAnimationFinish={handleAnimationFinish}
-            style={{ width: lottieWidth, height: lottieHeight }}
-          />
+          {showLottie ? (
+            <LottieView
+              autoPlay
+              loop={false}
+              source={welcomeSource}
+              speed={SPLASH_SPEED}
+              onAnimationFinish={handleAnimationFinish}
+              style={{ width: lottieWidth, height: lottieHeight }}
+            />
+          ) : null}
         </Animated.View>
       ) : null}
     </View>

@@ -89,3 +89,15 @@ export function useWithdrawOffer() {
     },
   });
 }
+
+export function useDeclineOffer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: OfferActionInput & { conversationId: string }) =>
+      offerService.declineOffer(input),
+    onSuccess: (_result, input) => {
+      invalidateOfferQueries(queryClient, input.conversationId);
+    },
+  });
+}

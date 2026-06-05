@@ -14,6 +14,9 @@ export function useUpdateServiceRequestStatus() {
       queryClient.setQueryData(queryKeys.jobs.detail(request.id), request);
       void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.messages.all });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.payments.byRequest(request.id),
+      });
     },
   });
 }

@@ -43,4 +43,8 @@ export const queryKeys = {
     byConversation: (conversationId: string) => ['offers', conversationId] as const,
     pending: (conversationId: string) => ['offers', conversationId, 'pending'] as const,
   },
+  payments: {
+    all: ['payments'] as const,
+    byRequest: (serviceRequestId: string) => ['payments', 'request', serviceRequestId] as const,
+  },
 } as const;

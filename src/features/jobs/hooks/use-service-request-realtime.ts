@@ -39,6 +39,7 @@ export function useServiceRequestRealtime({
 
     void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.published });
     void queryClient.invalidateQueries({ queryKey: queryKeys.messages.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.payments.byRequest(requestId) });
   }, [assignedProfessionalId, clientId, queryClient, requestId]);
 
   useSupabasePostgresChanges({

@@ -58,9 +58,12 @@ export default function AppLayout() {
         <Stack.Screen name="notifications" />
         <Stack.Screen name="jobs/create" />
         <Stack.Screen name="jobs/[id]" />
+        <Stack.Screen name="jobs/[id]/pay" />
+        <Stack.Screen name="jobs/[id]/payout" />
         <Stack.Screen name="messages/[conversationId]" />
         <Stack.Screen name="users/[userId]" />
         <Stack.Screen name="reviews/[reviewId]" />
+        <Stack.Screen name="legal/payment-terms" />
       </Stack>
     </RealtimeNotificationsProvider>
   );

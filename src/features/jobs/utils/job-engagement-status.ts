@@ -1,4 +1,5 @@
 import type { ServiceRequestStatus } from '@/features/jobs/types/service-request.types';
+import type { ServicePaymentStatus } from '@/features/payments/types/payment';
 
 type EngagementContext = {
   requestId: string;
@@ -9,6 +10,7 @@ type EngagementContext = {
   status: ServiceRequestStatus;
   assignedProfessionalId: string | null;
   isClient: boolean;
+  paymentStatus?: ServicePaymentStatus | null;
 };
 
 export function getJobEngagementStatusMessage(props: EngagementContext): string | null {
@@ -34,6 +36,14 @@ export function getJobEngagementStatusMessage(props: EngagementContext): string 
     }
 
     if (props.status === 'completed') {
+      if (props.paymentStatus === 'awaiting_client_payment') {
+        return 'Completa el pago del servicio finalizado.';
+      }
+
+      if (props.paymentStatus === 'paid_pending_payout') {
+        return 'Esperando que el cliente confirme el pago.';
+      }
+
       return 'Puedes dejar una reseña sobre este trabajo.';
     }
 
@@ -61,6 +71,14 @@ export function getJobEngagementStatusMessage(props: EngagementContext): string 
   }
 
   if (props.status === 'completed') {
+    if (props.paymentStatus === 'paid_pending_payout') {
+      return 'Tienes un pago disponible para reclamar.';
+    }
+
+    if (props.paymentStatus === 'payout_completed') {
+      return 'Trabajo completado y pago depositado.';
+    }
+
     return 'Trabajo completado.';
   }
 

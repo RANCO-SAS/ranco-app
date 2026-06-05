@@ -1,22 +1,32 @@
 import * as SplashScreen from 'expo-splash-screen';
-import type LottieView from 'lottie-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, InteractionManager } from 'react-native';
 
+import { getSplashLottieDurationMs } from '@/constants/splash';
+import {
+  isSplashCompletedForSession,
+  markSplashCompletedForSession,
+} from '@/features/splash/splash-session';
+
 const EXIT_FADE_MS = 200;
-const SPLASH_TIMEOUT_MS = 10_000;
+const SPLASH_TIMEOUT_MS = getSplashLottieDurationMs() + 1500;
 
 export type SplashPhase = 'splash' | 'exiting' | 'done';
 
 export function useSplashController() {
-  const [phase, setPhase] = useState<SplashPhase>('splash');
-  const [appReady, setAppReady] = useState(false);
+  const splashAlreadyCompleted = isSplashCompletedForSession();
 
-  const phaseRef = useRef<SplashPhase>('splash');
-  const nativeSplashHidden = useRef(false);
-  const lottieStarted = useRef(false);
-  const lottieRef = useRef<LottieView>(null);
-  const overlayOpacity = useMemo(() => new Animated.Value(1), []);
+  const [phase, setPhase] = useState<SplashPhase>(splashAlreadyCompleted ? 'done' : 'splash');
+  const [appReady, setAppReady] = useState(splashAlreadyCompleted);
+  const [showLottie, setShowLottie] = useState(false);
+
+  const phaseRef = useRef<SplashPhase>(splashAlreadyCompleted ? 'done' : 'splash');
+  const nativeSplashHidden = useRef(splashAlreadyCompleted);
+  const animationFinished = useRef(splashAlreadyCompleted);
+  const overlayOpacity = useMemo(
+    () => new Animated.Value(splashAlreadyCompleted ? 0 : 1),
+    [splashAlreadyCompleted],
+  );
 
   const setPhaseSafe = useCallback((next: SplashPhase) => {
     phaseRef.current = next;
@@ -24,14 +34,16 @@ export function useSplashController() {
   }, []);
 
   const finishSplash = useCallback(() => {
+    markSplashCompletedForSession();
     setPhaseSafe('done');
   }, [setPhaseSafe]);
 
   const startExitFade = useCallback(() => {
-    if (phaseRef.current !== 'splash') {
+    if (phaseRef.current !== 'splash' || animationFinished.current) {
       return;
     }
 
+    animationFinished.current = true;
     setPhaseSafe('exiting');
     Animated.timing(overlayOpacity, {
       toValue: 0,
@@ -44,30 +56,23 @@ export function useSplashController() {
     });
   }, [finishSplash, overlayOpacity, setPhaseSafe]);
 
-  const playLottieFromStart = useCallback(() => {
-    requestAnimationFrame(() => {
-      lottieRef.current?.play(0);
-    });
-  }, []);
-
-  const hideNativeAndPlayLottie = useCallback(async () => {
-    if (lottieStarted.current || !appReady) {
+  const hideNativeSplash = useCallback(async () => {
+    if (nativeSplashHidden.current || !appReady || splashAlreadyCompleted) {
       return;
     }
 
-    lottieStarted.current = true;
-
-    if (!nativeSplashHidden.current) {
-      nativeSplashHidden.current = true;
-      await SplashScreen.hideAsync();
-    }
-
-    playLottieFromStart();
-  }, [appReady, playLottieFromStart]);
+    nativeSplashHidden.current = true;
+    await SplashScreen.hideAsync();
+    setShowLottie(true);
+  }, [appReady, splashAlreadyCompleted]);
 
   const handleRootLayout = useCallback(() => {
-    void hideNativeAndPlayLottie();
-  }, [hideNativeAndPlayLottie]);
+    if (splashAlreadyCompleted) {
+      return;
+    }
+
+    void hideNativeSplash();
+  }, [hideNativeSplash, splashAlreadyCompleted]);
 
   const handleAnimationFinish = useCallback(
     (isCancelled: boolean) => {
@@ -81,6 +86,10 @@ export function useSplashController() {
   );
 
   useEffect(() => {
+    if (splashAlreadyCompleted) {
+      return;
+    }
+
     const interactionTask = InteractionManager.runAfterInteractions(() => {
       setAppReady(true);
     });
@@ -88,20 +97,24 @@ export function useSplashController() {
     return () => {
       interactionTask.cancel();
     };
-  }, []);
+  }, [splashAlreadyCompleted]);
 
   useEffect(() => {
-    if (phase !== 'splash' || !appReady) {
+    if (splashAlreadyCompleted || !appReady) {
+      return;
+    }
+
+    void hideNativeSplash();
+  }, [appReady, hideNativeSplash, splashAlreadyCompleted]);
+
+  useEffect(() => {
+    if (phase !== 'splash' || !appReady || !showLottie || splashAlreadyCompleted) {
       return;
     }
 
     const timeoutId = setTimeout(() => {
-      if (phaseRef.current !== 'splash') {
+      if (phaseRef.current !== 'splash' || animationFinished.current) {
         return;
-      }
-
-      if (__DEV__) {
-        console.error('[Splash] Timeout waiting for Lottie onAnimationFinish');
       }
 
       startExitFade();
@@ -110,19 +123,18 @@ export function useSplashController() {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [appReady, phase, startExitFade]);
+  }, [appReady, phase, showLottie, splashAlreadyCompleted, startExitFade]);
 
   const showOverlay = phase !== 'done';
   const isAppVisible = phase === 'done';
 
   return {
-    appReady,
     handleAnimationFinish,
     handleRootLayout,
     isAppVisible,
-    lottieRef,
     overlayOpacity,
     phase,
+    showLottie,
     showOverlay,
   };
 }

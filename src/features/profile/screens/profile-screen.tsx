@@ -80,6 +80,12 @@ export function ProfileScreen() {
         label: 'Notificaciones',
         onPress: () => router.push(Routes.app.notifications),
       },
+      {
+        key: 'payment-terms',
+        icon: 'document-text-outline',
+        label: 'Términos de pagos',
+        onPress: () => router.push(Routes.app.paymentTerms),
+      },
     ];
 
     if (profile.isClient) {

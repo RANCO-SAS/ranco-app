@@ -54,6 +54,65 @@ export const CardGradients = {
   },
 } as const;
 
+export const NegotiationSheetGradients = {
+  light: {
+    sheet: ['#F2F2F7', '#FFFFFF'] as const,
+    pendingBadge: ['#6366F1', '#818CF8'] as const,
+    amount: '#2563EB',
+  },
+  dark: {
+    sheet: ['#1C1C1E', '#141416'] as const,
+    pendingBadge: ['#6366F1', '#818CF8'] as const,
+    amount: '#64D2FF',
+  },
+} as const;
+
+/** Subtle full-screen backgrounds for legal / static content screens */
+export const TermsScreenGradients = {
+  light: ['#FFFFFF', '#F8FAFC', '#F1F5F9'] as const,
+  dark: ['#1C1C1E', '#0A0A0A', '#000000'] as const,
+} as const;
+
+export const NegotiationButtonGradients = {
+  light: {
+    primary: ['#1E40AF', '#2563EB', '#3B82F6'] as const,
+    primaryText: '#FFFFFF',
+    primaryIcon: '#FFFFFF',
+  },
+  dark: {
+    primary: ['#1E3A8A', '#1D4ED8', '#2563EB'] as const,
+    primaryText: '#FFFFFF',
+    primaryIcon: '#FFFFFF',
+  },
+} as const;
+
+export const NegotiationButtonSurfaces = {
+  light: {
+    outline: {
+      background: '#FFFFFF',
+      border: '#CBD5E1',
+      text: '#0F172A',
+    },
+    mutedDestructive: {
+      background: '#FEF2F2',
+      border: '#FECACA',
+      text: '#DC2626',
+    },
+  },
+  dark: {
+    outline: {
+      background: 'rgba(255,255,255,0.06)',
+      border: 'rgba(255,255,255,0.12)',
+      text: '#FFFFFF',
+    },
+    mutedDestructive: {
+      background: 'rgba(72, 32, 32, 0.55)',
+      border: 'rgba(127, 29, 29, 0.45)',
+      text: '#FCA5A5',
+    },
+  },
+} as const;
+
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 export type ColorScheme = keyof typeof Colors;
 

@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useMemo, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChatHeader } from '@/components/layout/chat-header';
@@ -14,15 +14,24 @@ import { Spacer } from '@/components/ui/spacer';
 import { AppText } from '@/components/ui/text';
 import { ZoomableImage } from '@/components/ui/zoomable-image';
 import { Layout, Radius, Spacing } from '@/constants/theme';
+import { Routes } from '@/constants/routes';
 import { ChatJobStatusBanner } from '@/features/jobs/components/chat-job-status-banner';
 import { JobEngagementPanel } from '@/features/jobs/components/job-engagement-panel';
 import { useServiceRequest } from '@/features/jobs/hooks/use-service-requests';
 import { getJobEngagementStatusMessage } from '@/features/jobs/utils/job-engagement-status';
-import { NegotiationBottomSheet } from '@/features/offers/components/negotiation-bottom-sheet';
+import {
+  NegotiationBottomSheet,
+  type NegotiationBottomSheetRef,
+} from '@/features/offers/components/negotiation-bottom-sheet';
 import { OfferChatCard } from '@/features/offers/components/offer-chat-card';
 import { usePendingOffer } from '@/features/offers/hooks/use-offer-mutations';
 import { useOffersRealtime } from '@/features/offers/hooks/use-offers-realtime';
+import { PaymentStatusBanner } from '@/features/payments/components/payment-status-banner';
+import { useAutoOpenClientPayment } from '@/features/payments/hooks/use-auto-open-client-payment';
+import { useServicePayment } from '@/features/payments/hooks/use-service-payment';
 import { formatOfferAmount } from '@/features/offers/utils/format-offer-amount';
+import { formatClientServiceTotalLabel } from '@/features/payments/components/client-service-total-preview';
+import { formatWorkerNetEarningsLabel } from '@/features/payments/components/worker-service-earnings-preview';
 import { parseOfferMessageContent } from '@/features/offers/utils/parse-offer-message';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import {
@@ -52,9 +61,10 @@ import { devError, devLog } from '@/lib/dev-logger';
 type MessageBubbleProps = {
   message: Message;
   isOwn: boolean;
+  isViewerClient: boolean;
 };
 
-function MessageBubble({ message, isOwn }: MessageBubbleProps) {
+function MessageBubble({ message, isOwn, isViewerClient }: MessageBubbleProps) {
   const theme = useTheme();
   const deliveryStatus = getMessageDeliveryStatus(message);
   const timeLabel = formatMessageTime(message.createdAt);
@@ -63,7 +73,15 @@ function MessageBubble({ message, isOwn }: MessageBubbleProps) {
     const payload = parseOfferMessageContent(message.content);
 
     if (payload) {
-      return <OfferChatCard isOwn={isOwn} payload={payload} timeLabel={timeLabel} />;
+      return (
+        <OfferChatCard
+          isOwn={isOwn}
+          payload={payload}
+          showClientTotal={isViewerClient && !isOwn}
+          showWorkerEarnings={!isViewerClient}
+          timeLabel={timeLabel}
+        />
+      );
     }
   }
 
@@ -124,10 +142,11 @@ function resolveCounterpart(conversation: Conversation, userId: string | undefin
 
 export function ConversationScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { session } = useAuth();
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
   const [draft, setDraft] = useState('');
-  const [isNegotiationOpen, setIsNegotiationOpen] = useState(false);
+  const negotiationSheetRef = useRef<NegotiationBottomSheetRef>(null);
   const conversationQuery = useConversation(conversationId);
   const messagesQuery = useMessages(conversationId);
   const pendingOfferQuery = usePendingOffer(conversationId);
@@ -136,6 +155,7 @@ export function ConversationScreen() {
   const { insets, keyboardBehavior, keyboardVerticalOffset } = useKeyboardLayout();
 
   const conversation = conversationQuery.data;
+  const paymentQuery = useServicePayment(conversation?.serviceRequestId);
   const requestQuery = useServiceRequest(conversation?.serviceRequestId);
   const request = requestQuery.data;
 
@@ -168,6 +188,14 @@ export function ConversationScreen() {
   );
   const canSend = useMemo(() => draft.trim().length > 0, [draft]);
   const isPending = sendTextMessage.isPending || sendImageMessage.isPending;
+
+  useAutoOpenClientPayment({
+    serviceRequestId: conversation?.serviceRequestId,
+    requestStatus: request?.status,
+    paymentStatus: paymentQuery.data?.status,
+    isClient,
+    enabled: Boolean(conversation && request),
+  });
 
   useMessagesRealtime({
     conversationId,
@@ -297,13 +325,14 @@ export function ConversationScreen() {
 
   const serviceRequestStatusResolved = request?.status ?? conversation.serviceRequestStatus;
   const isNegotiationPressable =
-    serviceRequestStatusResolved === 'in_negotiation' &&
-    !conversation.closedAt &&
-    !composerLock.locked;
+    serviceRequestStatusResolved === 'in_negotiation' && !conversation.closedAt;
   const pendingOffer = pendingOfferQuery.data;
   const negotiationSubtitle = pendingOffer
-    ? `Oferta pendiente: ${formatOfferAmount(pendingOffer.amountCents, pendingOffer.currency)}`
+    ? isClient
+      ? `Total a pagar: ${formatClientServiceTotalLabel(pendingOffer.amountCents)}`
+      : `Ganancia neta: ${formatWorkerNetEarningsLabel(pendingOffer.amountCents)}`
     : 'Propón un precio';
+  const payment = paymentQuery.data;
   const engagementMessage =
     request && session?.userId
       ? getJobEngagementStatusMessage({
@@ -315,8 +344,28 @@ export function ConversationScreen() {
           status: request.status,
           assignedProfessionalId: request.assignedProfessionalId,
           isClient,
+          paymentStatus: payment?.status,
         })
       : null;
+  const showPaymentBanner =
+    request?.status === 'completed' &&
+    payment &&
+    payment.status !== 'payout_completed';
+
+  const handlePaymentBannerPress = () => {
+    if (!request) {
+      return;
+    }
+
+    if (payment?.status === 'awaiting_client_payment' && isClient) {
+      router.push(Routes.app.payJob(request.id));
+      return;
+    }
+
+    if (payment?.status === 'paid_pending_payout' && !isClient) {
+      router.push(Routes.app.claimPayout(request.id));
+    }
+  };
   const bannerMessage =
     serviceRequestStatusResolved === 'in_negotiation' && isNegotiationPressable
       ? negotiationSubtitle
@@ -334,10 +383,26 @@ export function ConversationScreen() {
 
       <ChatJobStatusBanner
         message={bannerMessage}
-        onPress={isNegotiationPressable ? () => setIsNegotiationOpen(true) : undefined}
+        onPress={
+          isNegotiationPressable
+            ? () => {
+                negotiationSheetRef.current?.present();
+              }
+            : undefined
+        }
         pressable={isNegotiationPressable}
         status={serviceRequestStatusResolved}
       />
+
+      {showPaymentBanner && payment ? (
+        <View style={styles.paymentBannerWrap}>
+          <PaymentStatusBanner
+            isClient={isClient}
+            onPress={handlePaymentBannerPress}
+            paymentStatus={payment.status}
+          />
+        </View>
+      ) : null}
 
       {request && session?.userId ? (
         <JobEngagementPanel
@@ -398,7 +463,11 @@ export function ConversationScreen() {
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
-            <MessageBubble isOwn={item.senderId === session?.userId} message={item} />
+            <MessageBubble
+              isOwn={item.senderId === session?.userId}
+              isViewerClient={isClient}
+              message={item}
+            />
           )}
         />
 
@@ -462,13 +531,13 @@ export function ConversationScreen() {
 
       {session?.userId ? (
         <NegotiationBottomSheet
+          ref={negotiationSheetRef}
           conversationId={conversation.id}
           isConversationClosed={Boolean(conversation.closedAt)}
-          onClose={() => setIsNegotiationOpen(false)}
+          isViewerClient={isClient}
           pendingOffer={pendingOffer}
           serviceRequestTitle={conversation.serviceRequestTitle}
           userId={session.userId}
-          visible={isNegotiationOpen}
         />
       ) : null}
     </SafeAreaView>
@@ -493,6 +562,9 @@ const styles = StyleSheet.create({
   typingRow: {
     paddingHorizontal: Layout.screenPaddingHorizontal,
     paddingBottom: Spacing.xs,
+  },
+  paymentBannerWrap: {
+    paddingHorizontal: Layout.screenPaddingHorizontal,
   },
   messagesList: {
     paddingHorizontal: Layout.screenPaddingHorizontal,

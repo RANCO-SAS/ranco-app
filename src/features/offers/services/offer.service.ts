@@ -94,6 +94,17 @@ async function withdrawOffer(input: OfferActionInput): Promise<void> {
   }
 }
 
+async function declineOffer(input: OfferActionInput): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.rpc('decline_service_offer', {
+    p_offer_id: input.offerId,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export const offerService = {
   getConversationOffers,
   getPendingOffer,
@@ -101,4 +112,5 @@ export const offerService = {
   counterOffer,
   acceptOffer,
   withdrawOffer,
+  declineOffer,
 };

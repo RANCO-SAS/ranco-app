@@ -3,7 +3,11 @@ export type NotificationType =
   | 'new_message'
   | 'new_review'
   | 'job_status'
-  | 'new_conversation';
+  | 'new_conversation'
+  | 'new_offer'
+  | 'offer_accepted'
+  | 'payment_pending_claim'
+  | 'payment_completed';
 
 export type AppNotification = {
   id: string;
@@ -21,6 +25,7 @@ export type NotificationData = {
   conversationId?: string;
   messageId?: string;
   reviewId?: string;
+  offerId?: string;
   subcategoryId?: string;
   status?: string;
 };

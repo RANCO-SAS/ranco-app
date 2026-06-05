@@ -47,7 +47,7 @@ function resolveBannerContent(status: ServiceRequestStatus): BannerContent | nul
         tone: 'negotiation',
         title: 'En negociación',
         icon: 'chatbubbles-outline',
-        fallbackMessage: 'Coordinando detalles del servicio.',
+        fallbackMessage: 'Toca para proponer o revisar el precio.',
       };
     case 'accepted':
       return {
