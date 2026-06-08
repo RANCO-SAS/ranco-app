@@ -1,24 +1,22 @@
 import Constants from 'expo-constants';
 
 type Env = {
-  supabaseUrl: string;
-  supabaseAnonKey: string;
+  apiUrl: string;
+  wsUrl: string;
 };
 
-type SupabaseExtra = {
-  supabaseUrl?: string;
-  supabaseAnonKey?: string;
+type AppExtra = {
+  apiUrl?: string;
+  wsUrl?: string;
 };
 
-const extra = Constants.expoConfig?.extra as SupabaseExtra | undefined;
+const extra = Constants.expoConfig?.extra as AppExtra | undefined;
 
 export const env: Env = {
-  supabaseUrl:
-    process.env.EXPO_PUBLIC_SUPABASE_URL ?? extra?.supabaseUrl ?? '',
-  supabaseAnonKey:
-    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? extra?.supabaseAnonKey ?? '',
+  apiUrl: process.env.EXPO_PUBLIC_API_URL ?? extra?.apiUrl ?? 'http://localhost:8080',
+  wsUrl: process.env.EXPO_PUBLIC_WS_URL ?? extra?.wsUrl ?? 'ws://localhost:8080',
 };
 
-export function isSupabaseConfigured(): boolean {
-  return Boolean(env.supabaseUrl && env.supabaseAnonKey);
+export function isApiConfigured(): boolean {
+  return Boolean(env.apiUrl && env.wsUrl);
 }

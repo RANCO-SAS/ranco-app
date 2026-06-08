@@ -1,3 +1,4 @@
+import type { ApiServicePayment } from '@/repositories/payment.repository';
 import type { ServicePayment } from '@/features/payments/types/payment';
 
 export type ServicePaymentRow = {
@@ -24,6 +25,36 @@ export type ServicePaymentRow = {
   created_at: string;
   updated_at: string;
 };
+
+export function mapApiServicePayment(payment: ApiServicePayment): ServicePayment {
+  const amountCents = payment.amountCents;
+  const platformFeeCents = payment.platformFeeCents;
+
+  return {
+    id: payment.id,
+    serviceRequestId: payment.serviceRequestId,
+    offerId: payment.offerId,
+    clientId: payment.clientId,
+    professionalId: payment.professionalId,
+    amountCents,
+    clientFeeCents: 0,
+    workerFeeCents: 0,
+    clientTotalCents: amountCents,
+    platformFeeCents,
+    payoutCents: payment.payoutCents,
+    currency: (payment.currency as ServicePayment['currency']) ?? 'COP',
+    status: payment.status as ServicePayment['status'],
+    paymentMethodLabel: payment.paymentMethodLabel ?? null,
+    paidAt: payment.paidAt ?? null,
+    bankName: payment.bankName ?? null,
+    accountType: (payment.accountType as ServicePayment['accountType']) ?? null,
+    accountNumber: payment.accountNumber ?? null,
+    accountHolderName: payment.accountHolderName ?? null,
+    payoutCompletedAt: payment.payoutCompletedAt ?? null,
+    createdAt: payment.createdAt,
+    updatedAt: payment.updatedAt,
+  };
+}
 
 export function mapServicePaymentRow(row: ServicePaymentRow): ServicePayment {
   return {

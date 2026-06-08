@@ -1,4 +1,4 @@
-import { AuthError as SupabaseAuthError } from '@supabase/supabase-js';
+import { ApiError } from '@/services/api/errors';
 
 export class AuthError extends Error {
   code?: string;
@@ -12,16 +12,22 @@ export class AuthError extends Error {
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   invalid_credentials: 'Correo o contraseña incorrectos.',
+  unauthorized: 'Correo o contraseña incorrectos.',
   email_not_confirmed: 'Confirma tu correo antes de iniciar sesión.',
   user_already_registered: 'Este correo ya está registrado.',
+  already_exists: 'Este correo ya está registrado.',
+  conflict: 'Este correo ya está registrado.',
   weak_password: 'La contraseña es demasiado débil.',
+  validation_error: 'Revisa los datos ingresados e inténtalo de nuevo.',
   over_request_rate_limit: 'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
   validation_failed: 'Revisa los datos ingresados e inténtalo de nuevo.',
   user_not_found: 'No encontramos una cuenta con ese correo.',
-  signup_disabled: 'El registro con correo está deshabilitado en el proyecto.',
+  not_found: 'No encontramos una cuenta con ese correo.',
+  signup_disabled: 'El registro con correo está deshabilitado.',
   same_password: 'La nueva contraseña debe ser diferente a la anterior.',
   auth_session_missing: 'No se pudo completar la autenticación.',
   invalid_request: 'Solicitud de autenticación inválida. Inténtalo de nuevo.',
+  configuration_error: 'La app no está configurada correctamente.',
 };
 
 export function mapAuthError(error: unknown): string {
@@ -35,15 +41,15 @@ export function mapAuthError(error: unknown): string {
     return error.message;
   }
 
-  if (error instanceof SupabaseAuthError) {
-    const mappedMessage = AUTH_ERROR_MESSAGES[error.code ?? ''];
+  if (error instanceof ApiError) {
+    const mappedMessage = AUTH_ERROR_MESSAGES[error.code];
 
     if (mappedMessage) {
       return mappedMessage;
     }
 
-    if (error.message.toLowerCase().includes('invalid login credentials')) {
-      return AUTH_ERROR_MESSAGES.invalid_credentials;
+    if (error.message.toLowerCase().includes('invalid credentials')) {
+      return AUTH_ERROR_MESSAGES.unauthorized;
     }
 
     return error.message || 'Ocurrió un error de autenticación.';

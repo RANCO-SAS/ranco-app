@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { useSupabasePostgresChanges } from '@/hooks/use-supabase-postgres-changes';
-import type { ServiceOfferRow } from '@/features/offers/services/offer.mapper';
+import { useWebSocketSubscribe } from '@/hooks/use-websocket-subscribe';
 import { queryKeys } from '@/lib/query-keys';
 
 type UseOffersRealtimeOptions = {
@@ -17,7 +16,7 @@ export function useOffersRealtime({
   const queryClient = useQueryClient();
   const isEnabled = enabled && Boolean(conversationId);
 
-  const handlePayload = useCallback(() => {
+  const handleEvent = useCallback(() => {
     if (!conversationId) {
       return;
     }
@@ -38,11 +37,10 @@ export function useOffersRealtime({
     void queryClient.invalidateQueries({ queryKey: queryKeys.messages.all });
   }, [conversationId, queryClient]);
 
-  useSupabasePostgresChanges<ServiceOfferRow>({
+  useWebSocketSubscribe({
     enabled: isEnabled,
-    channelName: `service-offers:${conversationId ?? 'inactive'}`,
-    table: 'service_offers',
-    filter: conversationId ? `conversation_id=eq.${conversationId}` : undefined,
-    onPayload: handlePayload,
+    channel: conversationId ? `conversation:${conversationId}` : '',
+    eventType: 'offer.updated',
+    onEvent: handleEvent,
   });
 }

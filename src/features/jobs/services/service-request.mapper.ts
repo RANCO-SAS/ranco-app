@@ -1,9 +1,46 @@
+import type { ApiServiceRequest } from '@/repositories/service-request.repository';
 import type { ServiceRequestRow } from '@/features/jobs/types/service-request-db.types';
 import type {
   ServiceRequest,
   ServiceRequestStatus,
   ServiceRequestUrgency,
 } from '@/features/jobs/types/service-request.types';
+
+export function mapServiceRequestFromApi(request: ApiServiceRequest): ServiceRequest {
+  return {
+    id: request.id,
+    clientId: request.clientId,
+    client: {
+      id: request.client?.id ?? request.clientId,
+      fullName: request.client?.fullName?.trim() || 'Cliente',
+      avatarUrl: request.client?.avatarUrl ?? null,
+      isPro: request.client?.isPro ?? false,
+    },
+    title: request.title,
+    description: request.description,
+    categoryId: request.categoryId,
+    subcategoryId: request.subcategoryId,
+    categoryName: request.category?.name ?? 'Sin categoría',
+    categorySlug: request.category?.slug ?? 'other',
+    subcategoryName: request.subcategory?.name ?? 'General',
+    urgency: request.urgency as ServiceRequestUrgency,
+    status: request.status as ServiceRequestStatus,
+    assignedProfessionalId: request.assignedProfessionalId ?? null,
+    assignedProfessional: request.assignedProfessional
+      ? {
+          id: request.assignedProfessional.id,
+          fullName: request.assignedProfessional.fullName?.trim() || 'Profesional',
+          avatarUrl: request.assignedProfessional.avatarUrl ?? null,
+        }
+      : null,
+    locationLabel: request.locationLabel ?? null,
+    locationLat: request.locationLat ?? null,
+    locationLng: request.locationLng ?? null,
+    photoUrls: request.photoUrls ?? [],
+    createdAt: request.createdAt,
+    updatedAt: request.updatedAt,
+  };
+}
 
 export function mapServiceRequestRow(row: ServiceRequestRow): ServiceRequest {
   return {

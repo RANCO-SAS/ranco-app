@@ -1,12 +1,11 @@
 import { useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 import { conversationService } from '@/features/messages/services/conversation.service';
-import { mapMessageRow } from '@/features/messages/services/message.mapper';
-import type { MessageRow } from '@/features/messages/types/message-db.types';
+import { mapApiMessage } from '@/features/messages/services/message.mapper';
+import type { ApiMessage } from '@/repositories/conversation.repository';
 import type { Message } from '@/features/messages/types/message.types';
-import { useSupabasePostgresChanges } from '@/hooks/use-supabase-postgres-changes';
+import { useWebSocketSubscribe } from '@/hooks/use-websocket-subscribe';
 import { queryKeys } from '@/lib/query-keys';
 
 function getMessagesQueryKey(conversationId: string) {
@@ -43,41 +42,31 @@ export function useMessagesRealtime({
   const queryClient = useQueryClient();
   const isEnabled = enabled && Boolean(conversationId && userId);
 
-  const handlePayload = useCallback(
-    (payload: RealtimePostgresChangesPayload<MessageRow>) => {
+  const handleEvent = useCallback(
+    (payload: unknown) => {
       if (!conversationId) {
         return;
       }
 
       const queryKey = getMessagesQueryKey(conversationId);
+      const message = mapApiMessage(payload as ApiMessage);
 
-      if (payload.eventType === 'INSERT' && payload.new) {
-        const message = mapMessageRow(payload.new);
+      queryClient.setQueryData<Message[]>(queryKey, (current) => upsertMessage(current, message));
 
-        queryClient.setQueryData<Message[]>(queryKey, (current) => upsertMessage(current, message));
-
-        if (userId && message.senderId !== userId) {
-          void conversationService.markMessagesDelivered([message.id]);
-        }
-
-        void queryClient.invalidateQueries({ queryKey: queryKeys.messages.all });
-        return;
+      if (userId && message.senderId !== userId) {
+        void conversationService.markMessagesDelivered([message.id], conversationId);
       }
 
-      if (payload.eventType === 'UPDATE' && payload.new) {
-        const message = mapMessageRow(payload.new);
-        queryClient.setQueryData<Message[]>(queryKey, (current) => upsertMessage(current, message));
-      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.messages.all });
     },
     [conversationId, queryClient, userId],
   );
 
-  useSupabasePostgresChanges<MessageRow>({
+  useWebSocketSubscribe({
     enabled: isEnabled,
-    channelName: `messages:${conversationId ?? 'inactive'}`,
-    table: 'messages',
-    filter: conversationId ? `conversation_id=eq.${conversationId}` : undefined,
-    onPayload: handlePayload,
+    channel: conversationId ? `conversation:${conversationId}` : '',
+    eventType: 'message.created',
+    onEvent: (event) => handleEvent(event.payload),
   });
 }
 
@@ -110,11 +99,11 @@ export function useMessageReceipts({
     const syncReceipts = async () => {
       try {
         if (pendingDeliveryIds.length > 0) {
-          await conversationService.markMessagesDelivered(pendingDeliveryIds);
+          await conversationService.markMessagesDelivered(pendingDeliveryIds, conversationId);
         }
 
         if (pendingReadIds.length > 0) {
-          await conversationService.markMessagesRead(pendingReadIds);
+          await conversationService.markMessagesRead(pendingReadIds, conversationId);
         }
       } catch {
         // Receipt sync is best-effort; realtime updates will retry on next render.
@@ -134,7 +123,7 @@ export function useConversationsRealtime({ userId, enabled = true }: UseConversa
   const queryClient = useQueryClient();
   const isEnabled = enabled && Boolean(userId);
 
-  const handlePayload = useCallback(() => {
+  const handleEvent = useCallback(() => {
     if (!userId) {
       return;
     }
@@ -145,10 +134,10 @@ export function useConversationsRealtime({ userId, enabled = true }: UseConversa
     void queryClient.invalidateQueries({ queryKey: queryKeys.messages.all });
   }, [queryClient, userId]);
 
-  useSupabasePostgresChanges({
+  useWebSocketSubscribe({
     enabled: isEnabled,
-    channelName: `conversations:${userId ?? 'inactive'}`,
-    table: 'conversations',
-    onPayload: handlePayload,
+    channel: userId ? `user:${userId}` : '',
+    eventType: 'conversation.updated',
+    onEvent: handleEvent,
   });
 }

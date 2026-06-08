@@ -23,8 +23,7 @@ Avoid:
 # TanStack Query Responsibilities
 
 Use TanStack Query for:
-- API fetching
-- Supabase queries
+- API fetching via services/repositories
 - async synchronization
 - mutations
 - cache management
@@ -171,16 +170,23 @@ For large datasets:
 
 # Realtime Integration
 
-Use Supabase Realtime together with TanStack Query carefully.
+Use WebSocket events from ranco-core together with TanStack Query.
 
 Preferred patterns:
-- invalidate queries after realtime updates
-- merge lightweight realtime updates
+- invalidate queries after WebSocket events
+- merge lightweight realtime updates when appropriate
 - keep synchronization predictable
+
+Example flow:
+
+```
+WebSocket event → queryClient.invalidateQueries({ queryKey: queryKeys.messages.inbox(userId) })
+```
 
 Avoid:
 - excessive manual reconciliation logic
 - overly complex cache merging systems
+- direct Supabase realtime subscriptions
 
 # Query Separation
 
@@ -188,22 +194,25 @@ Separate:
 - fetching hooks
 - mutation hooks
 - services
+- repositories
 - transformations
 
 Avoid giant all-in-one hooks.
 
 # Service Layer Rules
 
-Query hooks should use services.
+Query hooks should use services, never repositories directly.
 
 Good:
 
 useJobs()
   -> jobs.service.ts
-  -> Supabase
+  -> repositories/service-request.repository.ts
+  -> api client
 
 Avoid:
-- direct Supabase logic everywhere
+- hooks calling repositories directly
+- direct API logic in components
 - duplicated queries across components
 
 # Retry Rules
@@ -254,3 +263,4 @@ When generating TanStack Query logic:
 - Use proper query keys
 - Respect feature boundaries
 - Prefer maintainable fetching patterns
+- Hooks call services only; services call repositories

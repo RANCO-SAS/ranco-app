@@ -1,4 +1,4 @@
-import { AuthError as SupabaseAuthError } from '@supabase/supabase-js';
+import { ApiError } from '@/services/api/errors';
 
 export class ProfileError extends Error {
   code?: string;
@@ -11,9 +11,10 @@ export class ProfileError extends Error {
 }
 
 const PROFILE_ERROR_MESSAGES: Record<string, string> = {
-  PGRST116: 'No se encontró el perfil del usuario.',
-  '23505': 'El perfil ya existe para este usuario.',
-  '42501': 'No tienes permisos para modificar este perfil.',
+  not_found: 'No se encontró el perfil del usuario.',
+  already_exists: 'El perfil ya existe para este usuario.',
+  forbidden: 'No tienes permisos para modificar este perfil.',
+  validation_error: 'Revisa los datos del perfil e inténtalo de nuevo.',
 };
 
 export function mapProfileError(error: unknown): string {
@@ -21,8 +22,8 @@ export function mapProfileError(error: unknown): string {
     return error.message;
   }
 
-  if (error instanceof SupabaseAuthError) {
-    const mappedMessage = PROFILE_ERROR_MESSAGES[error.code ?? ''];
+  if (error instanceof ApiError) {
+    const mappedMessage = PROFILE_ERROR_MESSAGES[error.code];
 
     if (mappedMessage) {
       return mappedMessage;

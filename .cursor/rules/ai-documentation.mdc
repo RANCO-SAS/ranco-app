@@ -32,7 +32,7 @@ Examples:
 
 features/auth/AGENTS.md
 features/jobs/AGENTS.md
-features/chat/AGENTS.md
+features/messages/AGENTS.md
 
 # Update Rules
 
@@ -41,10 +41,11 @@ features/chat/AGENTS.md
 This includes:
 - new screens
 - new hooks
+- new repositories
 - new services
 - schema changes
 - realtime flows
-- Supabase integration
+- API/repository integration
 - architectural refactors
 - navigation changes
 - state changes
@@ -80,7 +81,7 @@ Short explanation of module responsibilities.
 - components/ — reusable feature UI
 - screens/ — route-level screens
 - hooks/ — feature hooks
-- services/ — Supabase and async logic
+- services/ — orchestration and business logic
 - stores/ — Zustand state
 - schemas/ — Zod schemas
 - types/ — feature types
@@ -93,6 +94,7 @@ Short explanation of module responsibilities.
 - Role:
 - Screens:
 - Hooks:
+- Repositories:
 - Services:
 - Realtime:
 - State:
@@ -102,10 +104,10 @@ Short explanation of module responsibilities.
 ## Data Flow
 
 Describe:
-- query flow
+- query flow (hook → service → repository → API)
 - mutation flow
-- realtime synchronization
-- Supabase integration
+- WebSocket synchronization
+- API integration
 
 ## Navigation
 
@@ -117,8 +119,8 @@ List:
 ## Realtime
 
 Document:
-- subscriptions
-- presence systems
+- WebSocket channels subscribed
+- event types handled
 - invalidation strategy
 - synchronization behavior
 
@@ -177,18 +179,27 @@ Avoid:
 # Realtime Documentation
 
 Realtime modules must document:
-- active subscriptions
+- active WebSocket subscriptions
 - event flow
 - invalidation strategy
 - synchronization rules
 
+# Repository Documentation
+
+Repositories live in `src/repositories/` (flat folder, not inside features).
+
+Document per repository file:
+- API endpoints called
+- request/response shapes
+- error handling expectations
+
 # Service Documentation
 
 Document:
-- important Supabase queries
-- external integrations
-- mutation responsibilities
-- async orchestration
+- orchestration responsibilities
+- validation rules
+- mutation side effects
+- cross-feature dependencies
 
 # State Documentation
 

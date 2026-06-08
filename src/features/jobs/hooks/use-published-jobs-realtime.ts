@@ -1,24 +1,28 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { useSupabasePostgresChanges } from '@/hooks/use-supabase-postgres-changes';
+import { useWebSocketSubscribe } from '@/hooks/use-websocket-subscribe';
 import { queryKeys } from '@/lib/query-keys';
 
 type UsePublishedJobsRealtimeOptions = {
+  userId?: string;
   enabled?: boolean;
 };
 
-export function usePublishedJobsRealtime({ enabled = true }: UsePublishedJobsRealtimeOptions) {
+export function usePublishedJobsRealtime({
+  userId,
+  enabled = true,
+}: UsePublishedJobsRealtimeOptions) {
   const queryClient = useQueryClient();
 
-  const handlePayload = useCallback(() => {
+  const handleEvent = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.published });
   }, [queryClient]);
 
-  useSupabasePostgresChanges({
-    enabled,
-    channelName: 'published-service-requests',
-    table: 'service_requests',
-    onPayload: handlePayload,
+  useWebSocketSubscribe({
+    enabled: enabled && Boolean(userId),
+    channel: userId ? `user:${userId}` : '',
+    eventType: 'job.updated',
+    onEvent: handleEvent,
   });
 }

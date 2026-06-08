@@ -1,7 +1,7 @@
 import { File } from 'expo-file-system';
 
 import { devError, devLog, devWarn } from '@/lib/dev-logger';
-import { getSupabaseClient } from '@/services/supabase/client';
+import { apiUpload } from '@/services/api/client';
 import { withImageCacheBuster } from '@/shared/utils/image-uri';
 
 const AVATARS_BUCKET = 'avatars';
@@ -19,10 +19,9 @@ type StorageBucket =
 
 type UploadImageInput = {
   bucket: StorageBucket;
-  path: string;
   uri: string;
   contentType?: string;
-  upsert?: boolean;
+  fileName?: string;
 };
 
 function resolveContentType(uri: string, contentType?: string): string {
@@ -58,19 +57,16 @@ function resolveFileExtension(uri: string): 'png' | 'webp' | 'jpg' {
   return 'jpg';
 }
 
-function extractStoragePath(publicUrl: string, bucket: string): string | null {
-  const marker = `/storage/v1/object/public/${bucket}/`;
-
-  if (!publicUrl.includes(marker)) {
-    return null;
+function resolveFileName(uri: string, fileName?: string): string {
+  if (fileName) {
+    return fileName;
   }
 
-  const path = publicUrl.split(marker)[1]?.split('?')[0];
-  return path ? decodeURIComponent(path) : null;
+  return `upload-${Date.now()}.${resolveFileExtension(uri)}`;
 }
 
-async function readUriAsArrayBuffer(uri: string): Promise<ArrayBuffer> {
-  devLog('storage', 'readUriAsArrayBuffer:start', {
+async function assertUriReadable(uri: string): Promise<void> {
+  devLog('storage', 'assertUriReadable:start', {
     scheme: getUriScheme(uri),
     uriPreview: uri.slice(0, 120),
   });
@@ -79,168 +75,54 @@ async function readUriAsArrayBuffer(uri: string): Promise<ArrayBuffer> {
     const file = new File(uri);
     const info = file.info();
 
-    devLog('storage', 'readUriAsArrayBuffer:file-info', {
-      exists: info.exists,
-      size: info.size ?? null,
-      uri: info.uri ?? uri.slice(0, 120),
-    });
-
     if (!info.exists) {
       throw new Error('El archivo de imagen no existe o no es accesible.');
     }
-
-    const buffer = await file.arrayBuffer();
-
-    devLog('storage', 'readUriAsArrayBuffer:success', {
-      byteLength: buffer.byteLength,
-    });
-
-    return buffer;
   } catch (error) {
-    devError('storage', 'readUriAsArrayBuffer:failed', error, { uriPreview: uri.slice(0, 120) });
+    devError('storage', 'assertUriReadable:failed', error, { uriPreview: uri.slice(0, 120) });
     throw error;
   }
 }
 
-async function deleteStorageObjects(bucket: StorageBucket, paths: string[]): Promise<void> {
-  if (paths.length === 0) {
-    return;
-  }
-
-  const supabase = getSupabaseClient();
-  const { error } = await supabase.storage.from(bucket).remove(paths);
-
-  if (error) {
-    devWarn('storage', 'deleteStorageObjects:failed', { bucket, pathCount: paths.length });
-  }
-}
-
-async function deleteAvatarFiles(userId: string, keepPath?: string): Promise<void> {
-  const supabase = getSupabaseClient();
-  const { data: files, error } = await supabase.storage.from(AVATARS_BUCKET).list(userId);
-
-  if (error) {
-    devWarn('storage', 'deleteAvatarFiles:list-failed');
-    return;
-  }
-
-  const pathsToDelete =
-    files?.map((file) => `${userId}/${file.name}`).filter((path) => path !== keepPath) ?? [];
-
-  await deleteStorageObjects(AVATARS_BUCKET, pathsToDelete);
-}
-
-async function deletePreviousAvatarUrl(previousAvatarUrl?: string | null): Promise<void> {
-  if (!previousAvatarUrl) {
-    return;
-  }
-
-  const path = extractStoragePath(previousAvatarUrl, AVATARS_BUCKET);
-
-  if (!path) {
-    return;
-  }
-
-  await deleteStorageObjects(AVATARS_BUCKET, [path]);
-}
-
 async function uploadImage(input: UploadImageInput): Promise<string> {
-  const supabase = getSupabaseClient();
   const contentType = resolveContentType(input.uri, input.contentType);
+  const fileName = resolveFileName(input.uri, input.fileName);
 
   devLog('storage', 'uploadImage:start', {
     bucket: input.bucket,
-    path: input.path,
     contentType,
     uriScheme: getUriScheme(input.uri),
   });
 
-  let body: ArrayBuffer;
+  await assertUriReadable(input.uri);
 
-  try {
-    body = await readUriAsArrayBuffer(input.uri);
-  } catch (error) {
-    devWarn('storage', 'uploadImage:fallback-fetch-blob');
+  const formData = new FormData();
+  formData.append('file', {
+    uri: input.uri,
+    name: fileName,
+    type: contentType,
+  } as unknown as Blob);
 
-    const response = await fetch(input.uri);
+  const response = await apiUpload<{ url: string }>(`/v1/app/storage/${input.bucket}`, formData);
+  const publicUrl = withImageCacheBuster(response.url);
 
-    if (!response.ok) {
-      devError('storage', 'uploadImage:fetch-failed', error, {
-        status: response.status,
-        statusText: response.statusText,
-      });
-      throw new Error('No pudimos leer la imagen seleccionada.');
-    }
-
-    body = await response.arrayBuffer();
-    devLog('storage', 'uploadImage:fallback-fetch-success', { byteLength: body.byteLength });
-  }
-
-  if (body.byteLength === 0) {
-    throw new Error('La imagen seleccionada está vacía.');
-  }
-
-  const { data: uploadData, error } = await supabase.storage.from(input.bucket).upload(input.path, body, {
-    contentType,
-    upsert: input.upsert ?? true,
-  });
-
-  if (error) {
-    devError('storage', 'uploadImage:supabase-upload-failed', error, {
-      bucket: input.bucket,
-      path: input.path,
-    });
-    throw error;
-  }
-
-  devLog('storage', 'uploadImage:supabase-upload-success', {
-    bucket: input.bucket,
-    path: uploadData?.path ?? input.path,
-  });
-
-  if (input.bucket === AVATARS_BUCKET || input.bucket === WORK_EVIDENCE_BUCKET || input.bucket === REQUEST_PHOTOS_BUCKET) {
-    const { data } = supabase.storage.from(input.bucket).getPublicUrl(input.path);
-    const publicUrl = withImageCacheBuster(data.publicUrl);
-    devLog('storage', 'uploadImage:public-url', { urlPreview: publicUrl.slice(0, 120) });
-    return publicUrl;
-  }
-
-  const { data, error: signedUrlError } = await supabase.storage
-    .from(input.bucket)
-    .createSignedUrl(input.path, 60 * 60 * 24 * 7);
-
-  if (signedUrlError || !data?.signedUrl) {
-    devError('storage', 'uploadImage:signed-url-failed', signedUrlError ?? new Error('missing signed url'), {
-      bucket: input.bucket,
-      path: input.path,
-    });
-    throw signedUrlError ?? new Error('No pudimos generar la URL de la imagen.');
-  }
-
-  devLog('storage', 'uploadImage:signed-url-success', {
-    urlPreview: data.signedUrl.slice(0, 120),
-  });
-
-  return data.signedUrl;
+  devLog('storage', 'uploadImage:success', { urlPreview: publicUrl.slice(0, 120) });
+  return publicUrl;
 }
 
 async function uploadAvatar(
   userId: string,
   uri: string,
-  previousAvatarUrl?: string | null,
+  _previousAvatarUrl?: string | null,
 ): Promise<string> {
   devLog('storage', 'uploadAvatar:start', { userId, uriScheme: getUriScheme(uri) });
 
   const extension = resolveFileExtension(uri);
-  const nextPath = `${userId}/avatar-${Date.now()}.${extension}`;
-
-  await deleteAvatarFiles(userId, nextPath);
-  await deletePreviousAvatarUrl(previousAvatarUrl);
 
   return uploadImage({
     bucket: AVATARS_BUCKET,
-    path: nextPath,
     uri,
+    fileName: `avatar-${Date.now()}.${extension}`,
   });
 }
 
@@ -251,12 +133,11 @@ async function uploadChatImage(conversationId: string, uri: string): Promise<str
   });
 
   const extension = resolveFileExtension(uri);
-  const fileName = `${Date.now()}.${extension}`;
 
   return uploadImage({
     bucket: CHAT_MEDIA_BUCKET,
-    path: `${conversationId}/${fileName}`,
     uri,
+    fileName: `${Date.now()}.${extension}`,
   });
 }
 
@@ -267,21 +148,18 @@ async function uploadReviewEvidence(
   index: number,
 ): Promise<string> {
   const extension = resolveFileExtension(uri);
-  const path = `${userId}/${reviewId}/${Date.now()}-${index}.${extension}`;
 
   return uploadImage({
     bucket: WORK_EVIDENCE_BUCKET,
-    path,
     uri,
+    fileName: `${reviewId}-${Date.now()}-${index}.${extension}`,
   });
 }
 
 async function deleteReviewEvidenceUrls(urls: string[]): Promise<void> {
-  const paths = urls
-    .map((url) => extractStoragePath(url, WORK_EVIDENCE_BUCKET))
-    .filter((path): path is string => Boolean(path));
-
-  await deleteStorageObjects(WORK_EVIDENCE_BUCKET, paths);
+  if (urls.length > 0) {
+    devWarn('storage', 'deleteReviewEvidenceUrls:skipped', { count: urls.length });
+  }
 }
 
 async function uploadRequestPhoto(
@@ -291,21 +169,18 @@ async function uploadRequestPhoto(
   index: number,
 ): Promise<string> {
   const extension = resolveFileExtension(uri);
-  const path = `${clientId}/${requestId}/${Date.now()}-${index}.${extension}`;
 
   return uploadImage({
     bucket: REQUEST_PHOTOS_BUCKET,
-    path,
     uri,
+    fileName: `${requestId}-${Date.now()}-${index}.${extension}`,
   });
 }
 
 async function deleteRequestPhotoUrls(urls: string[]): Promise<void> {
-  const paths = urls
-    .map((url) => extractStoragePath(url, REQUEST_PHOTOS_BUCKET))
-    .filter((path): path is string => Boolean(path));
-
-  await deleteStorageObjects(REQUEST_PHOTOS_BUCKET, paths);
+  if (urls.length > 0) {
+    devWarn('storage', 'deleteRequestPhotoUrls:skipped', { count: urls.length });
+  }
 }
 
 export const storageService = {

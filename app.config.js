@@ -100,8 +100,8 @@ module.exports = {
       eas: {
         projectId: 'e2e47456-4bb1-43cf-8d29-fe2e229368d2',
       },
-      supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
-      supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+      apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080',
+      wsUrl: process.env.EXPO_PUBLIC_WS_URL ?? 'ws://localhost:8080',
       googleMapsApiKeyAndroid,
       googleMapsApiKeyIos,
     },

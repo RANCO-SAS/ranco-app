@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { useSupabasePostgresChanges } from '@/hooks/use-supabase-postgres-changes';
+import { useWebSocketSubscribe } from '@/hooks/use-websocket-subscribe';
 import { queryKeys } from '@/lib/query-keys';
 
 type UseInboxMessagesRealtimeOptions = {
@@ -16,7 +16,7 @@ export function useInboxMessagesRealtime({
   const queryClient = useQueryClient();
   const isEnabled = enabled && Boolean(userId);
 
-  const handlePayload = useCallback(() => {
+  const handleEvent = useCallback(() => {
     if (!userId) {
       return;
     }
@@ -28,11 +28,10 @@ export function useInboxMessagesRealtime({
     void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount(userId) });
   }, [queryClient, userId]);
 
-  useSupabasePostgresChanges({
+  useWebSocketSubscribe({
     enabled: isEnabled,
-    channelName: `inbox-messages:${userId ?? 'inactive'}`,
-    table: 'messages',
-    event: 'INSERT',
-    onPayload: handlePayload,
+    channel: userId ? `user:${userId}` : '',
+    eventType: 'conversation.updated',
+    onEvent: handleEvent,
   });
 }

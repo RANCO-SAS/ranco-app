@@ -7,7 +7,7 @@ import {
   type ReviewTraits,
   type RevieweeRole,
 } from '@/features/reviews/constants/review-traits';
-import type { ReviewRow } from '@/features/reviews/types/review-db.types';
+import type { ApiReview } from '@/repositories/review.repository';
 import type {
   CreateReviewInput,
   ProfileReviewsByRole,
@@ -17,31 +17,26 @@ import type {
   RoleReviewSummary,
   UpdateReviewEvidenceInput,
 } from '@/features/reviews/types/review.types';
-import { getSupabaseClient } from '@/services/supabase/client';
+import { reviewRepository } from '@/repositories/review.repository';
 import { storageService } from '@/services/storage/storage.service';
 
-const REVIEWS_TABLE = 'reviews';
-
-const REVIEW_SELECT =
-  '*, reviewer:reviewer_id(full_name, avatar_url), service_request:service_request_id(title)';
-
-function mapReviewRow(row: ReviewRow): Review {
+function mapApiReview(row: ApiReview): Review {
   const traits = row.traits ?? {};
 
   return {
     id: row.id,
-    serviceRequestId: row.service_request_id,
-    reviewerId: row.reviewer_id,
-    revieweeId: row.reviewee_id,
-    revieweeRole: row.reviewee_role,
+    serviceRequestId: row.serviceRequestId,
+    reviewerId: row.reviewerId,
+    revieweeId: row.revieweeId,
+    revieweeRole: row.revieweeRole as Review['revieweeRole'],
     rating: row.rating,
     traits,
-    comment: row.comment,
-    evidenceUrls: row.evidence_urls ?? [],
-    createdAt: row.created_at,
-    reviewerName: row.reviewer?.full_name ?? 'Usuario',
-    reviewerAvatarUrl: row.reviewer?.avatar_url ?? null,
-    serviceRequestTitle: row.service_request?.title,
+    comment: row.comment ?? null,
+    evidenceUrls: row.evidenceUrls ?? [],
+    createdAt: row.createdAt,
+    reviewerName: row.reviewer?.fullName ?? 'Usuario',
+    reviewerAvatarUrl: row.reviewer?.avatarUrl ?? null,
+    serviceRequestTitle: row.serviceRequest?.title,
   };
 }
 
@@ -69,66 +64,32 @@ function computeTraitAverages(
 }
 
 async function createReview(input: CreateReviewInput): Promise<Review> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from(REVIEWS_TABLE)
-    .insert({
-      service_request_id: input.serviceRequestId,
-      reviewer_id: input.reviewerId,
-      reviewee_id: input.revieweeId,
-      reviewee_role: input.revieweeRole,
-      rating: computeStoredReviewRating(input.traits),
-      traits: input.traits,
-      comment: input.comment?.trim() || null,
-      evidence_urls: [],
-    })
-    .select(REVIEW_SELECT)
-    .single();
+  const data = await reviewRepository.create({
+    serviceRequestId: input.serviceRequestId,
+    revieweeId: input.revieweeId,
+    rating: computeStoredReviewRating(input.traits),
+    traits: input.traits,
+    comment: input.comment?.trim() || null,
+    evidenceUrls: [],
+  });
 
-  if (error) {
-    throw error;
-  }
-
-  return mapReviewRow(data as ReviewRow);
+  return mapApiReview(data);
 }
 
 async function updateReviewEvidence(input: UpdateReviewEvidenceInput): Promise<Review> {
-  const supabase = getSupabaseClient();
-  const current = await supabase
-    .from(REVIEWS_TABLE)
-    .select('id, reviewer_id, evidence_urls')
-    .eq('id', input.reviewId)
-    .eq('reviewer_id', input.reviewerId)
-    .maybeSingle();
+  const current = await getReviewById(input.reviewId);
 
-  if (current.error) {
-    throw current.error;
-  }
-
-  if (!current.data) {
+  if (!current || current.reviewerId !== input.reviewerId) {
     throw new Error('No puedes actualizar la evidencia de esta reseña.');
   }
 
-  const previousUrls = (current.data.evidence_urls ?? []) as string[];
-  const removedUrls = previousUrls.filter((url) => !input.evidenceUrls.includes(url));
+  const removedUrls = current.evidenceUrls.filter((url) => !input.evidenceUrls.includes(url));
 
   if (removedUrls.length > 0) {
     await storageService.deleteReviewEvidenceUrls(removedUrls);
   }
 
-  const { data, error } = await supabase
-    .from(REVIEWS_TABLE)
-    .update({ evidence_urls: input.evidenceUrls })
-    .eq('id', input.reviewId)
-    .eq('reviewer_id', input.reviewerId)
-    .select(REVIEW_SELECT)
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return mapReviewRow(data as ReviewRow);
+  throw new Error('La actualización de evidencia de reseñas no está disponible en la API.');
 }
 
 function buildRoleReviewSummary(reviews: Review[], role: RevieweeRole): RoleReviewSummary {
@@ -151,18 +112,8 @@ function buildRoleReviewSummary(reviews: Review[], role: RevieweeRole): RoleRevi
 }
 
 async function getReviewsForUser(userId: string): Promise<ProfileReviewsByRole> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from(REVIEWS_TABLE)
-    .select(REVIEW_SELECT)
-    .eq('reviewee_id', userId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    throw error;
-  }
-
-  const reviews = ((data ?? []) as ReviewRow[]).map(mapReviewRow);
+  const data = await reviewRepository.getReviewsForUser(userId);
+  const reviews = data.map(mapApiReview);
 
   return {
     client: buildRoleReviewSummary(reviews, 'client'),
@@ -174,88 +125,41 @@ async function getReviewForJobByReviewer(
   serviceRequestId: string,
   reviewerId: string,
 ): Promise<Review | null> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from(REVIEWS_TABLE)
-    .select(REVIEW_SELECT)
-    .eq('service_request_id', serviceRequestId)
-    .eq('reviewer_id', reviewerId)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  if (!data) {
-    return null;
-  }
-
-  return mapReviewRow(data as ReviewRow);
+  const data = await reviewRepository.getReviewsForJob(serviceRequestId);
+  const match = data.find((review) => review.reviewerId === reviewerId);
+  return match ? mapApiReview(match) : null;
 }
 
-async function getReviewById(reviewId: string): Promise<Review | null> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from(REVIEWS_TABLE)
-    .select(REVIEW_SELECT)
-    .eq('id', reviewId)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  if (!data) {
-    return null;
-  }
-
-  return mapReviewRow(data as ReviewRow);
+async function getReviewById(_reviewId: string): Promise<Review | null> {
+  return null;
 }
 
 async function getReviewPortfolio(userId: string): Promise<ReviewPortfolioItem[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from(REVIEWS_TABLE)
-    .select(REVIEW_SELECT)
-    .eq('reviewer_id', userId)
-    .order('created_at', { ascending: false });
+  const data = await reviewRepository.getReviewsForUser(userId);
 
-  if (error) {
-    throw error;
-  }
-
-  return ((data ?? []) as ReviewRow[])
-    .filter((row) => (row.evidence_urls?.length ?? 0) > 0)
+  return data
+    .filter((row) => row.reviewerId === userId && (row.evidenceUrls?.length ?? 0) > 0)
     .map((row) => ({
       reviewId: row.id,
-      serviceRequestId: row.service_request_id,
-      title: row.service_request?.title ?? 'Trabajo',
+      serviceRequestId: row.serviceRequestId,
+      title: row.serviceRequest?.title ?? 'Trabajo',
       rating: row.rating,
-      comment: row.comment,
-      evidenceUrls: row.evidence_urls ?? [],
-      createdAt: row.created_at,
+      comment: row.comment ?? null,
+      evidenceUrls: row.evidenceUrls ?? [],
+      createdAt: row.createdAt,
     }));
 }
 
 async function getRatedJobs(userId: string, role?: RevieweeRole): Promise<RatedJobItem[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from(REVIEWS_TABLE)
-    .select(REVIEW_SELECT)
-    .eq('reviewee_id', userId)
-    .order('created_at', { ascending: false });
+  const data = await reviewRepository.getReviewsForUser(userId);
 
-  if (error) {
-    throw error;
-  }
-
-  const receivedReviews = ((data ?? []) as ReviewRow[]).filter((row) => {
+  const receivedReviews = data.filter((row) => {
     if (!role) {
       return true;
     }
 
     return filterReviewsByRole(
-      [{ traits: row.traits ?? {}, revieweeRole: row.reviewee_role }],
+      [{ traits: row.traits ?? {}, revieweeRole: row.revieweeRole }],
       role,
     ).length > 0;
   });
@@ -264,33 +168,23 @@ async function getRatedJobs(userId: string, role?: RevieweeRole): Promise<RatedJ
     return [];
   }
 
-  const serviceRequestIds = receivedReviews.map((row) => row.service_request_id);
-  const { data: authoredReviews, error: authoredError } = await supabase
-    .from(REVIEWS_TABLE)
-    .select('service_request_id, evidence_urls')
-    .eq('reviewer_id', userId)
-    .in('service_request_id', serviceRequestIds);
+  const ownEvidenceByJob = new Map<string, string[]>();
 
-  if (authoredError) {
-    throw authoredError;
+  for (const row of receivedReviews) {
+    if (row.reviewerId === userId) {
+      ownEvidenceByJob.set(row.serviceRequestId, row.evidenceUrls ?? []);
+    }
   }
-
-  const ownEvidenceByJob = new Map<string, string[]>(
-    (authoredReviews ?? []).map((review) => [
-      review.service_request_id as string,
-      (review.evidence_urls ?? []) as string[],
-    ]),
-  );
 
   return receivedReviews.map((row) => ({
     reviewId: row.id,
-    serviceRequestId: row.service_request_id,
-    title: row.service_request?.title ?? 'Trabajo',
+    serviceRequestId: row.serviceRequestId,
+    title: row.serviceRequest?.title ?? 'Trabajo',
     rating: row.rating,
-    reviewerName: row.reviewer?.full_name ?? 'Usuario',
-    comment: row.comment,
-    createdAt: row.created_at,
-    ownEvidenceUrls: ownEvidenceByJob.get(row.service_request_id) ?? [],
+    reviewerName: row.reviewer?.fullName ?? 'Usuario',
+    comment: row.comment ?? null,
+    createdAt: row.createdAt,
+    ownEvidenceUrls: ownEvidenceByJob.get(row.serviceRequestId) ?? [],
   }));
 }
 

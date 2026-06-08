@@ -1,14 +1,13 @@
 import { useCallback } from 'react';
 import { AppState } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
-import { mapNotificationRow, type NotificationRow } from '@/features/notifications/types/notification-db.types';
 import {
   canUseExpoNotifications,
   loadExpoNotificationsModule,
 } from '@/features/notifications/utils/notifications-module';
-import { useSupabasePostgresChanges } from '@/hooks/use-supabase-postgres-changes';
+import type { ApiNotification } from '@/repositories/notification.repository';
+import { useWebSocketSubscribe } from '@/hooks/use-websocket-subscribe';
 import { queryKeys } from '@/lib/query-keys';
 
 type UseNotificationsRealtimeOptions = {
@@ -23,8 +22,8 @@ export function useNotificationsRealtime({
   const queryClient = useQueryClient();
   const isEnabled = enabled && Boolean(userId);
 
-  const handlePayload = useCallback(
-    (payload: RealtimePostgresChangesPayload<NotificationRow>) => {
+  const handleEvent = useCallback(
+    (payload: unknown) => {
       if (!userId) {
         return;
       }
@@ -34,15 +33,11 @@ export function useNotificationsRealtime({
         queryKey: queryKeys.notifications.unreadCount(userId),
       });
 
-      if (payload.eventType !== 'INSERT' || !payload.new) {
-        return;
-      }
-
       if (AppState.currentState === 'active' || !canUseExpoNotifications()) {
         return;
       }
 
-      const notification = mapNotificationRow(payload.new);
+      const notification = payload as ApiNotification;
 
       void loadExpoNotificationsModule().then((Notifications) => {
         if (!Notifications) {
@@ -53,7 +48,7 @@ export function useNotificationsRealtime({
           content: {
             title: notification.title,
             body: notification.body,
-            data: notification.data,
+            data: notification.data ?? {},
           },
           trigger: null,
         });
@@ -62,11 +57,10 @@ export function useNotificationsRealtime({
     [queryClient, userId],
   );
 
-  useSupabasePostgresChanges<NotificationRow>({
+  useWebSocketSubscribe({
     enabled: isEnabled,
-    channelName: `notifications:${userId ?? 'inactive'}`,
-    table: 'notifications',
-    filter: userId ? `user_id=eq.${userId}` : undefined,
-    onPayload: handlePayload,
+    channel: userId ? `user:${userId}` : '',
+    eventType: 'notification.created',
+    onEvent: (event) => handleEvent(event.payload),
   });
 }

@@ -1,3 +1,4 @@
+import type { ApiConversation, ApiMessage } from '@/repositories/conversation.repository';
 import type {
   ConversationRow,
   MessageRow,
@@ -10,6 +11,45 @@ function mapParticipant(row: ProfileSummaryRow | undefined, fallbackId: string):
     id: row?.id ?? fallbackId,
     fullName: row?.full_name ?? 'Usuario',
     avatarUrl: row?.avatar_url ?? null,
+  };
+}
+
+export function mapApiConversation(row: ApiConversation): Conversation {
+  return {
+    id: row.id,
+    serviceRequestId: row.serviceRequestId,
+    clientId: row.clientId,
+    professionalId: row.professionalId,
+    serviceRequestTitle: row.serviceRequest?.title ?? 'Solicitud',
+    serviceRequestStatus: row.serviceRequest?.status ?? 'published',
+    client: {
+      id: row.client?.id ?? row.clientId,
+      fullName: row.client?.fullName ?? 'Usuario',
+      avatarUrl: row.client?.avatarUrl ?? null,
+    },
+    professional: {
+      id: row.professional?.id ?? row.professionalId,
+      fullName: row.professional?.fullName ?? 'Usuario',
+      avatarUrl: row.professional?.avatarUrl ?? null,
+    },
+    closedAt: row.closedAt ?? null,
+    closedReason: row.closedReason ?? null,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export function mapApiMessage(row: ApiMessage): Message {
+  return {
+    id: row.id,
+    conversationId: row.conversationId,
+    senderId: row.senderId,
+    type: row.messageType as Message['type'],
+    content: row.content,
+    mediaUrl: row.mediaUrl ?? null,
+    deliveredAt: row.deliveredAt ?? null,
+    readAt: row.readAt ?? null,
+    createdAt: row.createdAt,
   };
 }
 

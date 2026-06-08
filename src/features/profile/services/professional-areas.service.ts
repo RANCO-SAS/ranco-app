@@ -1,51 +1,28 @@
-import { getSupabaseClient } from '@/services/supabase/client';
-
-const PROFESSIONAL_AREAS_TABLE = 'professional_service_areas';
+import {
+  professionalAreasRepository,
+  type ProfessionalServiceArea,
+} from '@/repositories/professional-areas.repository';
 
 async function getProfessionalSubcategoryIds(userId: string): Promise<string[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from(PROFESSIONAL_AREAS_TABLE)
-    .select('subcategory_id')
-    .eq('user_id', userId);
-
-  if (error) {
-    throw error;
-  }
-
-  return data.map((row) => row.subcategory_id);
+  const areas = await professionalAreasRepository.listMine();
+  return areas.map((area) => area.subcategoryId);
 }
 
 async function replaceProfessionalSubcategories(
   userId: string,
   subcategoryIds: string[],
 ): Promise<string[]> {
-  const supabase = getSupabaseClient();
+  const existing = await professionalAreasRepository.listMine();
 
-  const { error: deleteError } = await supabase
-    .from(PROFESSIONAL_AREAS_TABLE)
-    .delete()
-    .eq('user_id', userId);
-
-  if (deleteError) {
-    throw deleteError;
-  }
+  await Promise.all(existing.map((area: ProfessionalServiceArea) => professionalAreasRepository.remove(area.id)));
 
   if (subcategoryIds.length === 0) {
     return [];
   }
 
   const uniqueIds = [...new Set(subcategoryIds)];
-  const { error: insertError } = await supabase.from(PROFESSIONAL_AREAS_TABLE).insert(
-    uniqueIds.map((subcategoryId) => ({
-      user_id: userId,
-      subcategory_id: subcategoryId,
-    })),
-  );
 
-  if (insertError) {
-    throw insertError;
-  }
+  await Promise.all(uniqueIds.map((subcategoryId) => professionalAreasRepository.add(subcategoryId)));
 
   return uniqueIds;
 }

@@ -1,3 +1,4 @@
+import type { ApiUserProfile } from '@/repositories/profile.repository';
 import type { UserProfileRow } from '@/features/profile/types/profile-db.types';
 import type { UserProfile } from '@/features/profile/types/profile.types';
 
@@ -19,6 +20,27 @@ export function mapUserProfileRow(
     onboardingCompletedAt: row.onboarding_completed_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+export function mapApiUserProfile(
+  profile: ApiUserProfile,
+  professionalSubcategoryIds: string[] = [],
+): UserProfile {
+  return {
+    id: profile.id,
+    fullName: profile.fullName,
+    avatarUrl: profile.avatarUrl ?? null,
+    phone: profile.phone ?? null,
+    locationLabel: profile.locationLabel ?? null,
+    locationLat: profile.locationLat ?? null,
+    locationLng: profile.locationLng ?? null,
+    isClient: profile.isClient,
+    isProfessional: profile.isProfessional,
+    professionalSubcategoryIds,
+    onboardingCompletedAt: profile.onboardingCompletedAt ?? null,
+    createdAt: profile.createdAt,
+    updatedAt: profile.updatedAt,
   };
 }
 

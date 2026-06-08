@@ -35,6 +35,7 @@ export function RealtimeNotificationsProvider({ children }: RealtimeNotification
   });
 
   usePublishedJobsRealtime({
+    userId,
     enabled: activeMode === 'professional' && Boolean(profile?.isProfessional),
   });
 

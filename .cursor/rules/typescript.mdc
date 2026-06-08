@@ -176,7 +176,7 @@ features/jobs/types/job.ts
 Always type:
 - API responses
 - mutations
-- Supabase queries
+- repository calls
 - hook returns
 - form schemas
 

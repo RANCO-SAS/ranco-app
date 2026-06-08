@@ -1,7 +1,8 @@
 import * as Linking from 'expo-linking';
 
 import { AuthError } from '@/features/auth/utils/map-auth-error';
-import { getSupabaseClient } from '@/services/supabase/client';
+import { setStoredTokens } from '@/services/api/token-storage';
+import { getStoredTokens } from '@/services/api/token-storage';
 
 let exchangeInFlight: Promise<void> | null = null;
 
@@ -32,37 +33,22 @@ async function exchangeSessionFromUrl(url: string): Promise<void> {
     throw new AuthError(`Error de autenticación: ${authErrorCode}`, authErrorCode);
   }
 
-  const supabase = getSupabaseClient();
-  const { data: existingSessionData } = await supabase.auth.getSession();
+  const existingTokens = await getStoredTokens();
 
-  if (existingSessionData.session) {
+  if (existingTokens?.accessToken) {
     return;
   }
 
-  const code = getParam(params, 'code');
   const accessToken = getParam(params, 'access_token');
   const refreshToken = getParam(params, 'refresh_token');
-
-  if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (error) {
-      throw error;
-    }
-
-    return;
-  }
+  const expiresAtRaw = getParam(params, 'expires_at');
 
   if (accessToken && refreshToken) {
-    const { error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
+    await setStoredTokens({
+      accessToken,
+      refreshToken,
+      expiresAt: expiresAtRaw ? Number(expiresAtRaw) : Date.now() + 3600_000,
     });
-
-    if (error) {
-      throw error;
-    }
-
     return;
   }
 
@@ -70,7 +56,7 @@ async function exchangeSessionFromUrl(url: string): Promise<void> {
 }
 
 export async function createSessionFromUrl(url: string): Promise<void> {
-  if (!url.includes('code=') && !url.includes('access_token=') && url.includes('error=')) {
+  if (!url.includes('access_token=') && url.includes('error=')) {
     await exchangeSessionFromUrl(url);
     return;
   }
@@ -85,14 +71,13 @@ export async function createSessionFromUrl(url: string): Promise<void> {
 }
 
 export async function waitForAuthSession(timeoutMs = 8000, intervalMs = 250) {
-  const supabase = getSupabaseClient();
   const deadline = Date.now() + timeoutMs;
 
   for (;;) {
-    const { data } = await supabase.auth.getSession();
+    const tokens = await getStoredTokens();
 
-    if (data.session) {
-      return data.session;
+    if (tokens?.accessToken) {
+      return tokens;
     }
 
     if (Date.now() >= deadline) {

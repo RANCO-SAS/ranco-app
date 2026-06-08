@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { useSupabasePostgresChanges } from '@/hooks/use-supabase-postgres-changes';
+import { useWebSocketSubscribe } from '@/hooks/use-websocket-subscribe';
 import { queryKeys } from '@/lib/query-keys';
 
 type UseProfileReviewsRealtimeOptions = {
@@ -16,7 +16,7 @@ export function useProfileReviewsRealtime({
   const queryClient = useQueryClient();
   const isEnabled = enabled && Boolean(userId);
 
-  const handlePayload = useCallback(() => {
+  const handleEvent = useCallback(() => {
     if (!userId) {
       return;
     }
@@ -26,11 +26,10 @@ export function useProfileReviewsRealtime({
     void queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all });
   }, [queryClient, userId]);
 
-  useSupabasePostgresChanges({
+  useWebSocketSubscribe({
     enabled: isEnabled,
-    channelName: `profile-reviews:${userId ?? 'inactive'}`,
-    table: 'reviews',
-    filter: userId ? `reviewee_id=eq.${userId}` : undefined,
-    onPayload: handlePayload,
+    channel: userId ? `user:${userId}` : '',
+    eventType: 'review.created',
+    onEvent: handleEvent,
   });
 }

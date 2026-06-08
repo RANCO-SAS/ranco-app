@@ -1,3 +1,4 @@
+import type { ApiServiceOffer } from '@/repositories/offer.repository';
 import type { ServiceOffer } from '@/features/offers/types/offer';
 
 export type ServiceOfferRow = {
@@ -13,6 +14,22 @@ export type ServiceOfferRow = {
   created_at: string;
   updated_at: string;
 };
+
+export function mapApiServiceOffer(offer: ApiServiceOffer): ServiceOffer {
+  return {
+    id: offer.id,
+    conversationId: offer.conversationId,
+    serviceRequestId: offer.serviceRequestId,
+    proposerId: offer.proposerId,
+    amountCents: offer.amountCents,
+    currency: (offer.currency as ServiceOffer['currency']) ?? 'COP',
+    status: offer.status as ServiceOffer['status'],
+    parentOfferId: offer.parentOfferId ?? null,
+    acceptedBy: offer.acceptedBy ?? null,
+    createdAt: offer.createdAt,
+    updatedAt: offer.updatedAt,
+  };
+}
 
 export function mapServiceOfferRow(row: ServiceOfferRow): ServiceOffer {
   return {

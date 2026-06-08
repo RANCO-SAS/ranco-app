@@ -1,36 +1,40 @@
-import type { UserProfileRow } from '@/features/profile/types/profile-db.types';
 import type {
   CompleteOnboardingInput,
   InitializeProfileInput,
   UpdateProfileInput,
   UserProfile,
 } from '@/features/profile/types/profile.types';
-import { mapUserProfileRow } from '@/features/profile/services/profile.mapper';
+import { mapApiUserProfile } from '@/features/profile/services/profile.mapper';
 import { professionalAreasService } from '@/features/profile/services/professional-areas.service';
-import { getSupabaseClient } from '@/services/supabase/client';
+import { profileRepository } from '@/repositories/profile.repository';
+import { isApiError } from '@/services/api/errors';
 
-const PROFILE_TABLE = 'user_profiles';
+async function getProfessionalSubcategoryIdsForUser(userId: string): Promise<string[]> {
+  try {
+    const me = await profileRepository.getMe();
+    if (me.id !== userId) {
+      return [];
+    }
+
+    return professionalAreasService.getProfessionalSubcategoryIds(userId);
+  } catch {
+    return [];
+  }
+}
 
 async function getProfileByUserId(userId: string): Promise<UserProfile | null> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from(PROFILE_TABLE)
-    .select('*')
-    .eq('id', userId)
-    .maybeSingle();
+  try {
+    const profile = await profileRepository.getById(userId);
+    const professionalSubcategoryIds = await getProfessionalSubcategoryIdsForUser(userId);
 
-  if (error) {
+    return mapApiUserProfile(profile, professionalSubcategoryIds);
+  } catch (error) {
+    if (isApiError(error) && error.code === 'not_found') {
+      return null;
+    }
+
     throw error;
   }
-
-  if (!data) {
-    return null;
-  }
-
-  const professionalSubcategoryIds =
-    await professionalAreasService.getProfessionalSubcategoryIds(userId);
-
-  return mapUserProfileRow(data as UserProfileRow, professionalSubcategoryIds);
 }
 
 async function initializeProfile(input: InitializeProfileInput): Promise<UserProfile> {
@@ -40,47 +44,26 @@ async function initializeProfile(input: InitializeProfileInput): Promise<UserPro
     return existingProfile;
   }
 
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from(PROFILE_TABLE)
-    .insert({
-      id: input.userId,
-      full_name: input.fullName?.trim() ?? '',
-      avatar_url: input.avatarUrl?.trim() || null,
-    })
-    .select('*')
-    .single();
+  const profile = await profileRepository.updateMe({
+    fullName: input.fullName?.trim() ?? '',
+    avatarUrl: input.avatarUrl?.trim() || null,
+  });
 
-  if (error) {
-    throw error;
-  }
-
-  return mapUserProfileRow(data as UserProfileRow, []);
+  return mapApiUserProfile(profile, []);
 }
 
 async function completeOnboarding(input: CompleteOnboardingInput): Promise<UserProfile> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from(PROFILE_TABLE)
-    .upsert(
-      {
-        id: input.userId,
-        full_name: input.fullName.trim(),
-        phone: input.phone?.trim() || null,
-        location_label: input.locationLabel?.trim() || null,
-        avatar_url: input.avatarUrl?.trim() || null,
-        is_client: input.isClient,
-        is_professional: input.isProfessional,
-        onboarding_completed_at: new Date().toISOString(),
-      },
-      { onConflict: 'id' },
-    )
-    .select('*')
-    .single();
+  const profile = await profileRepository.updateMe({
+    fullName: input.fullName.trim(),
+    phone: input.phone?.trim() || null,
+    locationLabel: input.locationLabel?.trim() || null,
+    avatarUrl: input.avatarUrl?.trim() || null,
+  });
 
-  if (error) {
-    throw error;
-  }
+  const onboarded = await profileRepository.completeOnboarding({
+    isClient: input.isClient,
+    isProfessional: input.isProfessional,
+  });
 
   const professionalSubcategoryIds = input.isProfessional
     ? await professionalAreasService.replaceProfessionalSubcategories(
@@ -89,47 +72,16 @@ async function completeOnboarding(input: CompleteOnboardingInput): Promise<UserP
       )
     : await professionalAreasService.replaceProfessionalSubcategories(input.userId, []);
 
-  return mapUserProfileRow(data as UserProfileRow, professionalSubcategoryIds);
+  return mapApiUserProfile(onboarded ?? profile, professionalSubcategoryIds);
 }
 
 async function updateProfile(userId: string, input: UpdateProfileInput): Promise<UserProfile> {
-  const supabase = getSupabaseClient();
-  const payload: Partial<UserProfileRow> = {};
-
-  if (input.fullName !== undefined) {
-    payload.full_name = input.fullName.trim();
-  }
-
-  if (input.phone !== undefined) {
-    payload.phone = input.phone?.trim() || null;
-  }
-
-  if (input.locationLabel !== undefined) {
-    payload.location_label = input.locationLabel?.trim() || null;
-  }
-
-  if (input.avatarUrl !== undefined) {
-    payload.avatar_url = input.avatarUrl?.trim() || null;
-  }
-
-  if (input.isClient !== undefined) {
-    payload.is_client = input.isClient;
-  }
-
-  if (input.isProfessional !== undefined) {
-    payload.is_professional = input.isProfessional;
-  }
-
-  const { data, error } = await supabase
-    .from(PROFILE_TABLE)
-    .update(payload)
-    .eq('id', userId)
-    .select('*')
-    .single();
-
-  if (error) {
-    throw error;
-  }
+  const profile = await profileRepository.updateMe({
+    fullName: input.fullName?.trim(),
+    phone: input.phone,
+    locationLabel: input.locationLabel,
+    avatarUrl: input.avatarUrl,
+  });
 
   let professionalSubcategoryIds =
     await professionalAreasService.getProfessionalSubcategoryIds(userId);
@@ -146,7 +98,7 @@ async function updateProfile(userId: string, input: UpdateProfileInput): Promise
     );
   }
 
-  return mapUserProfileRow(data as UserProfileRow, professionalSubcategoryIds);
+  return mapApiUserProfile(profile, professionalSubcategoryIds);
 }
 
 export const profileService = {

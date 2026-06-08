@@ -100,13 +100,12 @@ Avoid:
 - Use proper query keys
 - Avoid manual cache hacks
 
-# Supabase Expectations
+# API Expectations
 
-- Use relational modeling
-- Respect Row Level Security
-- Keep schemas simple
-- Avoid backend overengineering
-- Use realtime only when valuable
+- Use repositories for all HTTP/WebSocket I/O
+- Keep services as orchestration layer
+- Match ranco-core response envelope
+- Use WebSockets only where valuable
 
 # Form Expectations
 

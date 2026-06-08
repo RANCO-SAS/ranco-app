@@ -1,31 +1,26 @@
-import type {
-  ServiceCategoryRow,
-  ServiceSubcategoryRow,
-} from '@/features/jobs/types/service-category-db.types';
 import type { ServiceCategory } from '@/features/jobs/types/service-category.types';
-import { mapServiceCategoryRows } from '@/features/jobs/services/service-category.mapper';
-import { getSupabaseClient } from '@/services/supabase/client';
+import { serviceCategoryRepository } from '@/repositories/service-category.repository';
 
 async function getCategories(): Promise<ServiceCategory[]> {
-  const supabase = getSupabaseClient();
+  const categories = await serviceCategoryRepository.getCategories();
 
-  const [categoriesResult, subcategoriesResult] = await Promise.all([
-    supabase.from('service_categories').select('*').order('sort_order'),
-    supabase.from('service_subcategories').select('*').order('sort_order'),
-  ]);
-
-  if (categoriesResult.error) {
-    throw categoriesResult.error;
-  }
-
-  if (subcategoriesResult.error) {
-    throw subcategoriesResult.error;
-  }
-
-  return mapServiceCategoryRows(
-    categoriesResult.data as ServiceCategoryRow[],
-    subcategoriesResult.data as ServiceSubcategoryRow[],
-  ).sort((left, right) => left.sortOrder - right.sortOrder);
+  return categories
+    .map((category) => ({
+      id: category.id,
+      slug: category.slug,
+      name: category.name,
+      sortOrder: category.sortOrder,
+      subcategories: (category.subcategories ?? [])
+        .map((subcategory) => ({
+          id: subcategory.id,
+          categoryId: subcategory.categoryId,
+          slug: subcategory.slug,
+          name: subcategory.name,
+          sortOrder: subcategory.sortOrder,
+        }))
+        .sort((left, right) => left.sortOrder - right.sortOrder),
+    }))
+    .sort((left, right) => left.sortOrder - right.sortOrder);
 }
 
 export const serviceCategoryService = {

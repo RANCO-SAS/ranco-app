@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { useSupabasePostgresChanges } from '@/hooks/use-supabase-postgres-changes';
+import { useWebSocketSubscribe } from '@/hooks/use-websocket-subscribe';
 import { queryKeys } from '@/lib/query-keys';
 
 type UseClientJobsRealtimeOptions = {
@@ -13,7 +13,7 @@ export function useClientJobsRealtime({ clientId, enabled = true }: UseClientJob
   const queryClient = useQueryClient();
   const isEnabled = enabled && Boolean(clientId);
 
-  const handlePayload = useCallback(() => {
+  const handleEvent = useCallback(() => {
     if (!clientId) {
       return;
     }
@@ -21,11 +21,10 @@ export function useClientJobsRealtime({ clientId, enabled = true }: UseClientJob
     void queryClient.invalidateQueries({ queryKey: queryKeys.jobs.client(clientId) });
   }, [clientId, queryClient]);
 
-  useSupabasePostgresChanges({
+  useWebSocketSubscribe({
     enabled: isEnabled,
-    channelName: `client-jobs:${clientId ?? 'inactive'}`,
-    table: 'service_requests',
-    filter: clientId ? `client_id=eq.${clientId}` : undefined,
-    onPayload: handlePayload,
+    channel: clientId ? `user:${clientId}` : '',
+    eventType: 'job.updated',
+    onEvent: handleEvent,
   });
 }

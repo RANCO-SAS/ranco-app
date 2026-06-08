@@ -1,0 +1,165 @@
+---
+description: ranco-core API backend architecture and realtime standards
+alwaysApply: true
+---
+
+# Backend Philosophy
+
+ranco-core is the primary backend for the MVP.
+
+The backend architecture must prioritize:
+- fast iteration
+- simplicity
+- realtime capabilities via WebSockets
+- maintainability
+- predictable data flows
+
+Avoid:
+- direct Supabase usage in the mobile app
+- duplicated backend logic in the client
+- complex event-driven systems in the app
+- excessive client-side data access abstractions
+
+# Backend Responsibilities (ranco-core)
+
+ranco-core handles:
+- authentication (JWT)
+- database persistence
+- WebSocket realtime events
+- file storage uploads
+- authorization (service layer)
+- push notification dispatch
+
+The mobile app communicates exclusively via HTTP REST and WebSockets.
+
+# Repository Layer Rules
+
+All API communication belongs inside repositories.
+
+Good:
+
+repositories/service-request.repository.ts
+
+Avoid:
+- direct HTTP calls in components or hooks
+- Supabase client usage anywhere in the app
+- duplicated API calls across services
+
+Dependency flow:
+
+```
+hooks → services → repositories → src/services/api/client.ts
+```
+
+# Environment Variables
+
+Use:
+
+EXPO_PUBLIC_API_URL=
+EXPO_PUBLIC_WS_URL=
+
+Never hardcode credentials or API URLs.
+
+# Authentication Rules
+
+Use JWT issued by ranco-core.
+
+Rules:
+- persist tokens securely (AsyncStorage via auth flow)
+- centralize auth logic in auth service/repository
+- protect authenticated routes
+- attach `Authorization: Bearer <token>` on REST and WS connections
+- avoid duplicated auth state
+
+# API Response Envelope
+
+All ranco-core responses follow:
+
+```json
+{
+  "status": "success",
+  "status_reason": "ok",
+  "data": { ... }
+}
+```
+
+Error responses use domain codes (`not_found`, `validation_error`, `unauthorized`, etc.) in `status`.
+
+Repositories unwrap the envelope and throw typed errors for services to handle.
+
+# Query Rules
+
+- Keep repository methods simple and 1:1 with API endpoints
+- Avoid duplicated query logic
+- Select only required fields (via API query params when needed)
+- Services own data transformation via mappers
+
+# Storage Rules
+
+Use ranco-core storage endpoints for:
+- profile images
+- service request photos
+- chat media
+- work evidence photos
+
+Rules:
+- validate uploads in services before sending
+- use multipart upload via API client
+- avoid oversized uploads unnecessarily
+
+# WebSocket Rules
+
+Use WebSockets for realtime where valuable.
+
+Good realtime use cases:
+- chat messages
+- job status updates
+- offer negotiation updates
+- notifications
+- typing indicators
+
+Rules:
+- connect with JWT on upgrade
+- subscribe to scoped channels (`user:{id}`, `conversation:{id}`, `job:{id}`)
+- clean up subscriptions on unmount
+- prefer query invalidation over manual cache merging
+
+Preferred integration:
+- WebSocket event received
+- `queryClient.invalidateQueries()` with matching query keys
+- predictable cache updates
+
+# Error Handling
+
+- Always handle API errors in services
+- Use user-friendly messages in UI
+- Avoid exposing raw backend errors
+- Keep async flows predictable
+
+# MVP Philosophy
+
+The client-backend contract should remain:
+- simple
+- reliable
+- fast to iterate
+- easy to debug
+
+Prioritize:
+- shipping product
+- validating ideas
+- maintaining velocity
+
+Over:
+- enterprise backend complexity
+- premature scalability
+- unnecessary infrastructure in the app
+
+# Cursor AI Expectations
+
+When generating API integration logic:
+- Place HTTP calls in repositories only
+- Keep services as orchestration layer
+- Respect JWT auth flow
+- Use WebSockets only where valuable
+- Avoid Supabase imports or references
+- Match ranco-core response envelope

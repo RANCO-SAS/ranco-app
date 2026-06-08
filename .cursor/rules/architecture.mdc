@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Project Philosophy
 
-This project is an MVP-first mobile application built with Expo, React Native, TypeScript, and Supabase.
+This project is an MVP-first mobile application built with Expo, React Native, TypeScript, and the ranco-core API.
 
 The primary goal is:
 - Ship features quickly
@@ -19,7 +19,7 @@ Avoid:
 - Enterprise overengineering
 - CQRS
 - Complex DDD abstractions
-- Unnecessary backend infrastructure
+- Direct Supabase or database access from the app
 
 # Architecture Principles
 
@@ -41,6 +41,7 @@ Preferred structure:
 app/
 components/
 features/
+repositories/
 shared/
 services/
 stores/
@@ -111,6 +112,34 @@ Rules:
 - Avoid cross-feature imports when possible
 - Shared code belongs in shared/ or components/
 
+### Data flow dependency
+
+```
+hooks → services → repositories → api client
+```
+
+| Layer | Responsibility |
+|-------|----------------|
+| `hooks/` | TanStack Query; call **services** only, never repositories |
+| `services/` | Orchestration, validation, composition; call **repositories** |
+| `src/repositories/` | HTTP/WebSocket I/O against ranco-core; no business logic |
+| `src/services/api/` | Global HTTP client (base URL, JWT, envelope, errors) |
+
+## repositories/
+
+Contains all API repositories in a flat folder at `src/repositories/`.
+
+Examples:
+- auth.repository.ts
+- service-request.repository.ts
+- conversation.repository.ts
+
+Rules:
+- One file per domain endpoint group
+- No business logic; HTTP/WebSocket I/O only
+- Features import repositories via `@/repositories/<name>.repository`
+- Services remain the only layer that calls repositories
+
 ## shared/
 
 Contains truly shared business utilities and reusable logic.
@@ -129,15 +158,16 @@ Avoid:
 Contains global infrastructure services.
 
 Examples:
-- supabase client
+- API HTTP client
+- WebSocket client
 - storage adapters
-- notification services
 - analytics services
 
 Rules:
 - Infrastructure concerns only
 - No UI logic
 - No screen-specific behavior
+- No direct Supabase usage
 
 ## stores/
 
@@ -218,3 +248,4 @@ When generating code:
 - Avoid placeholder implementations unless requested
 - Follow feature-first architecture consistently
 - Prefer mobile-first UX decisions
+- Never call Supabase directly; use repositories via services

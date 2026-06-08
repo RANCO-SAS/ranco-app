@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 
 import { authService } from '@/features/auth/services/auth.service';
-import { isSupabaseConfigured } from '@/lib/env';
+import { isApiConfigured } from '@/lib/env';
+import { websocketClient } from '@/services/api/websocket-client';
 import { useAppStore } from '@/stores/app-store';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -14,7 +15,7 @@ export function useAuthInit() {
     let unsubscribe: (() => void) | undefined;
 
     async function initializeAuth() {
-      if (!isSupabaseConfigured()) {
+      if (!isApiConfigured()) {
         setSession(null);
         setHydrated(true);
         return;
@@ -32,11 +33,21 @@ export function useAuthInit() {
 
           if (event === 'SIGNED_OUT') {
             resetSessionState();
+            websocketClient.disconnect();
+          }
+
+          if (event === 'SIGNED_IN' && session) {
+            void websocketClient.connect();
           }
         });
 
         const session = await authService.getValidatedSession();
         setSession(session);
+        if (session) {
+          void websocketClient.connect();
+        } else {
+          websocketClient.disconnect();
+        }
         isInitialized = true;
       } catch {
         setSession(null);

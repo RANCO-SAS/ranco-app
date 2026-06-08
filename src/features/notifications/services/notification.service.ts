@@ -1,67 +1,35 @@
-import { getSupabaseClient } from '@/services/supabase/client';
+import type { AppNotification, NotificationType } from '@/features/notifications/types/notification.types';
+import { notificationRepository } from '@/repositories/notification.repository';
 
-import {
-  mapNotificationRow,
-  type NotificationRow,
-} from '@/features/notifications/types/notification-db.types';
-import type { AppNotification } from '@/features/notifications/types/notification.types';
-
-const NOTIFICATIONS_TABLE = 'notifications';
+function mapApiNotification(notification: Awaited<ReturnType<typeof notificationRepository.getNotifications>>[number]): AppNotification {
+  return {
+    id: notification.id,
+    userId: notification.userId,
+    type: notification.type as NotificationType,
+    title: notification.title,
+    body: notification.body,
+    data: (notification.data ?? {}) as AppNotification['data'],
+    readAt: notification.readAt ?? null,
+    createdAt: notification.createdAt,
+  };
+}
 
 export const notificationService = {
-  async getNotifications(userId: string): Promise<AppNotification[]> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from(NOTIFICATIONS_TABLE)
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    if (error) {
-      throw error;
-    }
-
-    return (data as NotificationRow[]).map(mapNotificationRow);
+  async getNotifications(_userId: string): Promise<AppNotification[]> {
+    const data = await notificationRepository.getNotifications();
+    return data.map(mapApiNotification);
   },
 
-  async getUnreadCount(userId: string): Promise<number> {
-    const supabase = getSupabaseClient();
-    const { count, error } = await supabase
-      .from(NOTIFICATIONS_TABLE)
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .is('read_at', null);
-
-    if (error) {
-      throw error;
-    }
-
-    return count ?? 0;
+  async getUnreadCount(_userId: string): Promise<number> {
+    const data = await notificationRepository.getUnreadCount();
+    return data.count ?? 0;
   },
 
   async markAsRead(notificationId: string): Promise<void> {
-    const supabase = getSupabaseClient();
-    const { error } = await supabase
-      .from(NOTIFICATIONS_TABLE)
-      .update({ read_at: new Date().toISOString() })
-      .eq('id', notificationId);
-
-    if (error) {
-      throw error;
-    }
+    await notificationRepository.markAsRead(notificationId);
   },
 
-  async markAllAsRead(userId: string): Promise<void> {
-    const supabase = getSupabaseClient();
-    const { error } = await supabase
-      .from(NOTIFICATIONS_TABLE)
-      .update({ read_at: new Date().toISOString() })
-      .eq('user_id', userId)
-      .is('read_at', null);
-
-    if (error) {
-      throw error;
-    }
+  async markAllAsRead(_userId: string): Promise<void> {
+    await notificationRepository.markAllAsRead();
   },
 };

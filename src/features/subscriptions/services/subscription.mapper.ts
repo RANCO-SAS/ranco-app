@@ -1,15 +1,62 @@
 import type {
+  ApiSubscriptionPlan,
+  ApiUserSubscription,
+} from '@/repositories/subscription.repository';
+import type {
   SubscriptionPlanRow,
   UserSubscriptionRow,
 } from '@/features/subscriptions/types/subscription-db.types';
-import type { SubscriptionPlan, UserSubscription } from '@/features/subscriptions/types/subscription';
+import type {
+  BillingCycle,
+  SubscriptionPlan,
+  SubscriptionPlanTier,
+  SubscriptionStatus,
+  SubscriptionTargetRole,
+  UserSubscription,
+} from '@/features/subscriptions/types/subscription';
 
-function parseFeatures(features: string[] | null): string[] {
+function parseFeatures(features: string[] | Record<string, unknown> | null | undefined): string[] {
   if (!features || !Array.isArray(features)) {
     return [];
   }
 
   return features.filter((item): item is string => typeof item === 'string');
+}
+
+export function mapApiSubscriptionPlan(plan: ApiSubscriptionPlan): SubscriptionPlan {
+  return {
+    id: plan.id,
+    slug: plan.slug,
+    name: plan.name,
+    description: plan.description,
+    targetRole: plan.targetRole as SubscriptionTargetRole,
+    tier: plan.tier as SubscriptionPlanTier,
+    priceMonthlyCents: plan.priceMonthlyCents,
+    priceAnnualCents: plan.priceAnnualCents,
+    features: parseFeatures(plan.features),
+    sortOrder: plan.sortOrder,
+  };
+}
+
+export function mapApiUserSubscription(subscription: ApiUserSubscription): UserSubscription {
+  const plan = subscription.plan;
+
+  return {
+    subscriptionId: subscription.id,
+    planId: subscription.planId,
+    planSlug: plan?.slug ?? '',
+    planName: plan?.name ?? '',
+    planDescription: plan?.description ?? '',
+    targetRole: subscription.targetRole as SubscriptionTargetRole,
+    tier: (plan?.tier ?? 'free') as SubscriptionPlanTier,
+    priceMonthlyCents: plan?.priceMonthlyCents ?? 0,
+    priceAnnualCents: plan?.priceAnnualCents ?? 0,
+    features: parseFeatures(plan?.features),
+    status: subscription.status as SubscriptionStatus,
+    billingCycle: subscription.billingCycle as BillingCycle,
+    currentPeriodStart: subscription.currentPeriodStart,
+    currentPeriodEnd: subscription.currentPeriodEnd ?? null,
+  };
 }
 
 export function mapSubscriptionPlanRow(row: SubscriptionPlanRow): SubscriptionPlan {

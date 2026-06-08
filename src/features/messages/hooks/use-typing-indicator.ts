@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
-  useSupabaseBroadcast,
-  useSupabaseBroadcastSender,
-} from '@/hooks/use-supabase-broadcast';
+  useWebSocketBroadcast,
+  useWebSocketBroadcastSender,
+} from '@/hooks/use-websocket-broadcast';
 
 const TYPING_EVENT = 'typing';
 const TYPING_TIMEOUT_MS = 3_000;
@@ -32,10 +32,10 @@ export function useTypingIndicator({
   const [typingLabel, setTypingLabel] = useState<string | null>(null);
   const timeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const lastSentRef = useRef<boolean>(false);
-  const channelName = conversationId ? `typing:${conversationId}` : 'typing:inactive';
+  const channel = conversationId ? `typing:${conversationId}` : 'typing:inactive';
   const isEnabled = enabled && Boolean(conversationId && userId);
 
-  const { sendBroadcast } = useSupabaseBroadcastSender(channelName, isEnabled);
+  const { sendBroadcast } = useWebSocketBroadcastSender(channel, isEnabled);
 
   const handleTypingPayload = useCallback(
     (payload: TypingPayload) => {
@@ -67,9 +67,9 @@ export function useTypingIndicator({
     [userId],
   );
 
-  useSupabaseBroadcast<TypingPayload>({
+  useWebSocketBroadcast<TypingPayload>({
     enabled: isEnabled,
-    channelName,
+    channel,
     event: TYPING_EVENT,
     onPayload: handleTypingPayload,
   });
