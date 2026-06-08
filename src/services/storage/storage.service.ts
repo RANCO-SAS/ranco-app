@@ -1,7 +1,7 @@
 import { File } from 'expo-file-system';
 
 import { devError, devLog, devWarn } from '@/lib/dev-logger';
-import { apiUpload } from '@/services/api/client';
+import { apiDelete, apiUpload } from '@/services/api/client';
 import { withImageCacheBuster } from '@/shared/utils/image-uri';
 
 const AVATARS_BUCKET = 'avatars';
@@ -110,6 +110,40 @@ async function uploadImage(input: UploadImageInput): Promise<string> {
   return publicUrl;
 }
 
+function extractStoragePath(publicUrl: string, bucket: StorageBucket): string | null {
+  try {
+    const pathname = new URL(publicUrl.split('?')[0]).pathname;
+    const segments = pathname.split('/').filter(Boolean);
+    const bucketIndex = segments.indexOf(bucket);
+
+    if (bucketIndex === -1) {
+      return null;
+    }
+
+    return segments.slice(bucketIndex + 1).join('/');
+  } catch {
+    return null;
+  }
+}
+
+async function deleteStorageObjects(bucket: StorageBucket, urls: string[]): Promise<void> {
+  for (const url of urls) {
+    const path = extractStoragePath(url, bucket);
+
+    if (!path) {
+      devWarn('storage', 'delete:invalid-url', { bucket, urlPreview: url.slice(0, 120) });
+      continue;
+    }
+
+    try {
+      await apiDelete(`/v1/app/storage/${bucket}/${path}`);
+      devLog('storage', 'delete:success', { bucket, path });
+    } catch (error) {
+      devWarn('storage', 'delete:failed', { bucket, path, error });
+    }
+  }
+}
+
 async function uploadAvatar(
   userId: string,
   uri: string,
@@ -157,9 +191,7 @@ async function uploadReviewEvidence(
 }
 
 async function deleteReviewEvidenceUrls(urls: string[]): Promise<void> {
-  if (urls.length > 0) {
-    devWarn('storage', 'deleteReviewEvidenceUrls:skipped', { count: urls.length });
-  }
+  await deleteStorageObjects(WORK_EVIDENCE_BUCKET, urls);
 }
 
 async function uploadRequestPhoto(
@@ -178,9 +210,7 @@ async function uploadRequestPhoto(
 }
 
 async function deleteRequestPhotoUrls(urls: string[]): Promise<void> {
-  if (urls.length > 0) {
-    devWarn('storage', 'deleteRequestPhotoUrls:skipped', { count: urls.length });
-  }
+  await deleteStorageObjects(REQUEST_PHOTOS_BUCKET, urls);
 }
 
 export const storageService = {

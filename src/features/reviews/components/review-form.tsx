@@ -20,14 +20,13 @@ import {
   validateTraits,
   type ReviewTraits,
 } from '@/features/reviews/constants/review-traits';
-import { useCreateReview, useUpdateReviewEvidence } from '@/features/reviews/hooks/use-reviews';
-import { reviewService } from '@/features/reviews/services/review.service';
+import { useCreateReview } from '@/features/reviews/hooks/use-reviews';
 import type { Review } from '@/features/reviews/types/review.types';
 import { getReviewSubmitErrorMessage } from '@/features/reviews/utils/get-review-submit-error-message';
 import { type ServiceRequestPhotoItem } from '@/features/jobs/types/service-request-photo.types';
 import { useTheme } from '@/hooks/use-theme';
 import { queryKeys } from '@/lib/query-keys';
-import { storageService } from '@/services/storage/storage.service';
+import { reviewService } from '@/features/reviews/services/review.service';
 
 type ReviewFormProps = {
   serviceRequestId: string;
@@ -37,37 +36,6 @@ type ReviewFormProps = {
   revieweeIsProfessional: boolean;
   existingReview?: Review | null;
 };
-
-async function uploadDraftEvidence(
-  review: Review,
-  reviewerId: string,
-  photos: ServiceRequestPhotoItem[],
-  updateEvidence: ReturnType<typeof useUpdateReviewEvidence>,
-): Promise<Review> {
-  const localPhotos = photos.filter((photo) => !photo.isRemote);
-
-  if (localPhotos.length === 0) {
-    return review;
-  }
-
-  const uploadedUrls: string[] = [];
-
-  for (let index = 0; index < localPhotos.length; index += 1) {
-    const uploadedUrl = await storageService.uploadReviewEvidence(
-      reviewerId,
-      review.id,
-      localPhotos[index].uri,
-      index,
-    );
-    uploadedUrls.push(uploadedUrl);
-  }
-
-  return updateEvidence.mutateAsync({
-    reviewId: review.id,
-    reviewerId,
-    evidenceUrls: uploadedUrls,
-  });
-}
 
 export function ReviewForm({
   serviceRequestId,
@@ -81,7 +49,6 @@ export function ReviewForm({
   const router = useRouter();
   const queryClient = useQueryClient();
   const createReview = useCreateReview();
-  const updateEvidence = useUpdateReviewEvidence();
   const traitDefinitions = getReviewTraitsForReviewee(revieweeIsProfessional);
   const [traits, setTraits] = useState<ReviewTraits>(
     existingReview?.traits ?? buildDefaultTraits(traitDefinitions),
@@ -111,24 +78,7 @@ export function ReviewForm({
   const handleSubmitSuccess = (review: Review) => {
     setSubmitError(null);
     setSubmittedReview(review);
-
-    if (evidencePhotos.length === 0) {
-      setIsExpanded(false);
-      return;
-    }
-
-    setIsUploadingEvidence(true);
-    void uploadDraftEvidence(review, reviewerId, evidencePhotos, updateEvidence)
-      .then((nextReview) => {
-        setSubmittedReview(nextReview);
-        setIsExpanded(false);
-      })
-      .catch(() => {
-        setIsExpanded(false);
-      })
-      .finally(() => {
-        setIsUploadingEvidence(false);
-      });
+    setIsExpanded(false);
   };
 
   if (activeReview) {
@@ -210,6 +160,7 @@ export function ReviewForm({
           }
 
           setSubmitError(null);
+          setIsUploadingEvidence(true);
           createReview.mutate(
             {
               serviceRequestId,
@@ -219,10 +170,17 @@ export function ReviewForm({
               rating: computeStoredReviewRating(traits),
               traits,
               comment: comment.trim() || undefined,
+              evidencePhotoUris: evidencePhotos
+                .filter((photo) => !photo.isRemote)
+                .map((photo) => photo.uri),
             },
             {
-              onSuccess: handleSubmitSuccess,
+              onSuccess: (review) => {
+                setIsUploadingEvidence(false);
+                handleSubmitSuccess(review);
+              },
               onError: (error) => {
+                setIsUploadingEvidence(false);
                 const message = getReviewSubmitErrorMessage(error);
                 setSubmitError(message);
 

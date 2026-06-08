@@ -24,6 +24,7 @@ export type CreateReviewInput = {
   rating: number;
   traits: ReviewTraits;
   comment?: string;
+  evidencePhotoUris?: string[];
 };
 
 export type UpdateReviewEvidenceInput = {

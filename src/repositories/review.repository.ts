@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '@/services/api/client';
+import { apiGet, apiPatch, apiPost } from '@/services/api/client';
 
 export type ApiReview = {
   id: string;
@@ -33,6 +33,14 @@ export type CreateReviewBody = {
 export const reviewRepository = {
   create(body: CreateReviewBody) {
     return apiPost<ApiReview>('/v1/app/reviews', body);
+  },
+
+  getById(reviewId: string) {
+    return apiGet<ApiReview>(`/v1/app/reviews/${reviewId}`);
+  },
+
+  updateEvidence(reviewId: string, body: { evidenceUrls: string[] }) {
+    return apiPatch<ApiReview>(`/v1/app/reviews/${reviewId}/evidence`, body);
   },
 
   getReviewsForUser(userId: string) {

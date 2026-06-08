@@ -1,5 +1,6 @@
 import { env } from '@/lib/env';
-import { getAccessToken } from '@/services/api/token-storage';
+import { refreshAccessToken } from '@/services/api/client';
+import { getStoredTokens, isTokenExpired } from '@/services/api/token-storage';
 
 export type WsEvent = {
   type: string;
@@ -14,9 +15,13 @@ class WebSocketClient {
   private handlers = new Map<string, Set<EventHandler>>();
   private subscribedChannels = new Set<string>();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private manuallyClosed = false;
+  private reconnectDelayMs = 3000;
 
   async connect(): Promise<void> {
-    const token = await getAccessToken();
+    this.manuallyClosed = false;
+    const token = await this.resolveAccessToken();
+
     if (!token) {
       return;
     }
@@ -45,21 +50,28 @@ class WebSocketClient {
     };
 
     this.socket.onopen = () => {
+      this.reconnectDelayMs = 3000;
       for (const channel of this.subscribedChannels) {
         this.sendSubscribe(channel);
       }
     };
 
     this.socket.onclose = () => {
+      if (this.manuallyClosed) {
+        return;
+      }
       this.scheduleReconnect();
     };
   }
 
   disconnect(): void {
+    this.manuallyClosed = true;
+
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+
     this.socket?.close();
     this.socket = null;
   }
@@ -92,6 +104,20 @@ class WebSocketClient {
     );
   }
 
+  private async resolveAccessToken(): Promise<string | null> {
+    const tokens = await getStoredTokens();
+
+    if (!tokens) {
+      return null;
+    }
+
+    if (isTokenExpired(tokens.expiresAt)) {
+      return refreshAccessToken();
+    }
+
+    return tokens.accessToken;
+  }
+
   private sendSubscribe(channel: string): void {
     if (this.socket?.readyState !== WebSocket.OPEN) {
       return;
@@ -109,14 +135,15 @@ class WebSocketClient {
   }
 
   private scheduleReconnect(): void {
-    if (this.reconnectTimer) {
+    if (this.reconnectTimer || this.manuallyClosed) {
       return;
     }
 
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       void this.connect();
-    }, 3000);
+      this.reconnectDelayMs = Math.min(this.reconnectDelayMs * 2, 30000);
+    }, this.reconnectDelayMs);
   }
 }
 

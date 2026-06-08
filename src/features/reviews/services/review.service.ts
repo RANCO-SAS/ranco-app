@@ -63,14 +63,38 @@ function computeTraitAverages(
   }, {});
 }
 
+async function uploadEvidencePhotos(
+  reviewerId: string,
+  serviceRequestId: string,
+  photoUris: string[],
+): Promise<string[]> {
+  const uploadedUrls: string[] = [];
+
+  for (let index = 0; index < photoUris.length; index += 1) {
+    const uploadedUrl = await storageService.uploadReviewEvidence(
+      reviewerId,
+      serviceRequestId,
+      photoUris[index],
+      index,
+    );
+    uploadedUrls.push(uploadedUrl);
+  }
+
+  return uploadedUrls;
+}
+
 async function createReview(input: CreateReviewInput): Promise<Review> {
+  const evidenceUrls = input.evidencePhotoUris?.length
+    ? await uploadEvidencePhotos(input.reviewerId, input.serviceRequestId, input.evidencePhotoUris)
+    : [];
+
   const data = await reviewRepository.create({
     serviceRequestId: input.serviceRequestId,
     revieweeId: input.revieweeId,
     rating: computeStoredReviewRating(input.traits),
     traits: input.traits,
     comment: input.comment?.trim() || null,
-    evidenceUrls: [],
+    evidenceUrls,
   });
 
   return mapApiReview(data);
@@ -89,7 +113,11 @@ async function updateReviewEvidence(input: UpdateReviewEvidenceInput): Promise<R
     await storageService.deleteReviewEvidenceUrls(removedUrls);
   }
 
-  throw new Error('La actualización de evidencia de reseñas no está disponible en la API.');
+  const data = await reviewRepository.updateEvidence(input.reviewId, {
+    evidenceUrls: input.evidenceUrls,
+  });
+
+  return mapApiReview(data);
 }
 
 function buildRoleReviewSummary(reviews: Review[], role: RevieweeRole): RoleReviewSummary {
@@ -130,8 +158,13 @@ async function getReviewForJobByReviewer(
   return match ? mapApiReview(match) : null;
 }
 
-async function getReviewById(_reviewId: string): Promise<Review | null> {
-  return null;
+async function getReviewById(reviewId: string): Promise<Review | null> {
+  try {
+    const data = await reviewRepository.getById(reviewId);
+    return mapApiReview(data);
+  } catch {
+    return null;
+  }
 }
 
 async function getReviewPortfolio(userId: string): Promise<ReviewPortfolioItem[]> {
