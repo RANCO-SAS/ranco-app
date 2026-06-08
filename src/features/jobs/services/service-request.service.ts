@@ -105,7 +105,7 @@ async function updateServiceRequest(input: UpdateServiceRequestInput): Promise<S
   const removedPhotoUrls = current.photoUrls.filter((url) => !input.keptPhotoUrls.includes(url));
 
   if (removedPhotoUrls.length > 0) {
-    await storageService.deleteRequestPhotoUrls(removedPhotoUrls);
+    await storageService.deleteRequestPhotoUrls(input.requestId, removedPhotoUrls);
   }
 
   const uploadedPhotoUrls = await uploadRequestPhotos(

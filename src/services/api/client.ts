@@ -1,5 +1,6 @@
 import { env } from '@/lib/env';
 import { devError, devLog } from '@/lib/dev-logger';
+import { keysToCamelCase, keysToSnakeCase } from '@/services/api/case-transform';
 import { ApiError } from '@/services/api/errors';
 import {
   getAccessToken,
@@ -40,22 +41,24 @@ async function refreshAccessToken(): Promise<string | null> {
     const response = await fetch(`${getBaseUrl()}/v1/app/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: tokens.refreshToken }),
+      body: JSON.stringify(keysToSnakeCase({ refreshToken: tokens.refreshToken })),
     });
 
-    const payload = (await response.json()) as ApiResponse<ApiAuthResponse>;
+    const payload = (await response.json()) as ApiResponse<Record<string, unknown>>;
     if (payload.status !== 'success' || !payload.data) {
       await setStoredTokens(null);
       return null;
     }
 
+    const data = keysToCamelCase(payload.data) as ApiAuthResponse;
+
     await setStoredTokens({
-      accessToken: payload.data.accessToken,
-      refreshToken: payload.data.refreshToken,
-      expiresAt: payload.data.expiresAt,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      expiresAt: data.expiresAt,
     });
 
-    return payload.data.accessToken;
+    return data.accessToken;
   })().finally(() => {
     refreshPromise = null;
   });
@@ -81,7 +84,7 @@ async function resolveAccessToken(auth: boolean): Promise<string | null> {
 }
 
 async function parseResponse<T>(response: Response, method: string, path: string, startedAt: number): Promise<T> {
-  const payload = (await response.json()) as ApiResponse<T>;
+  const payload = (await response.json()) as ApiResponse<Record<string, unknown>>;
 
   if (__DEV__) {
     devLog('api', `${method} ${path} ${response.status} ${Date.now() - startedAt}ms`);
@@ -100,7 +103,7 @@ async function parseResponse<T>(response: Response, method: string, path: string
     );
   }
 
-  return payload.data as T;
+  return keysToCamelCase(payload.data) as T;
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -123,7 +126,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const response = await fetch(`${getBaseUrl()}${path}`, {
     method,
     headers,
-    body: formData ?? (body !== undefined ? JSON.stringify(body) : undefined),
+    body:
+      formData ??
+      (body !== undefined ? JSON.stringify(keysToSnakeCase(body)) : undefined),
   });
 
   if (response.status === 401 && auth) {
@@ -153,8 +158,12 @@ export async function apiPut<T>(path: string, body?: unknown, auth = true): Prom
   return apiRequest<T>(path, { auth, method: 'PUT', body });
 }
 
-export async function apiDelete<T>(path: string, auth = true): Promise<T> {
-  return apiRequest<T>(path, { auth, method: 'DELETE' });
+export async function apiDelete<T>(
+  path: string,
+  auth = true,
+  body?: unknown,
+): Promise<T> {
+  return apiRequest<T>(path, { auth, method: 'DELETE', body });
 }
 
 export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {

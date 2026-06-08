@@ -4,25 +4,8 @@ import { devError, devLog, devWarn } from '@/lib/dev-logger';
 import { apiDelete, apiUpload } from '@/services/api/client';
 import { withImageCacheBuster } from '@/shared/utils/image-uri';
 
-const AVATARS_BUCKET = 'avatars';
-const CHAT_MEDIA_BUCKET = 'chat-media';
-const WORK_EVIDENCE_BUCKET = 'work-evidence';
-const REQUEST_PHOTOS_BUCKET = 'request-photos';
 const MAX_REVIEW_EVIDENCE_IMAGES = 3;
 const MAX_REQUEST_PHOTOS = 5;
-
-type StorageBucket =
-  | typeof AVATARS_BUCKET
-  | typeof CHAT_MEDIA_BUCKET
-  | typeof WORK_EVIDENCE_BUCKET
-  | typeof REQUEST_PHOTOS_BUCKET;
-
-type UploadImageInput = {
-  bucket: StorageBucket;
-  uri: string;
-  contentType?: string;
-  fileName?: string;
-};
 
 function resolveContentType(uri: string, contentType?: string): string {
   if (contentType) {
@@ -84,63 +67,38 @@ async function assertUriReadable(uri: string): Promise<void> {
   }
 }
 
-async function uploadImage(input: UploadImageInput): Promise<string> {
-  const contentType = resolveContentType(input.uri, input.contentType);
-  const fileName = resolveFileName(input.uri, input.fileName);
+async function uploadToPath(path: string, uri: string, fileName?: string): Promise<string> {
+  const contentType = resolveContentType(uri);
+  const resolvedFileName = resolveFileName(uri, fileName);
 
-  devLog('storage', 'uploadImage:start', {
-    bucket: input.bucket,
+  devLog('storage', 'upload:start', {
+    path,
     contentType,
-    uriScheme: getUriScheme(input.uri),
+    uriScheme: getUriScheme(uri),
   });
 
-  await assertUriReadable(input.uri);
+  await assertUriReadable(uri);
 
   const formData = new FormData();
   formData.append('file', {
-    uri: input.uri,
-    name: fileName,
+    uri,
+    name: resolvedFileName,
     type: contentType,
   } as unknown as Blob);
 
-  const response = await apiUpload<{ url: string }>(`/v1/app/storage/${input.bucket}`, formData);
+  const response = await apiUpload<{ url: string }>(path, formData);
   const publicUrl = withImageCacheBuster(response.url);
 
-  devLog('storage', 'uploadImage:success', { urlPreview: publicUrl.slice(0, 120) });
+  devLog('storage', 'upload:success', { urlPreview: publicUrl.slice(0, 120) });
   return publicUrl;
 }
 
-function extractStoragePath(publicUrl: string, bucket: StorageBucket): string | null {
+async function deleteStoredFile(path: string, url: string): Promise<void> {
   try {
-    const pathname = new URL(publicUrl.split('?')[0]).pathname;
-    const segments = pathname.split('/').filter(Boolean);
-    const bucketIndex = segments.indexOf(bucket);
-
-    if (bucketIndex === -1) {
-      return null;
-    }
-
-    return segments.slice(bucketIndex + 1).join('/');
-  } catch {
-    return null;
-  }
-}
-
-async function deleteStorageObjects(bucket: StorageBucket, urls: string[]): Promise<void> {
-  for (const url of urls) {
-    const path = extractStoragePath(url, bucket);
-
-    if (!path) {
-      devWarn('storage', 'delete:invalid-url', { bucket, urlPreview: url.slice(0, 120) });
-      continue;
-    }
-
-    try {
-      await apiDelete(`/v1/app/storage/${bucket}/${path}`);
-      devLog('storage', 'delete:success', { bucket, path });
-    } catch (error) {
-      devWarn('storage', 'delete:failed', { bucket, path, error });
-    }
+    await apiDelete(path, true, { url });
+    devLog('storage', 'delete:success', { path, urlPreview: url.slice(0, 120) });
+  } catch (error) {
+    devWarn('storage', 'delete:failed', { path, urlPreview: url.slice(0, 120), error });
   }
 }
 
@@ -153,11 +111,7 @@ async function uploadAvatar(
 
   const extension = resolveFileExtension(uri);
 
-  return uploadImage({
-    bucket: AVATARS_BUCKET,
-    uri,
-    fileName: `avatar-${Date.now()}.${extension}`,
-  });
+  return uploadToPath('/v1/app/profile/avatar', uri, `avatar-${Date.now()}.${extension}`);
 }
 
 async function uploadChatImage(conversationId: string, uri: string): Promise<string> {
@@ -168,11 +122,11 @@ async function uploadChatImage(conversationId: string, uri: string): Promise<str
 
   const extension = resolveFileExtension(uri);
 
-  return uploadImage({
-    bucket: CHAT_MEDIA_BUCKET,
+  return uploadToPath(
+    `/v1/app/conversations/${conversationId}/media`,
     uri,
-    fileName: `${Date.now()}.${extension}`,
-  });
+    `${Date.now()}.${extension}`,
+  );
 }
 
 async function uploadReviewEvidence(
@@ -181,17 +135,23 @@ async function uploadReviewEvidence(
   uri: string,
   index: number,
 ): Promise<string> {
+  void userId;
+  void reviewId;
+  void index;
+
   const extension = resolveFileExtension(uri);
 
-  return uploadImage({
-    bucket: WORK_EVIDENCE_BUCKET,
+  return uploadToPath(
+    '/v1/app/reviews/evidence',
     uri,
-    fileName: `${reviewId}-${Date.now()}-${index}.${extension}`,
-  });
+    `evidence-${Date.now()}.${extension}`,
+  );
 }
 
 async function deleteReviewEvidenceUrls(urls: string[]): Promise<void> {
-  await deleteStorageObjects(WORK_EVIDENCE_BUCKET, urls);
+  for (const url of urls) {
+    await deleteStoredFile('/v1/app/reviews/evidence', url);
+  }
 }
 
 async function uploadRequestPhoto(
@@ -200,17 +160,22 @@ async function uploadRequestPhoto(
   uri: string,
   index: number,
 ): Promise<string> {
+  void clientId;
+  void index;
+
   const extension = resolveFileExtension(uri);
 
-  return uploadImage({
-    bucket: REQUEST_PHOTOS_BUCKET,
+  return uploadToPath(
+    `/v1/app/jobs/${requestId}/photos`,
     uri,
-    fileName: `${requestId}-${Date.now()}-${index}.${extension}`,
-  });
+    `photo-${Date.now()}.${extension}`,
+  );
 }
 
-async function deleteRequestPhotoUrls(urls: string[]): Promise<void> {
-  await deleteStorageObjects(REQUEST_PHOTOS_BUCKET, urls);
+async function deleteRequestPhotoUrls(requestId: string, urls: string[]): Promise<void> {
+  for (const url of urls) {
+    await deleteStoredFile(`/v1/app/jobs/${requestId}/photos`, url);
+  }
 }
 
 export const storageService = {

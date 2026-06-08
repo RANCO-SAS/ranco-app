@@ -1,4 +1,5 @@
 import { apiGet } from '@/services/api/client';
+import { buildSnakeCaseQuery } from '@/services/api/case-transform';
 
 export type ApiFeaturedProfessional = {
   id: string;
@@ -19,18 +20,10 @@ export type GetFeaturedProfessionalsParams = {
 
 export const featuredProfessionalsRepository = {
   getFeatured(params: GetFeaturedProfessionalsParams = {}) {
-    const searchParams = new URLSearchParams();
-
-    if (params.limit) {
-      searchParams.set('limit', String(params.limit));
-    }
-
-    if (params.subcategoryIds && params.subcategoryIds.length > 0) {
-      searchParams.set('subcategoryIds', params.subcategoryIds.join(','));
-    }
-
-    const query = searchParams.toString();
-    const path = query ? `/v1/app/home/featured?${query}` : '/v1/app/home/featured';
+    const path = `/v1/app/home/featured${buildSnakeCaseQuery({
+      limit: params.limit,
+      subcategoryIds: params.subcategoryIds?.join(','),
+    })}`;
 
     return apiGet<ApiFeaturedProfessional[]>(path);
   },

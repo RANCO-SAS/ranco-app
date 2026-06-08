@@ -1,4 +1,5 @@
 import { apiGet, apiPost } from '@/services/api/client';
+import { buildSnakeCaseQuery } from '@/services/api/case-transform';
 
 export type ApiSubscriptionPlan = {
   id: string;
@@ -37,7 +38,9 @@ export type ChangeSubscriptionBody = {
 
 export const subscriptionRepository = {
   getPlansByRole(targetRole: string) {
-    return apiGet<ApiSubscriptionPlan[]>(`/v1/app/subscriptions/plans?targetRole=${targetRole}`);
+    return apiGet<ApiSubscriptionPlan[]>(
+      `/v1/app/subscriptions/plans${buildSnakeCaseQuery({ targetRole })}`,
+    );
   },
 
   getMySubscriptions() {

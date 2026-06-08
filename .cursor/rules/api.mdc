@@ -96,15 +96,21 @@ Repositories unwrap the envelope and throw typed errors for services to handle.
 
 # Storage Rules
 
-Use ranco-core storage endpoints for:
-- profile images
-- service request photos
-- chat media
-- work evidence photos
+Upload files via **domain HTTP routes** (never bucket names or R2 paths):
+
+| Use case | Route |
+|----------|-------|
+| Profile avatar | `POST /v1/app/profile/avatar` |
+| Chat image | `POST /v1/app/conversations/:id/media` |
+| Job photos | `POST/DELETE /v1/app/jobs/:id/photos` |
+| Review evidence | `POST/DELETE /v1/app/reviews/evidence` |
+
+Implementation lives in `src/services/storage/storage.service.ts` (multipart field `file`).
 
 Rules:
-- validate uploads in services before sending
-- use multipart upload via API client
+- validate uploads in feature services before calling storage adapter
+- use `apiUpload` / `apiDelete` from API client (snake_case wire, camelCase in TS)
+- never hardcode bucket names, AWS keys, or storage key paths in the app
 - avoid oversized uploads unnecessarily
 
 # WebSocket Rules
