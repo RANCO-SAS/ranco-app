@@ -1,4 +1,5 @@
 import { ApiError } from '@/services/api/errors';
+import { getUserErrorMessage } from '@/services/api/user-error-message';
 
 export class ProfileError extends Error {
   code?: string;
@@ -23,13 +24,16 @@ export function mapProfileError(error: unknown): string {
   }
 
   if (error instanceof ApiError) {
-    const mappedMessage = PROFILE_ERROR_MESSAGES[error.code];
+    if (error.message) {
+      return error.message;
+    }
 
+    const mappedMessage = PROFILE_ERROR_MESSAGES[error.code];
     if (mappedMessage) {
       return mappedMessage;
     }
 
-    return error.message || 'Ocurrió un error al procesar el perfil.';
+    return getUserErrorMessage(error, 'Ocurrió un error al procesar el perfil.');
   }
 
   if (error instanceof Error) {

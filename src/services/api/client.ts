@@ -1,4 +1,5 @@
 import { env } from '@/lib/env';
+import { devError, devLog } from '@/lib/dev-logger';
 import { ApiError } from '@/services/api/errors';
 import {
   getAccessToken,
@@ -20,7 +21,7 @@ let refreshPromise: Promise<string | null> | null = null;
 function getBaseUrl(): string {
   const base = env.apiUrl.replace(/\/$/, '');
   if (!base) {
-    throw new ApiError('API URL is not configured', 'configuration_error');
+    throw new ApiError('La app no está configurada correctamente.', 'configuration_error');
   }
   return base;
 }
@@ -79,11 +80,24 @@ async function resolveAccessToken(auth: boolean): Promise<string | null> {
   return tokens.accessToken;
 }
 
-async function parseResponse<T>(response: Response): Promise<T> {
+async function parseResponse<T>(response: Response, method: string, path: string, startedAt: number): Promise<T> {
   const payload = (await response.json()) as ApiResponse<T>;
 
+  if (__DEV__) {
+    devLog('api', `${method} ${path} ${response.status} ${Date.now() - startedAt}ms`);
+  }
+
   if (payload.status !== 'success') {
-    throw new ApiError(payload.status_reason || 'Request failed', payload.status);
+    if (__DEV__) {
+      devError('api', `${method} ${path} failed`, undefined, {
+        code: payload.status,
+        statusReason: payload.status_reason,
+      });
+    }
+    throw new ApiError(
+      payload.status_reason || 'Ocurrió un error inesperado. Inténtalo de nuevo.',
+      payload.status,
+    );
   }
 
   return payload.data as T;
@@ -92,11 +106,12 @@ async function parseResponse<T>(response: Response): Promise<T> {
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { auth = true, method = 'GET', body, formData } = options;
   const headers: Record<string, string> = {};
+  const startedAt = Date.now();
 
   if (auth) {
     const token = (await resolveAccessToken(true)) ?? (await getAccessToken());
     if (!token) {
-      throw new ApiError('Authentication required', 'unauthorized');
+      throw new ApiError('Debes iniciar sesión para continuar.', 'unauthorized');
     }
     headers.Authorization = `Bearer ${token}`;
   }
@@ -116,10 +131,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     if (refreshed) {
       return apiRequest<T>(path, options);
     }
-    throw new ApiError('Session expired', 'unauthorized');
+    throw new ApiError('Tu sesión expiró. Inicia sesión de nuevo.', 'unauthorized');
   }
 
-  return parseResponse<T>(response);
+  return parseResponse<T>(response, method, path, startedAt);
 }
 
 export async function apiGet<T>(path: string, auth = true): Promise<T> {

@@ -6,14 +6,12 @@ import type {
   ServiceOffer,
 } from '@/features/offers/types/offer';
 import { offerRepository } from '@/repositories/offer.repository';
-import { isApiError } from '@/services/api/errors';
+import { getUserErrorMessage } from '@/services/api/user-error-message';
+
+const OFFER_ERROR_FALLBACK = 'No se pudo completar la operación con la oferta. Inténtalo de nuevo.';
 
 function mapOfferError(error: unknown): never {
-  if (isApiError(error)) {
-    throw new Error(error.message);
-  }
-
-  throw error;
+  throw new Error(getUserErrorMessage(error, OFFER_ERROR_FALLBACK));
 }
 
 async function getConversationOffers(conversationId: string): Promise<ServiceOffer[]> {

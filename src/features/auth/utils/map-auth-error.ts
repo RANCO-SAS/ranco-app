@@ -1,4 +1,5 @@
 import { ApiError } from '@/services/api/errors';
+import { getUserErrorMessage } from '@/services/api/user-error-message';
 
 export class AuthError extends Error {
   code?: string;
@@ -42,17 +43,16 @@ export function mapAuthError(error: unknown): string {
   }
 
   if (error instanceof ApiError) {
-    const mappedMessage = AUTH_ERROR_MESSAGES[error.code];
+    if (error.message) {
+      return error.message;
+    }
 
+    const mappedMessage = AUTH_ERROR_MESSAGES[error.code];
     if (mappedMessage) {
       return mappedMessage;
     }
 
-    if (error.message.toLowerCase().includes('invalid credentials')) {
-      return AUTH_ERROR_MESSAGES.unauthorized;
-    }
-
-    return error.message || 'Ocurrió un error de autenticación.';
+    return getUserErrorMessage(error, 'Ocurrió un error de autenticación.');
   }
 
   if (error instanceof Error) {
