@@ -2,6 +2,12 @@
 
 Marketplace móvil que conecta clientes con profesionales de servicios cercanos.
 
+## Documentación del prototipo
+
+Guía completa para entender, presentar y explicar el proyecto: nombre, descripción, funcionalidades, flujos, modelo de negocio, stack, estado del MVP y guion de demo.
+
+→ **[docs/prototipo.md](docs/prototipo.md)**
+
 ## Requisitos
 
 - Node.js 20+
